@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -50,7 +51,7 @@
         .template-modern { font-family: 'Georgia', serif; letter-spacing: 0.02em; }
         .template-minimal { font-family: monospace; text-transform: uppercase; font-size: 0.8rem; }
 
-        /* Smooth loading state for buttons */
+        /* Smooth loading state for non-blocking UI */
         .is-loading {
             pointer-events: none;
             opacity: 0.7;
@@ -74,29 +75,26 @@
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 antialiased min-h-screen">
 
-    <!-- Auth Wall -->
+    <!-- Auth Wall (Magic Link) -->
     <div id="auth-wall" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-100 dark:bg-slate-900 px-4">
         <div class="w-full max-w-md p-8 glass-panel rounded-2xl">
             <div class="text-center mb-6">
                 <h2 class="text-3xl font-bold tracking-tight text-brand-600 dark:text-brand-500">InvoiceSuite Pro</h2>
-                <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Enterprise-grade multi-tenant platform</p>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Passwordless Secure Login</p>
             </div>
             
             <form id="auth-form" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium mb-1">Email Address</label>
-                    <input type="email" id="auth-email" required class="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
+                    <input type="email" id="auth-email" required placeholder="you@company.com" class="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Password</label>
-                    <input type="password" id="auth-password" required class="w-full px-3 py-2 border rounded-lg dark:bg-slate-800 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 transition">
-                </div>
+                <!-- Password field removed for Magic Link architecture -->
                 <button type="submit" id="btn-auth-primary" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg transition shadow-sm">
-                    <span>Sign In / Sign Up</span>
+                    <span>Send Magic Link</span>
                 </button>
             </form>
             <div class="mt-4 text-center">
-                <button id="btn-toggle-auth-mode" class="text-xs text-brand-600 dark:text-brand-400 hover:underline">New user? Enter details and click above to register</button>
+                <p class="text-xs text-slate-500 dark:text-slate-400">We'll send a secure login link directly to your inbox.</p>
             </div>
         </div>
     </div>
@@ -339,7 +337,7 @@
     <div id="toast" class="fixed bottom-6 right-6 px-4 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl shadow-xl font-medium text-sm transform translate-y-24 opacity-0 transition duration-300 ease-out z-50 pointer-events-none"></div>
 
     <script>
-        // Use environment variables for secure configs in production
+        // Replace these with your actual Supabase project credentials
         const SUPABASE_URL = "https://your-supabase-project.supabase.co";
         const SUPABASE_ANON_KEY = "your-key-here";
         
@@ -350,12 +348,91 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             
-            // --- STATE MANAGEMENT ---
-            let activeSession = null;
-            let currentProfile = { plan_type: 'free', invoices_this_month: 0 };
-            let invoiceHistory = [];
-            let activeInvoiceId = null;
+            // --- DOM ELEMENTS FOR AUTH ---
+            const authWall = document.getElementById('auth-wall');
+            const appLayout = document.getElementById('app-layout');
+            const authForm = document.getElementById('auth-form');
+            const authEmail = document.getElementById('auth-email');
+            const btnAuthPrimary = document.getElementById('btn-auth-primary');
+            const userDisplay = document.getElementById('user-display');
+            const btnLogout = document.getElementById('btn-logout');
+            const toastEl = document.getElementById('toast');
 
+            // --- NOTIFICATION UTILITY ---
+            function showToast(msg) {
+                toastEl.textContent = msg;
+                toastEl.classList.remove('translate-y-24', 'opacity-0');
+                setTimeout(() => toastEl.classList.add('translate-y-24', 'opacity-0'), 3000);
+            }
+
+            // --- AUTHENTICATION LOGIC (MAGIC LINK) ---
+            if (supabase) {
+                // 1. Check if user is already logged in or clicking a magic link
+                supabase.auth.getSession().then(({ data: { session } }) => {
+                    handleAuthState(session);
+                });
+
+                // 2. Listen to state changes (login/logout events)
+                supabase.auth.onAuthStateChange((_event, session) => {
+                    handleAuthState(session);
+                });
+            }
+
+            function handleAuthState(session) {
+                if (session) {
+                    // User is authenticated -> Show App
+                    authWall.classList.add('hidden');
+                    appLayout.classList.remove('hidden');
+                    userDisplay.textContent = session.user.email;
+                } else {
+                    // No user -> Show Login Wall
+                    authWall.classList.remove('hidden');
+                    appLayout.classList.add('hidden');
+                    userDisplay.textContent = '';
+                }
+            }
+
+            // 3. Handle Form Submission (Send Magic Link)
+            authForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                if (!supabase) {
+                    showToast("Error: Supabase credentials are missing.");
+                    return;
+                }
+
+                const email = authEmail.value;
+                
+                // Add Loading state (Non-blocking)
+                btnAuthPrimary.classList.add('is-loading');
+
+                const { data, error } = await supabase.auth.signInWithOtp({
+                    email: email,
+                    options: {
+                        emailRedirectTo: window.location.origin
+                    }
+                });
+
+                // Remove Loading state
+                btnAuthPrimary.classList.remove('is-loading');
+
+                if (error) {
+                    showToast(error.message);
+                } else {
+                    showToast("Magic Link sent! Check your inbox.");
+                    authForm.reset();
+                }
+            });
+
+            // 4. Handle Logout
+            btnLogout.addEventListener('click', async () => {
+                if(supabase) {
+                    await supabase.auth.signOut();
+                    showToast("Logged out successfully");
+                }
+            });
+
+            // --- APP STATE MANAGEMENT ---
             let state = {
                 docType: 'Invoice', currency: 'USD', region: 'USA',
                 docNumber: 'INV-0001', date: new Date().toISOString().split('T')[0], dueDate: '',
@@ -366,14 +443,8 @@
             };
 
             let calcTotals = { subtotal: 0, discount: 0, tax: 0, total: 0 };
-
-            // --- DOM ELEMENTS MAP ---
-            const els = {
-                itemsContainer: document.getElementById('items-container'),
-                toast: document.getElementById('toast'),
-                btnPdf: document.getElementById('btn-pdf'),
-                btnSave: document.getElementById('btn-save')
-            };
+            const itemsContainer = document.getElementById('items-container');
+            const btnPdf = document.getElementById('btn-pdf');
 
             // --- CORE UTILS ---
             function formatMoney(amount) {
@@ -390,12 +461,6 @@
                 }
             }
 
-            function showToast(msg) {
-                els.toast.textContent = msg;
-                els.toast.classList.remove('translate-y-24', 'opacity-0');
-                setTimeout(() => els.toast.classList.add('translate-y-24', 'opacity-0'), 3000);
-            }
-
             // --- ENGINE & LOGIC ---
             function calculate() {
                 let sub = state.items.reduce((acc, item) => acc + (item.qty * item.price), 0);
@@ -406,8 +471,8 @@
                 calcTotals = { subtotal: sub, discount: disc, tax: tax, total: afterDisc + tax };
             }
 
-            // [FIXED]: Memory Leak Prevented Using Event Delegation
-            els.itemsContainer.addEventListener('input', (e) => {
+            // Memory Leak Prevented Using Event Delegation
+            itemsContainer.addEventListener('input', (e) => {
                 if (e.target.tagName === 'INPUT') {
                     const id = e.target.dataset.id;
                     const field = e.target.dataset.field;
@@ -415,12 +480,11 @@
                     if(item) {
                         item[field] = field === 'desc' ? e.target.value : parseFloat(e.target.value) || 0;
                         renderTotalsOnly();
-                        autoSyncCloudWorkspace();
                     }
                 }
             });
 
-            els.itemsContainer.addEventListener('click', (e) => {
+            itemsContainer.addEventListener('click', (e) => {
                 const btn = e.target.closest('.del-item');
                 if (btn) {
                     const id = btn.dataset.id;
@@ -429,12 +493,11 @@
                         state.items.push({ id: crypto.randomUUID(), desc: '', qty: 1, price: 0 });
                     }
                     updateAll();
-                    autoSyncCloudWorkspace();
                 }
             });
 
             function renderItemsEditor() {
-                els.itemsContainer.innerHTML = state.items.map(item => `
+                itemsContainer.innerHTML = state.items.map(item => `
                     <div class="grid grid-cols-[2fr_1fr_1fr_1fr_40px] gap-2 items-center">
                         <input type="text" placeholder="Description" value="${item.desc}" data-id="${item.id}" data-field="desc" class="px-2 py-1 text-xs border rounded dark:bg-slate-900 dark:border-slate-700 outline-none">
                         <input type="number" min="1" step="1" value="${item.qty}" data-id="${item.id}" data-field="qty" class="px-2 py-1 text-xs border rounded text-center dark:bg-slate-900 dark:border-slate-700 outline-none">
@@ -448,11 +511,9 @@
             }
 
             function renderPreview() {
-                // Apply Template Class
                 const previewEl = document.getElementById('doc-preview');
                 previewEl.className = `a4-document bg-white text-slate-900 p-[20mm] min-h-[297mm] transition-all template-${state.template_id}`;
                 
-                // Map basic text
                 document.getElementById('prev-title').textContent = state.docType.toUpperCase();
                 document.getElementById('prev-number-label').textContent = `# ${state.docNumber}`;
                 document.getElementById('prev-date').textContent = state.date;
@@ -464,7 +525,6 @@
                 badge.textContent = state.status;
                 badge.className = `inline-block mt-2 px-2 py-0.5 text-xs font-bold uppercase rounded ${state.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : state.status === 'Unpaid' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`;
 
-                // Render Table
                 document.getElementById('prev-items-body').innerHTML = state.items.filter(i => i.desc || i.price > 0).map(item => `
                     <tr class="border-b border-slate-100">
                         <td class="py-3 font-medium text-slate-700">${item.desc}</td>
@@ -488,7 +548,7 @@
                 document.getElementById('prev-tax').textContent = formatMoney(calcTotals.tax);
                 document.getElementById('prev-total').textContent = formatMoney(calcTotals.total);
 
-                const totalDivs = els.itemsContainer.querySelectorAll('.item-total');
+                const totalDivs = itemsContainer.querySelectorAll('.item-total');
                 state.items.forEach((item, index) => {
                     if(totalDivs[index]) totalDivs[index].textContent = formatMoney(item.qty * item.price);
                 });
@@ -499,7 +559,7 @@
                 renderPreview();
             }
 
-            // Event Listeners for settings
+            // Configuration Listeners
             ['doc-type', 'currency', 'region', 'doc-template', 'discount-type', 'doc-status'].forEach(id => {
                 document.getElementById(id).addEventListener('change', e => { 
                     const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
@@ -509,7 +569,6 @@
                     if(id === 'region') document.getElementById('tax-input-container').style.display = state.region === 'USA' ? 'flex' : 'none';
                     
                     updateAll(id === 'currency' || id === 'discount-type');
-                    autoSyncCloudWorkspace();
                 });
             });
 
@@ -519,7 +578,6 @@
                     state[key === 'docDate' ? 'date' : key] = e.target.value;
                     if(id.includes('details') || id.includes('number') || id.includes('date')) updateAll(false);
                     else updateAll(true);
-                    autoSyncCloudWorkspace();
                 });
             });
 
@@ -528,24 +586,13 @@
                 updateAll();
             });
 
-            let syncDebounceTimer = null;
-            function autoSyncCloudWorkspace() {
-                clearTimeout(syncDebounceTimer);
-                syncDebounceTimer = setTimeout(() => {
-                    console.log("Auto-saving..."); // Mock cloud save
-                }, 1500);
-            }
-
-            // [FIXED]: Non-blocking UI for PDF Export
-            els.btnPdf.addEventListener('click', async () => {
+            // Non-blocking PDF Export 
+            btnPdf.addEventListener('click', async () => {
                 const element = document.getElementById('doc-preview');
-                const btn = els.btnPdf;
-                
-                // Add loading state visually
-                btn.classList.add('is-loading');
+                btnPdf.classList.add('is-loading');
                 showToast("Compiling PDF asynchronously...");
 
-                // Yielding to the main thread before heavy processing
+                // Yield to main thread
                 await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 50)));
 
                 const options = {
@@ -563,7 +610,7 @@
                     showToast("Error generating PDF.");
                     console.error(error);
                 } finally {
-                    btn.classList.remove('is-loading');
+                    btnPdf.classList.remove('is-loading');
                 }
             });
 
