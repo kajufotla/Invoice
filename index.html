@@ -49,31 +49,21 @@
         .template-modern { font-family: 'Georgia', serif; letter-spacing: 0.02em; }
         .template-minimal { font-family: monospace; text-transform: uppercase; font-size: 0.8rem; }
 
-        /* Smooth loading state for non-blocking UI */
-        .is-loading {
-            pointer-events: none;
-            opacity: 0.7;
-            position: relative;
-        }
+        .is-loading { pointer-events: none; opacity: 0.7; position: relative; }
         .is-loading::after {
-            content: "";
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            top: 0; left: 0; right: 0; bottom: 0;
-            margin: auto;
-            border: 2px solid transparent;
-            border-top-color: #ffffff;
-            border-radius: 50%;
+            content: ""; position: absolute; width: 16px; height: 16px; top: 0; left: 0; right: 0; bottom: 0;
+            margin: auto; border: 2px solid transparent; border-top-color: #ffffff; border-radius: 50%;
             animation: spin 1s linear infinite;
         }
         .is-loading > span { opacity: 0; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Hide file input */
+        input[type="file"] { display: none; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 antialiased min-h-screen">
 
-    <!-- Main App Layout (Visible by default) -->
     <div id="app-layout" class="flex flex-col h-screen overflow-hidden">
         
         <header class="h-16 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between glass-panel z-30 shrink-0">
@@ -82,6 +72,7 @@
                 <span id="badge-plan" class="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">Pro Version</span>
             </div>
             <div class="flex items-center gap-3">
+                <button id="btn-reset" class="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition">Clear Data</button>
                 <button id="btn-dark-toggle" aria-label="Toggle Dark Mode" class="p-2 border rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M14 12a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 </button>
@@ -89,25 +80,6 @@
         </header>
 
         <div class="flex flex-1 overflow-hidden">
-            
-            <aside class="w-80 border-r border-slate-200 dark:border-slate-800 glass-panel flex flex-col h-full overflow-hidden shrink-0 no-print">
-                <div class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 space-y-3">
-                    <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Volume</p>
-                        <p id="dash-volume" class="text-xl font-bold tracking-tight text-slate-800 dark:text-slate-100">$0.00</p>
-                    </div>
-                </div>
-
-                <div class="p-4 border-b border-slate-200 dark:border-slate-800">
-                    <button id="btn-new-document" class="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-sm text-sm transition flex items-center justify-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path></svg>
-                        New Document
-                    </button>
-                </div>
-
-                <div id="history-container" class="flex-1 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/50"></div>
-            </aside>
-
             <main class="flex-1 grid grid-cols-1 xl:grid-cols-2 overflow-hidden bg-slate-50 dark:bg-slate-900/40">
                 
                 <section class="h-full overflow-y-auto p-6 space-y-6 no-print border-r border-slate-200 dark:border-slate-800/80">
@@ -125,6 +97,22 @@
                             <button id="btn-pdf" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
                                 <span>Export PDF</span>
                             </button>
+                        </div>
+                    </div>
+
+                    <!-- Branding / Logo Upload Panel -->
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Branding</h3>
+                        <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-lg cursor-pointer transition text-slate-500 dark:text-slate-400 hover:text-brand-600 relative overflow-hidden">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                <p class="text-xs font-semibold">Click to upload business logo</p>
+                                <p class="text-[10px]">PNG or JPG</p>
+                            </div>
+                            <input type="file" id="logo-upload" accept="image/png, image/jpeg" />
+                        </label>
+                        <div id="logo-remove-wrapper" class="hidden text-right">
+                            <button id="btn-remove-logo" class="text-xs text-rose-500 hover:text-rose-700">Remove Logo</button>
                         </div>
                     </div>
 
@@ -216,11 +204,11 @@
                                     <option value="fixed">Fixed</option>
                                     <option value="percent">Percentage</option>
                                 </select>
-                                <input type="number" id="discount-value" min="0" step="0.01" class="w-20 px-2 py-1 border rounded text-right dark:bg-slate-900 dark:border-slate-700 outline-none" value="0">
+                                <input type="number" id="discount-value" min="0" step="0.01" class="w-20 px-2 py-1 border rounded text-right dark:bg-slate-900 dark:border-slate-700 outline-none">
                             </div>
                             <div class="flex items-center gap-3 text-xs" id="tax-input-container">
                                 <span class="text-slate-400 font-medium">Tax Rate (%):</span>
-                                <input type="number" id="tax-rate-manual" min="0" step="0.01" class="w-20 px-2 py-1 border rounded text-right dark:bg-slate-900 dark:border-slate-700 outline-none" value="0">
+                                <input type="number" id="tax-rate-manual" min="0" step="0.01" class="w-20 px-2 py-1 border rounded text-right dark:bg-slate-900 dark:border-slate-700 outline-none">
                             </div>
                         </div>
                     </div>
@@ -229,15 +217,17 @@
 
                 <section class="h-full overflow-y-auto p-6 bg-slate-200/50 dark:bg-slate-950/20 flex justify-center">
                     <div id="capture-box" class="w-full max-w-[210mm]">
-                        <div class="a4-document bg-white text-slate-900 p-[20mm] min-h-[297mm] template-classic shadow-xl rounded-sm transition-all" id="doc-preview">
+                        <div class="a4-document bg-white text-slate-900 p-[20mm] min-h-[297mm] template-classic shadow-xl rounded-sm transition-all relative" id="doc-preview">
                             
                             <div id="tpl-header-block" class="flex justify-between items-start mb-12">
                                 <div>
+                                    <!-- Dynamic Logo Injection -->
+                                    <img id="prev-logo" class="max-h-16 max-w-[200px] object-contain mb-4 hidden" alt="Business Logo">
                                     <h1 class="text-4xl font-extrabold tracking-tight text-brand-600 uppercase mb-1" id="prev-title">INVOICE</h1>
                                     <p class="text-sm font-bold text-slate-700" id="prev-number-label"># INV-0001</p>
                                     <span id="prev-status-badge" class="inline-block mt-2 px-2 py-0.5 text-xs font-bold uppercase rounded bg-slate-100 text-slate-800">Pending</span>
                                 </div>
-                                <div class="text-right text-xs space-y-1">
+                                <div class="text-right text-xs space-y-1 mt-auto">
                                     <p><span class="text-slate-400 uppercase font-medium">Date:</span> <strong id="prev-date" class="text-slate-800"></strong></p>
                                     <p><span class="text-slate-400 uppercase font-medium">Due:</span> <strong id="prev-due-date" class="text-slate-800"></strong></p>
                                 </div>
@@ -297,22 +287,57 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const toastEl = document.getElementById('toast');
-
             function showToast(msg) {
                 toastEl.textContent = msg;
                 toastEl.classList.remove('translate-y-24', 'opacity-0');
                 setTimeout(() => toastEl.classList.add('translate-y-24', 'opacity-0'), 3000);
             }
 
-            // --- APP STATE MANAGEMENT ---
-            let state = {
+            // --- APP STATE MANAGEMENT & LOCAL STORAGE ---
+            let defaultState = {
                 docType: 'Invoice', currency: 'USD', region: 'USA',
                 docNumber: 'INV-0001', date: new Date().toISOString().split('T')[0], dueDate: '',
                 senderDetails: 'My Company LLC\nNew York, NY 10001',
                 clientDetails: 'Acme Corp\nSan Francisco, CA 94105',
                 items: [{ id: crypto.randomUUID(), desc: 'Web Development Services', qty: 1, price: 1500.00 }],
-                discountType: 'fixed', discountValue: 0, taxRateManual: 0, status: 'Pending', template_id: 'classic'
+                discountType: 'fixed', discountValue: 0, taxRateManual: 0, status: 'Pending', template_id: 'classic',
+                logoDataUrl: null
             };
+
+            let state = { ...defaultState };
+
+            function loadState() {
+                const saved = localStorage.getItem('invoiceStatePro');
+                if (saved) {
+                    try { state = { ...state, ...JSON.parse(saved) }; } 
+                    catch (e) { console.error("Could not parse saved state"); }
+                }
+            }
+
+            function saveState() {
+                localStorage.setItem('invoiceStatePro', JSON.stringify(state));
+            }
+
+            function syncDOMWithState() {
+                document.getElementById('doc-type').value = state.docType;
+                document.getElementById('currency').value = state.currency;
+                document.getElementById('region').value = state.region;
+                document.getElementById('doc-number').value = state.docNumber;
+                document.getElementById('doc-date').value = state.date;
+                document.getElementById('doc-due-date').value = state.dueDate;
+                document.getElementById('sender-details').value = state.senderDetails;
+                document.getElementById('client-details').value = state.clientDetails;
+                document.getElementById('discount-type').value = state.discountType;
+                document.getElementById('discount-value').value = state.discountValue;
+                document.getElementById('tax-rate-manual').value = state.taxRateManual;
+                document.getElementById('doc-status').value = state.status;
+                document.getElementById('doc-template').value = state.template_id;
+                document.getElementById('tax-input-container').style.display = state.region === 'USA' ? 'flex' : 'none';
+            }
+
+            // Initialization 
+            loadState();
+            syncDOMWithState();
 
             let calcTotals = { subtotal: 0, discount: 0, tax: 0, total: 0 };
             const itemsContainer = document.getElementById('items-container');
@@ -333,7 +358,6 @@
                 }
             }
 
-            // --- ENGINE & LOGIC ---
             function calculate() {
                 let sub = state.items.reduce((acc, item) => acc + (item.qty * item.price), 0);
                 let dVal = parseFloat(state.discountValue) || 0;
@@ -343,7 +367,7 @@
                 calcTotals = { subtotal: sub, discount: disc, tax: tax, total: afterDisc + tax };
             }
 
-            // Memory Leak Prevented Using Event Delegation
+            // --- ITEM EVENT LISTENERS (FIXED FOCUS ISSUE) ---
             itemsContainer.addEventListener('input', (e) => {
                 if (e.target.tagName === 'INPUT') {
                     const id = e.target.dataset.id;
@@ -351,7 +375,13 @@
                     const item = state.items.find(i => i.id === id);
                     if(item) {
                         item[field] = field === 'desc' ? e.target.value : parseFloat(e.target.value) || 0;
-                        renderTotalsOnly();
+                        // Update DOM directly instead of fully re-rendering the item input list
+                        const row = e.target.closest('.grid');
+                        const totalEl = row.querySelector('.item-total');
+                        if (totalEl) totalEl.textContent = formatMoney(item.qty * item.price);
+                        
+                        saveState();
+                        renderPreview(); 
                     }
                 }
             });
@@ -364,7 +394,9 @@
                     if(state.items.length === 0) {
                         state.items.push({ id: crypto.randomUUID(), desc: '', qty: 1, price: 0 });
                     }
-                    updateAll();
+                    saveState();
+                    renderItemsEditor(); // Safe to re-render inputs entirely on structural changes
+                    renderPreview();
                 }
             });
 
@@ -386,6 +418,19 @@
                 const previewEl = document.getElementById('doc-preview');
                 previewEl.className = `a4-document bg-white text-slate-900 p-[20mm] min-h-[297mm] transition-all template-${state.template_id}`;
                 
+                // Handle Logo
+                const logoImg = document.getElementById('prev-logo');
+                const btnRemoveLogo = document.getElementById('logo-remove-wrapper');
+                if (state.logoDataUrl) {
+                    logoImg.src = state.logoDataUrl;
+                    logoImg.classList.remove('hidden');
+                    btnRemoveLogo.classList.remove('hidden');
+                } else {
+                    logoImg.src = '';
+                    logoImg.classList.add('hidden');
+                    btnRemoveLogo.classList.add('hidden');
+                }
+
                 document.getElementById('prev-title').textContent = state.docType.toUpperCase();
                 document.getElementById('prev-number-label').textContent = `# ${state.docNumber}`;
                 document.getElementById('prev-date').textContent = state.date;
@@ -406,10 +451,6 @@
                     </tr>
                 `).join('');
 
-                renderTotalsOnly();
-            }
-
-            function renderTotalsOnly() {
                 calculate();
                 document.getElementById('prev-subtotal').textContent = formatMoney(calcTotals.subtotal);
                 document.getElementById('prev-discount').textContent = `-${formatMoney(calcTotals.discount)}`;
@@ -419,19 +460,30 @@
                 document.getElementById('prev-tax-label').textContent = taxLabel;
                 document.getElementById('prev-tax').textContent = formatMoney(calcTotals.tax);
                 document.getElementById('prev-total').textContent = formatMoney(calcTotals.total);
-
-                const totalDivs = itemsContainer.querySelectorAll('.item-total');
-                state.items.forEach((item, index) => {
-                    if(totalDivs[index]) totalDivs[index].textContent = formatMoney(item.qty * item.price);
-                });
             }
 
-            function updateAll(fullRender = true) {
-                if(fullRender) renderItemsEditor();
+            // Logo Upload Handler
+            document.getElementById('logo-upload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        state.logoDataUrl = event.target.result;
+                        saveState();
+                        renderPreview();
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            document.getElementById('btn-remove-logo').addEventListener('click', () => {
+                state.logoDataUrl = null;
+                document.getElementById('logo-upload').value = ''; // Reset file input
+                saveState();
                 renderPreview();
-            }
+            });
 
-            // Configuration Listeners
+            // Input Event Listeners
             ['doc-type', 'currency', 'region', 'doc-template', 'discount-type', 'doc-status'].forEach(id => {
                 document.getElementById(id).addEventListener('change', e => { 
                     const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
@@ -440,7 +492,9 @@
                     
                     if(id === 'region') document.getElementById('tax-input-container').style.display = state.region === 'USA' ? 'flex' : 'none';
                     
-                    updateAll(id === 'currency' || id === 'discount-type');
+                    saveState();
+                    if(id === 'currency') renderItemsEditor(); // Refresh currency format in input list
+                    renderPreview();
                 });
             });
 
@@ -448,14 +502,28 @@
                 document.getElementById(id).addEventListener('input', e => {
                     const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
                     state[key === 'docDate' ? 'date' : key] = e.target.value;
-                    if(id.includes('details') || id.includes('number') || id.includes('date')) updateAll(false);
-                    else updateAll(true);
+                    saveState();
+                    renderPreview(); // Real-time preview ONLY (stops focus break on settings inputs)
                 });
             });
 
             document.getElementById('btn-add-item').addEventListener('click', () => {
                 state.items.push({ id: crypto.randomUUID(), desc: '', qty: 1, price: 0 });
-                updateAll();
+                saveState();
+                renderItemsEditor(); 
+                renderPreview();
+            });
+
+            // Clear Data Hook
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                if(confirm("Are you sure you want to clear all invoice data?")) {
+                    localStorage.removeItem('invoiceStatePro');
+                    state = { ...defaultState, items: [{ id: crypto.randomUUID(), desc: '', qty: 1, price: 0 }] };
+                    syncDOMWithState();
+                    renderItemsEditor();
+                    renderPreview();
+                    showToast("Data cleared successfully.");
+                }
             });
 
             // Non-blocking PDF Export 
@@ -464,7 +532,6 @@
                 btnPdf.classList.add('is-loading');
                 showToast("Compiling PDF asynchronously...");
 
-                // Yield to main thread
                 await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 50)));
 
                 const options = {
@@ -490,8 +557,10 @@
                 document.documentElement.classList.toggle('dark');
             });
 
-            updateAll();
+            // Initial Render
+            renderItemsEditor();
+            renderPreview();
         });
     </script>
 </body>
-</html> .
+</html>
