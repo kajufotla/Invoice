@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -241,9 +240,34 @@
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2 pt-2">
-                            <input type="checkbox" id="toggle-qr" class="rounded border-slate-300 text-brand-600 focus:ring-brand-500">
-                            <label for="toggle-qr" class="text-xs font-medium text-slate-600 dark:text-slate-400">Generate Payment QR Code</label>
+                        <div class="border-t border-slate-100 dark:border-slate-700/60 pt-4 mt-4">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Upload Payment QR Code</label>
+                            </div>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
+                                Upload your JazzCash, EasyPaisa, Bank, PayPal, Stripe, or other payment QR code.
+                            </p>
+                            <div class="space-y-3">
+                                <label class="cursor-pointer px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg shadow-sm transition inline-flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                    Upload QR Code
+                                    <input type="file" id="qr-upload-input" accept="image/*" class="hidden" />
+                                </label>
+
+                                <div id="qr-upload-preview" class="hidden w-full p-3 border border-slate-200 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-900/50 flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-white border border-slate-200 dark:border-slate-600 rounded flex items-center justify-center overflow-hidden">
+                                            <img id="qr-preview-image" src="" alt="QR" class="max-w-full max-h-full object-contain hidden" />
+                                        </div>
+                                        <span id="qr-file-name" class="text-xs font-medium text-slate-600 dark:text-slate-300 truncate max-w-[120px]">qr-code.png</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <button id="btn-replace-qr" class="text-[10px] text-brand-600 font-bold hover:underline">Replace</button>
+                                        <span class="text-slate-300 dark:text-slate-600">|</span>
+                                        <button id="btn-remove-qr" class="text-[10px] text-rose-500 font-bold hover:underline">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
