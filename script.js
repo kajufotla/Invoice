@@ -1,7 +1,7 @@
 // Firebase SDK Modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // Your provided Firebase Config
 const firebaseConfig = {
@@ -40,127 +40,322 @@ window.firebaseAuth = auth;
 let isSignUp = false;
 
 function showAuthToast(msg) {
+    if(!toastEl) return;
     toastEl.textContent = msg;
     toastEl.classList.remove('translate-y-24', 'opacity-0');
     setTimeout(() => toastEl.classList.add('translate-y-24', 'opacity-0'), 3000);
 }
 
 // Toggle Login/Signup
-btnToggleAuth.addEventListener('click', () => {
-    isSignUp = !isSignUp;
-    if(isSignUp) {
-        repassContainer.classList.remove('hidden');
-        btnAuthAction.textContent = 'Sign Up';
-        btnToggleAuth.textContent = 'Already have an account? Login';
-    } else {
-        repassContainer.classList.add('hidden');
-        btnAuthAction.textContent = 'Login';
-        btnToggleAuth.textContent = 'Create an account';
-    }
-});
+if(btnToggleAuth) {
+    btnToggleAuth.addEventListener('click', () => {
+        isSignUp = !isSignUp;
+        if(isSignUp) {
+            repassContainer.classList.remove('hidden');
+            btnAuthAction.textContent = 'Sign Up';
+            btnToggleAuth.textContent = 'Already have an account? Login';
+        } else {
+            repassContainer.classList.add('hidden');
+            btnAuthAction.textContent = 'Login';
+            btnToggleAuth.textContent = 'Create an account';
+        }
+    });
+}
 
 // Email Auth (Login & Register)
-btnAuthAction.addEventListener('click', () => {
-    const email = emailInput.value;
-    const password = passInput.value;
-    
-    if(!email || !password) return showAuthToast("Please enter email and password.");
-
-    if(isSignUp) {
-        const repass = repassInput.value;
-        if(password !== repass) return showAuthToast("Passwords do not match!");
+if(btnAuthAction) {
+    btnAuthAction.addEventListener('click', () => {
+        const email = emailInput.value;
+        const password = passInput.value;
         
-        btnAuthAction.textContent = 'Loading...';
-        createUserWithEmailAndPassword(auth, email, password)
-            .then(() => showAuthToast("Account created successfully!"))
-            .catch(err => {
-                showAuthToast(err.message);
-                btnAuthAction.textContent = 'Sign Up';
-            });
-    } else {
-        btnAuthAction.textContent = 'Loading...';
-        signInWithEmailAndPassword(auth, email, password)
-            .then(() => showAuthToast("Logged in successfully!"))
-            .catch(err => {
-                showAuthToast("Login failed: " + err.message);
-                btnAuthAction.textContent = 'Login';
-            });
-    }
-});
+        if(!email || !password) return showAuthToast("Please enter email and password.");
+
+        if(isSignUp) {
+            const repass = repassInput.value;
+            if(password !== repass) return showAuthToast("Passwords do not match!");
+            
+            btnAuthAction.textContent = 'Loading...';
+            createUserWithEmailAndPassword(auth, email, password)
+                .then(() => showAuthToast("Account created successfully!"))
+                .catch(err => {
+                    showAuthToast(err.message);
+                    btnAuthAction.textContent = 'Sign Up';
+                });
+        } else {
+            btnAuthAction.textContent = 'Loading...';
+            signInWithEmailAndPassword(auth, email, password)
+                .then(() => showAuthToast("Logged in successfully!"))
+                .catch(err => {
+                    showAuthToast("Login failed: " + err.message);
+                    btnAuthAction.textContent = 'Login';
+                });
+        }
+    });
+}
 
 // Google Auth
-btnGoogleLogin.addEventListener('click', () => {
-    signInWithPopup(auth, provider)
-        .then(() => showAuthToast("Logged in with Google!"))
-        .catch(err => showAuthToast("Google Login failed: " + err.message));
-});
+if(btnGoogleLogin) {
+    btnGoogleLogin.addEventListener('click', () => {
+        signInWithPopup(auth, provider)
+            .then(() => showAuthToast("Logged in with Google!"))
+            .catch(err => showAuthToast("Google Login failed: " + err.message));
+    });
+}
 
 // Forgot Password
-btnForgotPass.addEventListener('click', () => {
-    const email = emailInput.value;
-    if(!email) return showAuthToast("Please enter your email first to reset password.");
-    sendPasswordResetEmail(auth, email)
-        .then(() => showAuthToast("Password reset email sent!"))
-        .catch(err => showAuthToast(err.message));
-});
+if(btnForgotPass) {
+    btnForgotPass.addEventListener('click', () => {
+        const email = emailInput.value;
+        if(!email) return showAuthToast("Please enter your email first to reset password.");
+        sendPasswordResetEmail(auth, email)
+            .then(() => showAuthToast("Password reset email sent!"))
+            .catch(err => showAuthToast(err.message));
+    });
+}
 
-// Logout
+// Logout Confirmation Fix
 if(btnLogout) {
     btnLogout.addEventListener('click', () => {
-        signOut(auth).then(() => {
-            showAuthToast("Logged out successfully.");
-        }).catch((error) => {
-            showAuthToast("Error logging out.");
-        });
+        if(confirm("Are you sure you want to logout? All unsaved data will be kept in cloud if synced.")) {
+            signOut(auth).then(() => {
+                showAuthToast("Logged out successfully.");
+            }).catch((error) => {
+                showAuthToast("Error logging out.");
+            });
+        }
     });
 }
 
 // Auth State Listener (Hides App/Shows Form based on login state)
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        authContainer.classList.add('hidden');
-        appLayout.classList.remove('hidden');
-        btnAuthAction.textContent = isSignUp ? 'Sign Up' : 'Login';
+        if(authContainer) authContainer.classList.add('hidden');
+        if(appLayout) appLayout.classList.remove('hidden');
+        if(btnAuthAction) btnAuthAction.textContent = isSignUp ? 'Sign Up' : 'Login';
         window.dispatchEvent(new Event('auth-ready'));
     } else {
-        authContainer.classList.remove('hidden');
-        appLayout.classList.add('hidden');
-        emailInput.value = '';
-        passInput.value = '';
-        repassInput.value = '';
+        if(authContainer) authContainer.classList.remove('hidden');
+        if(appLayout) appLayout.classList.add('hidden');
+        if(emailInput) emailInput.value = '';
+        if(passInput) passInput.value = '';
+        if(repassInput) repassInput.value = '';
     }
 });
 
 // Application Business Logic
-document.addEventListener('DOMContentLoaded', () => {
-    const toastEl = document.getElementById('toast');
+document.addEventListener('DOMContentLoaded', async () => {
+    const toastElApp = document.getElementById('toast');
     function showToast(msg) {
-        toastEl.textContent = msg;
-        toastEl.classList.remove('translate-y-24', 'opacity-0');
-        setTimeout(() => toastEl.classList.add('translate-y-24', 'opacity-0'), 3000);
+        if(!toastElApp) return alert(msg);
+        toastElApp.textContent = msg;
+        toastElApp.classList.remove('translate-y-24', 'opacity-0');
+        setTimeout(() => toastElApp.classList.add('translate-y-24', 'opacity-0'), 3000);
+    }
+
+    // Public Invoice Link Check
+    const urlParams = new URLSearchParams(window.location.search);
+    const publicInvoiceId = urlParams.get('invoice');
+    if (publicInvoiceId) {
+        try {
+            const docRef = doc(db, "public_invoices", publicInvoiceId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const publicData = docSnap.data();
+                document.body.innerHTML = '';
+                document.body.className = 'bg-slate-100 flex justify-center py-10';
+                
+                const previewEl = document.createElement('div');
+                previewEl.id = 'doc-preview';
+                previewEl.className = 'a4-document bg-white text-slate-900 shadow-xl';
+                document.body.appendChild(previewEl);
+
+                // Reconstruct dictionary for public view
+                const dict = {
+                    en: { dir: 'ltr', invoice: "INVOICE", receipt: "RECEIPT", quote: "QUOTE", from: "From", to: "To", desc: "Description", qty: "Qty", price: "Unit Price", total: "Total", subtotal: "Subtotal", tax: "Tax", discount: "Discount", payment: "Payment Details", due: "Due:", date: "Date:", gtotal: "Total" },
+                    ur: { dir: 'rtl', invoice: "رسید", receipt: "وصولی", quote: "تخمینہ", from: "کی طرف سے", to: "کے نام", desc: "تفصیل", qty: "تعداد", price: "قیمت", total: "کل", subtotal: "میزان", tax: "ٹیکس", discount: "رعایت", payment: "ادائیگی کی تفصیلات", due: "آخری تاریخ:", date: "تاریخ:", gtotal: "کل رقم" }
+                };
+
+                // Temporary assignment for rendering
+                state = { ...defaultState, ...JSON.parse(publicData.stateSnapshot) };
+                
+                // Construct structure
+                previewEl.innerHTML = `
+                    <div class="flex justify-between items-start mb-8">
+                        <div>
+                            <img id="prev-logo" class="${state.logoDataUrl ? '' : 'hidden'}" src="${state.logoDataUrl || ''}" style="max-height: 80px; margin-bottom: 15px;">
+                            <h2 id="prev-title" class="text-3xl font-light tracking-wide text-brand-600 mb-1">${state.docType.toUpperCase()}</h2>
+                            <p id="prev-number-label" class="text-sm font-bold text-slate-700"># ${state.docNumber}</p>
+                            <span id="prev-status-badge"></span>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-semibold text-slate-700 mb-1"><span id="lbl-date" class="text-slate-500 font-normal mr-2"></span><span id="prev-date">${state.date}</span></p>
+                            <p class="text-sm font-semibold text-slate-700"><span id="lbl-due" class="text-slate-500 font-normal mr-2"></span><span id="prev-due-date">${state.dueDate}</span></p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-8 mb-8">
+                        <div>
+                            <p id="lbl-from" class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2"></p>
+                            <div id="prev-sender" class="text-sm text-slate-600 leading-relaxed"></div>
+                        </div>
+                        <div class="text-right">
+                            <p id="lbl-to" class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2"></p>
+                            <div id="prev-client" class="text-sm text-slate-600 leading-relaxed whitespace-pre-line">${state.clientDetails}</div>
+                        </div>
+                    </div>
+                    <table class="w-full mb-8 text-sm">
+                        <thead>
+                            <tr class="border-b-2 border-brand-600">
+                                <th id="lbl-desc" class="py-2 text-left font-bold text-slate-700"></th>
+                                <th id="lbl-qty" class="py-2 text-center font-bold text-slate-700 w-24"></th>
+                                <th id="lbl-price" class="py-2 text-right font-bold text-slate-700 w-32"></th>
+                                <th id="lbl-total" class="py-2 text-right font-bold text-slate-700 w-32"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="prev-items-body"></tbody>
+                    </table>
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="w-1/2 pr-8">
+                            <div id="prev-notes-terms-container" class="hidden">
+                                <div id="prev-notes-box" class="mb-4">
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Notes</p>
+                                    <p id="prev-notes-content" class="text-xs text-slate-600 whitespace-pre-wrap"></p>
+                                </div>
+                                <div id="prev-terms-box">
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Terms</p>
+                                    <p id="prev-terms-content" class="text-xs text-slate-600 whitespace-pre-wrap"></p>
+                                </div>
+                            </div>
+                            <div class="mt-6">
+                                <p id="lbl-payment" class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1"></p>
+                                <p id="prev-payment-details" class="text-xs text-slate-600 whitespace-pre-wrap"></p>
+                                <div id="qr-code-container" class="mt-3"></div>
+                            </div>
+                        </div>
+                        <div class="w-1/2 max-w-sm ml-auto">
+                            <div class="bg-slate-50 rounded-lg p-4">
+                                <div class="flex justify-between items-center mb-2 text-sm">
+                                    <span id="lbl-subtotal" class="text-slate-500"></span>
+                                    <span id="prev-subtotal" class="font-semibold text-slate-700"></span>
+                                </div>
+                                <div id="prev-discount-row" class="flex justify-between items-center mb-2 text-sm text-emerald-600 hidden">
+                                    <span id="lbl-discount"></span>
+                                    <span id="prev-discount"></span>
+                                </div>
+                                <div class="flex justify-between items-center mb-4 text-sm">
+                                    <span id="prev-tax-label" class="text-slate-500"></span>
+                                    <span id="prev-tax" class="font-semibold text-slate-700"></span>
+                                </div>
+                                <div class="flex justify-between items-center pt-3 border-t border-slate-200">
+                                    <span id="lbl-grandtotal" class="font-bold text-slate-800"></span>
+                                    <span id="prev-total" class="font-black text-xl text-brand-600"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="sig-container" class="mt-16 border-t border-slate-200 pt-8 inline-block hidden">
+                        <img id="prev-sig" style="max-height: 60px; margin-bottom: 5px;">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider text-center">Authorized Signature</p>
+                    </div>
+                `;
+                renderPreview(); // Will hook into the newly created DOM structure
+                
+                // Inject floating print button for public viewer
+                const floatBtn = document.createElement('button');
+                floatBtn.innerText = 'Print / Save PDF';
+                floatBtn.className = 'fixed bottom-6 right-6 bg-brand-600 text-white px-6 py-3 rounded-full shadow-lg font-bold hover:bg-brand-700 transition';
+                floatBtn.onclick = () => window.print();
+                document.body.appendChild(floatBtn);
+                
+                return; // Stop further execution of app
+            }
+        } catch (error) {
+            console.error("Error loading public invoice", error);
+        }
     }
 
     const dict = {
-        en: { dir: 'ltr', invoice: "INVOICE", receipt: "RECEIPT", quote: "QUOTE", from: "From", to: "To", desc: "Description", qty: "Qty", price: "Unit Price", total: "Total", subtotal: "Subtotal", tax: "Tax", discount: "Discount", payment: "Payment Details", due: "Due:", date: "Date:", gtotal: "Total" },
+        en: { dir: 'ltr', invoice: "INVOICE", receipt: "RECEIPT", quote: "QUOTE", from: "From", to: "To", desc: "Description", qty: "Qty", price: "Unit Price", total: "Total", subtotal: "Subtotal", tax: "Tax", discount: "Discount", payment: "Payment Details", due: "Due Date:", date: "Date:", gtotal: "Total" },
         ur: { dir: 'rtl', invoice: "رسید", receipt: "وصولی", quote: "تخمینہ", from: "کی طرف سے", to: "کے نام", desc: "تفصیل", qty: "تعداد", price: "قیمت", total: "کل", subtotal: "میزان", tax: "ٹیکس", discount: "رعایت", payment: "ادائیگی کی تفصیلات", due: "آخری تاریخ:", date: "تاریخ:", gtotal: "کل رقم" }
     };
 
     let defaultState = {
         id: null,
         docType: 'Invoice', currency: 'USD', region: 'USA',
-        docNumber: 'INV-0001', date: new Date().toISOString().split('T')[0], dueDate: '',
+        docNumber: 'INV-1001', date: new Date().toISOString().split('T')[0], dueDate: '',
         senderDetails: 'My Company LLC\nNew York, NY 10001',
         clientDetails: 'Acme Corp\nSan Francisco, CA 94105',
         paymentDetails: '',
         items: [{ id: crypto.randomUUID(), desc: 'Web Development Services', qty: 1, price: 1500.00 }],
         discountType: 'fixed', discountValue: 0, taxRateManual: 0, status: 'Pending', template_id: 'classic',
         logoDataUrl: null, sigDataUrl: null, uploadedQrDataUrl: null, showQR: false, lang: 'en',
-        notes: '', terms: ''
+        notes: '', terms: '', paymentLinks: { stripe: '', paypal: '', wise: '', bank: '' }
     };
 
     let state = { ...defaultState };
     let library = { clients: [], products: [], history: [] };
     let chartsInstance = { revenue: null, status: null };
+
+    // Replace manual tax input with a dropdown dynamically
+    const taxManualEl = document.getElementById('tax-rate-manual');
+    if (taxManualEl && taxManualEl.tagName.toLowerCase() === 'input') {
+        const select = document.createElement('select');
+        select.id = taxManualEl.id;
+        select.className = taxManualEl.className;
+        const rates = [0, 1, 2, 3, 4, 5, 7.5, 10, 12, 15, 18, 20, 25];
+        select.innerHTML = rates.map(r => `<option value="${r}">${r}%</option>`).join('');
+        taxManualEl.parentNode.replaceChild(select, taxManualEl);
+    }
+
+    // Add Advanced Backup & Payment config UI to DOM if missing
+    const dashContainer = document.getElementById('view-dashboard');
+    if (dashContainer && !document.getElementById('btn-export-backup')) {
+        dashContainer.insertAdjacentHTML('beforeend', `
+            <div class="mt-8 p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+                <h3 class="text-md font-bold text-slate-800 dark:text-slate-100 mb-4">Data Management</h3>
+                <div class="flex gap-4">
+                    <button id="btn-export-backup" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 rounded font-semibold text-sm transition">Export Backup (JSON)</button>
+                    <label class="px-4 py-2 bg-brand-50 text-brand-600 hover:bg-brand-100 rounded font-semibold text-sm transition cursor-pointer">
+                        Import Backup
+                        <input type="file" id="btn-import-backup" accept=".json" class="hidden">
+                    </label>
+                </div>
+            </div>
+        `);
+    }
+
+    // Inject payment configuration into Company Profile Modal if missing
+    const companyProfileBody = document.getElementById('prof-company-address');
+    if (companyProfileBody && !document.getElementById('prof-stripe')) {
+        companyProfileBody.parentNode.insertAdjacentHTML('beforeend', `
+            <div class="mt-4 border-t pt-4 border-slate-200">
+                <p class="text-xs font-bold text-slate-500 mb-2 uppercase">Payment Links (Optional)</p>
+                <input type="text" id="prof-stripe" placeholder="Stripe Payment Link" class="w-full mb-2 px-3 py-2 text-sm border border-slate-300 rounded dark:bg-slate-900 dark:border-slate-700">
+                <input type="text" id="prof-paypal" placeholder="PayPal Link" class="w-full mb-2 px-3 py-2 text-sm border border-slate-300 rounded dark:bg-slate-900 dark:border-slate-700">
+                <input type="text" id="prof-wise" placeholder="Wise Link" class="w-full mb-2 px-3 py-2 text-sm border border-slate-300 rounded dark:bg-slate-900 dark:border-slate-700">
+                <textarea id="prof-bank" placeholder="Bank Transfer Details" class="w-full px-3 py-2 text-sm border border-slate-300 rounded dark:bg-slate-900 dark:border-slate-700" rows="2"></textarea>
+            </div>
+        `);
+    }
+
+    // Advanced Search Injection in History
+    const historyListContainer = document.getElementById('history-list');
+    if (historyListContainer && !document.getElementById('history-search')) {
+        historyListContainer.insertAdjacentHTML('beforebegin', `
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="history-search" placeholder="Search Invoice # or Client" class="w-full px-3 py-2 text-xs border border-slate-300 rounded dark:bg-slate-900 dark:border-slate-700 outline-none focus:border-brand-500">
+                <select id="history-status" class="px-3 py-2 text-xs border border-slate-300 rounded dark:bg-slate-900 dark:border-slate-700 outline-none">
+                    <option value="">All Status</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid</option>
+                    <option value="Pending">Pending</option>
+                </select>
+                <input type="date" id="history-date" class="px-3 py-2 text-xs border border-slate-300 rounded dark:bg-slate-900 dark:border-slate-700 outline-none">
+            </div>
+        `);
+        document.getElementById('history-search').addEventListener('input', renderHistoryList);
+        document.getElementById('history-status').addEventListener('change', renderHistoryList);
+        document.getElementById('history-date').addEventListener('change', renderHistoryList);
+    }
 
     // Validation Function
     function validateInvoice() {
@@ -184,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
 
-    async function loadAppData() {
+    function loadAppData() {
         const savedState = localStorage.getItem('invoiceStatePro');
         const savedLib = localStorage.getItem('invoiceLibraryPro');
         if (savedState) {
@@ -193,6 +388,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (savedLib) {
             try { library = { clients: [], products: [], history: [], ...JSON.parse(savedLib) }; } catch(e){}
         }
+        
+        // Ensure state id is ready
+        if(!state.id) state.id = crypto.randomUUID();
+
         syncDOMWithState();
         updateClientDropdown();
         updateProductDatalist();
@@ -203,9 +402,8 @@ document.addEventListener('DOMContentLoaded', () => {
     async function syncCloud() {
         if(window.firebaseAuth && window.firebaseAuth.currentUser && window.firebaseDb) {
             const uid = window.firebaseAuth.currentUser.uid;
-            const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
             try {
-                await setDoc(doc(window.firebaseDb, "users", uid), { library: JSON.stringify(library), state: JSON.stringify(state) }, { merge: true });
+                await setDoc(doc(window.firebaseDb, "users", uid), { library: JSON.stringify(library), state: JSON.stringify(state), lastSync: new Date().toISOString() }, { merge: true });
             } catch(e) { console.error("Cloud sync error", e); }
         }
     }
@@ -222,7 +420,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('auth-ready', async () => {
         const uid = window.firebaseAuth.currentUser.uid;
-        const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js");
         try {
             const docSnap = await getDoc(doc(window.firebaseDb, "users", uid));
             if (docSnap.exists()) {
@@ -242,30 +439,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function syncDOMWithState() {
-        document.getElementById('doc-type').value = state.docType;
-        document.getElementById('currency').value = state.currency;
-        document.getElementById('region').value = state.region;
-        document.getElementById('doc-number').value = state.docNumber;
-        document.getElementById('doc-date').value = state.date;
-        document.getElementById('doc-due-date').value = state.dueDate;
-        document.getElementById('sender-details').value = state.senderDetails;
-        document.getElementById('client-details').value = state.clientDetails;
-        document.getElementById('payment-details').value = state.paymentDetails;
-        document.getElementById('discount-type').value = state.discountType;
-        document.getElementById('discount-value').value = state.discountValue;
-        document.getElementById('tax-rate-manual').value = state.taxRateManual;
-        document.getElementById('doc-status').value = state.status;
-        document.getElementById('doc-template').value = state.template_id;
+        const setVal = (id, val) => { if(document.getElementById(id)) document.getElementById(id).value = val; };
+        
+        setVal('doc-type', state.docType);
+        setVal('currency', state.currency);
+        setVal('region', state.region);
+        setVal('doc-number', state.docNumber);
+        setVal('doc-date', state.date);
+        setVal('doc-due-date', state.dueDate);
+        setVal('sender-details', state.senderDetails);
+        setVal('client-details', state.clientDetails);
+        setVal('payment-details', state.paymentDetails);
+        setVal('discount-type', state.discountType);
+        setVal('discount-value', state.discountValue);
+        setVal('tax-rate-manual', state.taxRateManual);
+        setVal('doc-status', state.status);
+        setVal('doc-template', state.template_id);
+        setVal('invoice-notes', state.notes || '');
+        setVal('invoice-terms', state.terms || '');
         
         const toggleQr = document.getElementById('toggle-qr');
-        if (toggleQr) toggleQr.checked = state.showQR;
+        if (toggleQr && toggleQr.type === 'checkbox') toggleQr.checked = state.showQR;
 
-        document.getElementById('tax-input-container').style.display = state.region === 'USA' ? 'flex' : 'none';
+        const taxContainer = document.getElementById('tax-input-container');
+        if(taxContainer) taxContainer.style.display = state.region === 'USA' ? 'flex' : 'none';
         
-        document.getElementById('invoice-notes').value = state.notes || '';
-        document.getElementById('invoice-terms').value = state.terms || '';
-        
-        document.getElementById('btn-lang-toggle').textContent = state.lang.toUpperCase();
+        const langBtn = document.getElementById('btn-lang-toggle');
+        if(langBtn) langBtn.textContent = state.lang.toUpperCase();
     }
 
     loadAppData();
@@ -296,8 +496,50 @@ document.addEventListener('DOMContentLoaded', () => {
         calcTotals = { subtotal: sub, discount: disc, tax: tax, total: afterDisc + tax };
     }
 
-    // Auto Invoice Number Generation
-    document.getElementById('btn-auto-invoice').addEventListener('click', () => {
+    // New Invoice logic applied to btn-reset OR newly created btn-new-invoice
+    const btnReset = document.getElementById('btn-reset');
+    if (btnReset) {
+        btnReset.outerHTML = btnReset.outerHTML; // strip old listeners
+        document.getElementById('btn-reset').textContent = "New Invoice";
+        document.getElementById('btn-reset').className = "px-4 py-2 bg-brand-50 text-brand-600 hover:bg-brand-100 rounded font-semibold text-sm transition";
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            if(confirm("Are you sure you want to start a new invoice? Current unsaved changes to items will be cleared.")) {
+                
+                let maxNum = 0;
+                if (library.history && library.history.length > 0) {
+                    library.history.forEach(h => {
+                        const match = h.docNumber.match(/\d+/);
+                        if (match) {
+                            const num = parseInt(match[0], 10);
+                            if (num > maxNum) maxNum = num;
+                        }
+                    });
+                }
+                const nextNum = maxNum > 0 ? maxNum + 1 : 1001;
+                const prefix = state.docType === 'Invoice' ? 'INV-' : state.docType === 'Receipt' ? 'REC-' : 'QTE-';
+                
+                state = { 
+                    ...defaultState, 
+                    id: crypto.randomUUID(),
+                    docNumber: prefix + nextNum.toString().padStart(4, '0'),
+                    senderDetails: state.senderDetails, // Keep company profile
+                    paymentLinks: state.paymentLinks,
+                    logoDataUrl: state.logoDataUrl,
+                    sigDataUrl: state.sigDataUrl,
+                    lang: state.lang,
+                    items: [{ id: crypto.randomUUID(), desc: '', qty: 1, price: 0 }] 
+                };
+                
+                saveState();
+                syncDOMWithState();
+                renderItemsEditor();
+                renderPreview();
+                showToast("Started fresh invoice. Workspace clear.");
+            }
+        });
+    }
+
+    document.getElementById('btn-auto-invoice')?.addEventListener('click', () => {
         let maxNum = 0;
         if (library.history && library.history.length > 0) {
             library.history.forEach(h => {
@@ -311,24 +553,37 @@ document.addEventListener('DOMContentLoaded', () => {
         const nextNum = maxNum > 0 ? maxNum + 1 : 1001;
         const prefix = state.docType === 'Invoice' ? 'INV-' : state.docType === 'Receipt' ? 'REC-' : 'QTE-';
         state.docNumber = prefix + nextNum.toString().padStart(4, '0');
-        document.getElementById('doc-number').value = state.docNumber;
+        if(document.getElementById('doc-number')) document.getElementById('doc-number').value = state.docNumber;
         saveState();
         renderPreview();
         showToast(`Generated: ${state.docNumber}`);
     });
 
     // Company Profile Operations
-    document.getElementById('btn-save-profile').addEventListener('click', () => {
-        const name = document.getElementById('prof-company-name').value.trim();
-        const address = document.getElementById('prof-company-address').value.trim();
+    document.getElementById('btn-save-profile')?.addEventListener('click', () => {
+        const name = document.getElementById('prof-company-name')?.value.trim();
+        const address = document.getElementById('prof-company-address')?.value.trim();
+        
         if (!name) return showToast("Company Name is required.");
-        const profile = { name, address };
+        
+        const paymentLinks = {
+            stripe: document.getElementById('prof-stripe')?.value.trim() || '',
+            paypal: document.getElementById('prof-paypal')?.value.trim() || '',
+            wise: document.getElementById('prof-wise')?.value.trim() || '',
+            bank: document.getElementById('prof-bank')?.value.trim() || ''
+        };
+
+        const profile = { name, address, paymentLinks };
         localStorage.setItem('invoiceCompanyProfile', JSON.stringify(profile));
+        
         state.senderDetails = `${name}\n${address}`;
-        document.getElementById('sender-details').value = state.senderDetails;
+        state.paymentLinks = paymentLinks;
+
+        if(document.getElementById('sender-details')) document.getElementById('sender-details').value = state.senderDetails;
+        
         saveState();
         renderPreview();
-        showToast("Company profile saved locally.");
+        showToast("Company profile saved.");
     });
 
     function loadCompanyProfile() {
@@ -336,20 +591,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (profileStr) {
             try {
                 const profile = JSON.parse(profileStr);
-                document.getElementById('prof-company-name').value = profile.name || '';
-                document.getElementById('prof-company-address').value = profile.address || '';
+                if(document.getElementById('prof-company-name')) document.getElementById('prof-company-name').value = profile.name || '';
+                if(document.getElementById('prof-company-address')) document.getElementById('prof-company-address').value = profile.address || '';
+                
+                if(profile.paymentLinks) {
+                    state.paymentLinks = profile.paymentLinks;
+                    if(document.getElementById('prof-stripe')) document.getElementById('prof-stripe').value = profile.paymentLinks.stripe || '';
+                    if(document.getElementById('prof-paypal')) document.getElementById('prof-paypal').value = profile.paymentLinks.paypal || '';
+                    if(document.getElementById('prof-wise')) document.getElementById('prof-wise').value = profile.paymentLinks.wise || '';
+                    if(document.getElementById('prof-bank')) document.getElementById('prof-bank').value = profile.paymentLinks.bank || '';
+                }
             } catch(e){}
         }
     }
 
-    // Duplicate Invoice Operations
-    document.getElementById('btn-duplicate').addEventListener('click', () => {
+    document.getElementById('btn-duplicate')?.addEventListener('click', () => {
         if (!state.docNumber) return showToast("No active template instance to duplicate.");
+        state.id = crypto.randomUUID(); // ensure unique id for duplication
         state.docNumber = state.docNumber + "-DUP";
-        document.getElementById('doc-number').value = state.docNumber;
+        if(document.getElementById('doc-number')) document.getElementById('doc-number').value = state.docNumber;
         saveState();
         renderPreview();
-        showToast("Invoice duplicated as variant.");
+        showToast("Invoice duplicated. ID refreshed.");
     });
 
     // Print Friendly View Framework Toggles
@@ -369,7 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    document.getElementById('btn-save-client').addEventListener('click', () => {
+    document.getElementById('btn-save-client')?.addEventListener('click', () => {
         if(!state.clientDetails.trim()) return showToast("Client details are empty.");
         if(!library.clients.includes(state.clientDetails)) {
             library.clients.push(state.clientDetails);
@@ -381,10 +644,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.getElementById('lib-clients').addEventListener('change', (e) => {
+    document.getElementById('lib-clients')?.addEventListener('change', (e) => {
         if(e.target.value !== "") {
             state.clientDetails = library.clients[parseInt(e.target.value)];
-            document.getElementById('client-details').value = state.clientDetails;
+            if(document.getElementById('client-details')) document.getElementById('client-details').value = state.clientDetails;
             saveState();
             renderPreview();
             e.target.value = ""; 
@@ -393,22 +656,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateClientDropdown() {
         const select = document.getElementById('lib-clients');
+        if(!select) return;
         select.innerHTML = '<option value="">Load...</option>' + library.clients.map((c, i) => {
             const shortName = c.split('\n')[0].substring(0, 20);
             return `<option value="${i}">${shortName}</option>`;
         }).join('');
     }
 
-    // Advanced Client Database Panel Management
     const clientsModal = document.getElementById('clients-modal');
-    document.getElementById('btn-manage-clients').addEventListener('click', () => {
+    document.getElementById('btn-manage-clients')?.addEventListener('click', () => {
         renderClientsDbList();
         clientsModal.classList.remove('hidden');
     });
-    document.getElementById('btn-close-clients').addEventListener('click', () => clientsModal.classList.add('hidden'));
+    document.getElementById('btn-close-clients')?.addEventListener('click', () => clientsModal.classList.add('hidden'));
 
     function renderClientsDbList() {
         const container = document.getElementById('clients-db-list');
+        if(!container) return;
         if (!library.clients || library.clients.length === 0) {
             container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No database client profiles stored.</p>`;
             return;
@@ -421,7 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `).join('');
     }
 
-    document.getElementById('clients-db-list').addEventListener('click', (e) => {
+    document.getElementById('clients-db-list')?.addEventListener('click', (e) => {
         if (e.target.classList.contains('btn-del-client')) {
             const index = parseInt(e.target.dataset.index, 10);
             library.clients.splice(index, 1);
@@ -442,15 +706,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateProductDatalist() {
-        document.getElementById('library-products').innerHTML = library.products.map(p => `<option value="${p.desc}">`).join('');
+        const dp = document.getElementById('library-products');
+        if(dp) dp.innerHTML = library.products.map(p => `<option value="${p.desc}">`).join('');
     }
 
-    document.getElementById('btn-save-invoice').addEventListener('click', () => {
+    document.getElementById('btn-save-invoice')?.addEventListener('click', async () => {
         if (!validateInvoice()) return;
 
-        if (!state.id) {
-            state.id = crypto.randomUUID();
-        }
+        if (!state.id) state.id = crypto.randomUUID();
 
         const duplicateCheck = library.history.find(h => h.docNumber.trim() === state.docNumber.trim() && h.id !== state.id);
         if(duplicateCheck) {
@@ -459,7 +722,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const record = {
             id: state.id,
-            date: new Date().toLocaleString(),
+            date: state.date,
             docNumber: state.docNumber,
             clientInfo: state.clientDetails.split('\n')[0],
             total: calcTotals.total,
@@ -473,18 +736,26 @@ document.addEventListener('DOMContentLoaded', () => {
         else library.history.unshift(record);
         
         saveLibrary();
+        
+        // Generate Public Invoice Link via Firestore Cloud save
+        if(window.firebaseDb) {
+            try {
+                await setDoc(doc(window.firebaseDb, "public_invoices", state.id), record, {merge:true});
+            } catch(e) { console.error("Error making public URL", e); }
+        }
+
         showToast("Invoice saved to Cloud & History.");
     });
 
     // Navigation Logic
-    document.getElementById('nav-editor').addEventListener('click', (e) => {
+    document.getElementById('nav-editor')?.addEventListener('click', (e) => {
         document.getElementById('view-editor').classList.remove('hidden');
         document.getElementById('view-dashboard').classList.add('hidden');
         e.target.classList.add('border-b-2', 'border-brand-600', 'text-brand-600');
         document.getElementById('nav-dashboard').classList.remove('border-b-2', 'border-brand-600', 'text-brand-600');
     });
 
-    document.getElementById('nav-dashboard').addEventListener('click', (e) => {
+    document.getElementById('nav-dashboard')?.addEventListener('click', (e) => {
         document.getElementById('view-editor').classList.add('hidden');
         document.getElementById('view-dashboard').classList.remove('hidden');
         e.target.classList.add('border-b-2', 'border-brand-600', 'text-brand-600');
@@ -492,21 +763,24 @@ document.addEventListener('DOMContentLoaded', () => {
         updateDashboard();
     });
 
-    // Features Logic (Share, Email)
+    // Share & Email Features
     const shareModal = document.getElementById('share-modal');
-    document.getElementById('btn-share').addEventListener('click', async () => {
+    document.getElementById('btn-share')?.addEventListener('click', async () => {
         if (!validateInvoice()) return;
+        if (!state.id) state.id = crypto.randomUUID();
+        
+        const shareLink = `${window.location.origin}${window.location.pathname}?invoice=${state.id}`;
+        document.getElementById('share-link-input').value = shareLink;
 
         if (navigator.share) {
             try {
                 await navigator.share({
                     title: `Invoice ${state.docNumber}`,
                     text: `Please find the details for invoice ${state.docNumber} from ${state.senderDetails.split('\n')[0]}.\nTotal: ${formatMoney(calcTotals.total)}`,
-                    url: window.location.href
+                    url: shareLink
                 });
                 showToast("Shared successfully.");
             } catch (err) {
-                console.error('Error sharing:', err);
                 shareModal.classList.remove('hidden');
             }
         } else {
@@ -514,35 +788,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.getElementById('btn-close-share').addEventListener('click', () => shareModal.classList.add('hidden'));
-    document.getElementById('btn-copy-link').addEventListener('click', () => {
-        navigator.clipboard.writeText(document.getElementById('share-link-input').value);
-        showToast("Link copied to clipboard!");
+    document.getElementById('btn-close-share')?.addEventListener('click', () => shareModal.classList.add('hidden'));
+    document.getElementById('btn-copy-link')?.addEventListener('click', () => {
+        const linkInput = document.getElementById('share-link-input');
+        if(linkInput) {
+            navigator.clipboard.writeText(linkInput.value);
+            showToast("Link copied to clipboard!");
+        }
     });
 
-    document.getElementById('btn-email').addEventListener('click', () => {
+    document.getElementById('btn-email')?.addEventListener('click', () => {
         if (!validateInvoice()) return;
-        
+        if (!state.id) state.id = crypto.randomUUID();
+
+        const shareLink = `${window.location.origin}${window.location.pathname}?invoice=${state.id}`;
         const subject = encodeURIComponent(`Invoice ${state.docNumber} from ${state.senderDetails.split('\n')[0]}`);
-        const body = encodeURIComponent(`Hello,\n\nPlease find the details for invoice ${state.docNumber} below.\n\nTotal: ${formatMoney(calcTotals.total)}\nDue Date: ${state.dueDate || 'N/A'}\n\nThank you for your business!`);
+        const body = encodeURIComponent(`Hello,\n\nPlease find the details for invoice ${state.docNumber} below.\n\nTotal: ${formatMoney(calcTotals.total)}\nDue Date: ${state.dueDate || 'N/A'}\n\nView or download your invoice here:\n${shareLink}\n\nThank you for your business!`);
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
         showToast("Opening Email client...");
     });
 
     const historyModal = document.getElementById('history-modal');
-    document.getElementById('btn-history').addEventListener('click', () => {
+    document.getElementById('btn-history')?.addEventListener('click', () => {
         renderHistoryList();
         historyModal.classList.remove('hidden');
     });
-    document.getElementById('btn-close-history').addEventListener('click', () => historyModal.classList.add('hidden'));
+    document.getElementById('btn-close-history')?.addEventListener('click', () => historyModal.classList.add('hidden'));
 
     function renderHistoryList() {
         const list = document.getElementById('history-list');
-        if(library.history.length === 0) {
-            list.innerHTML = `<p class="text-sm text-slate-500 text-center py-6">No saved invoices yet.</p>`;
+        if(!list) return;
+
+        const searchQ = document.getElementById('history-search')?.value.toLowerCase() || '';
+        const statusF = document.getElementById('history-status')?.value || '';
+        const dateF = document.getElementById('history-date')?.value || '';
+
+        const filtered = library.history.filter(h => {
+            const matchQuery = h.docNumber.toLowerCase().includes(searchQ) || h.clientInfo.toLowerCase().includes(searchQ);
+            const matchStatus = statusF === '' || h.status === statusF;
+            const matchDate = dateF === '' || h.date === dateF;
+            return matchQuery && matchStatus && matchDate;
+        });
+
+        if(filtered.length === 0) {
+            list.innerHTML = `<p class="text-sm text-slate-500 text-center py-6">No records found.</p>`;
             return;
         }
-        list.innerHTML = library.history.map(h => `
+        
+        list.innerHTML = filtered.map(h => `
             <li class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm transition hover:shadow">
                 <div>
                     <div class="flex items-center gap-2">
@@ -559,7 +852,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `).join('');
     }
 
-    document.getElementById('history-list').addEventListener('click', (e) => {
+    document.getElementById('history-list')?.addEventListener('click', (e) => {
         const id = e.target.dataset.id;
         if(!id) return;
         if(e.target.classList.contains('btn-load-history')) {
@@ -580,56 +873,100 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Items Editor Listeners
-    itemsContainer.addEventListener('input', (e) => {
-        if (e.target.tagName === 'INPUT') {
-            const id = e.target.dataset.id;
-            const field = e.target.dataset.field;
-            const item = state.items.find(i => i.id === id);
-            if(item) {
-                item[field] = field === 'desc' ? e.target.value : parseFloat(e.target.value) || 0;
-                
-                if(field === 'desc') {
-                    const libItem = library.products.find(p => p.desc === e.target.value);
-                    if(libItem) {
-                        item.price = libItem.price;
-                        e.target.closest('.grid').querySelector('[data-field="price"]').value = libItem.price;
-                    }
+    // Backup and Restore
+    document.getElementById('btn-export-backup')?.addEventListener('click', () => {
+        const payload = JSON.stringify({ state, library });
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `invoice_backup_${new Date().getTime()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("Backup downloaded!");
+    });
+
+    document.getElementById('btn-import-backup')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const data = JSON.parse(evt.target.result);
+                if(data.state && data.library) {
+                    state = { ...defaultState, ...data.state };
+                    library = data.library;
+                    saveState();
+                    saveLibrary();
+                    syncDOMWithState();
+                    renderItemsEditor();
+                    renderPreview();
+                    updateDashboard();
+                    showToast("Backup restored successfully.");
+                } else {
+                    showToast("Invalid backup file format.");
                 }
+            } catch(err) {
+                showToast("Error parsing backup JSON.");
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+    });
 
-                const row = e.target.closest('.grid');
-                const totalEl = row.querySelector('.item-total');
-                if (totalEl) totalEl.textContent = formatMoney(item.qty * item.price);
-                
+    // Items Editor Listeners (Live Preview updates automatically via input)
+    if(itemsContainer) {
+        itemsContainer.addEventListener('input', (e) => {
+            if (e.target.tagName === 'INPUT') {
+                const id = e.target.dataset.id;
+                const field = e.target.dataset.field;
+                const item = state.items.find(i => i.id === id);
+                if(item) {
+                    item[field] = field === 'desc' ? e.target.value : parseFloat(e.target.value) || 0;
+                    
+                    if(field === 'desc') {
+                        const libItem = library.products.find(p => p.desc === e.target.value);
+                        if(libItem) {
+                            item.price = libItem.price;
+                            e.target.closest('.grid').querySelector('[data-field="price"]').value = libItem.price;
+                        }
+                    }
+
+                    const row = e.target.closest('.grid');
+                    const totalEl = row.querySelector('.item-total');
+                    if (totalEl) totalEl.textContent = formatMoney(item.qty * item.price);
+                    
+                    saveState();
+                    renderPreview(); 
+                }
+            }
+        });
+
+        itemsContainer.addEventListener('focusout', (e) => {
+            if(e.target.tagName === 'INPUT' && (e.target.dataset.field === 'desc' || e.target.dataset.field === 'price')) {
+                const id = e.target.dataset.id;
+                const item = state.items.find(i => i.id === id);
+                if(item && item.desc && item.price > 0) saveProductToLibrary(item.desc, item.price);
+            }
+        });
+
+        itemsContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.del-item');
+            if (btn) {
+                const id = btn.dataset.id;
+                state.items = state.items.filter(i => i.id !== id);
+                if(state.items.length === 0) {
+                    state.items.push({ id: crypto.randomUUID(), desc: '', qty: 1, price: 0 });
+                }
                 saveState();
-                renderPreview(); 
+                renderItemsEditor(); 
+                renderPreview();
             }
-        }
-    });
-
-    itemsContainer.addEventListener('focusout', (e) => {
-        if(e.target.tagName === 'INPUT' && (e.target.dataset.field === 'desc' || e.target.dataset.field === 'price')) {
-            const id = e.target.dataset.id;
-            const item = state.items.find(i => i.id === id);
-            if(item && item.desc && item.price > 0) saveProductToLibrary(item.desc, item.price);
-        }
-    });
-
-    itemsContainer.addEventListener('click', (e) => {
-        const btn = e.target.closest('.del-item');
-        if (btn) {
-            const id = btn.dataset.id;
-            state.items = state.items.filter(i => i.id !== id);
-            if(state.items.length === 0) {
-                state.items.push({ id: crypto.randomUUID(), desc: '', qty: 1, price: 0 });
-            }
-            saveState();
-            renderItemsEditor(); 
-            renderPreview();
-        }
-    });
+        });
+    }
 
     function renderItemsEditor() {
+        if(!itemsContainer) return;
         itemsContainer.innerHTML = state.items.map(item => `
             <div class="grid grid-cols-[2fr_1fr_1fr_1fr_40px] gap-2 items-center">
                 <input type="text" list="library-products" placeholder="Description" value="${item.desc}" data-id="${item.id}" data-field="desc" class="w-full px-2 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded dark:bg-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500">
@@ -645,123 +982,153 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderPreview() {
         const previewEl = document.getElementById('doc-preview');
+        if(!previewEl) return;
         previewEl.className = `a4-document bg-white text-slate-900 p-[20mm] min-h-[297mm] transition-all template-${state.template_id}`;
         
-        const langDict = dict[state.lang];
+        const langDict = dict[state.lang] || dict['en'];
         previewEl.setAttribute('dir', langDict.dir);
         
         const logoImg = document.getElementById('prev-logo');
-        if (state.logoDataUrl) {
-            logoImg.src = state.logoDataUrl;
-            logoImg.classList.remove('hidden');
-        } else {
-            logoImg.src = '';
-            logoImg.classList.add('hidden');
+        if(logoImg) {
+            if (state.logoDataUrl) {
+                logoImg.src = state.logoDataUrl;
+                logoImg.classList.remove('hidden');
+            } else {
+                logoImg.src = '';
+                logoImg.classList.add('hidden');
+            }
         }
 
         const typeKey = state.docType.toLowerCase();
-        document.getElementById('prev-title').textContent = langDict[typeKey] || state.docType.toUpperCase();
-        document.getElementById('prev-number-label').textContent = `# ${state.docNumber}`;
-        document.getElementById('prev-date').textContent = state.date;
+        if(document.getElementById('prev-title')) document.getElementById('prev-title').textContent = langDict[typeKey] || state.docType.toUpperCase();
+        if(document.getElementById('prev-number-label')) document.getElementById('prev-number-label').textContent = `# ${state.docNumber}`;
+        if(document.getElementById('prev-date')) document.getElementById('prev-date').textContent = state.date;
         
-        // Proper Due Date Handling
         const prevDueDate = document.getElementById('prev-due-date');
-        const dueDateLblContainer = document.getElementById('lbl-due').parentElement;
+        const dueDateLblContainer = document.getElementById('lbl-due')?.parentElement;
         if (state.dueDate) {
-            prevDueDate.textContent = state.dueDate;
+            if(prevDueDate) prevDueDate.textContent = state.dueDate;
             if(dueDateLblContainer) dueDateLblContainer.style.display = '';
         } else {
-            prevDueDate.textContent = '';
+            if(prevDueDate) prevDueDate.textContent = '';
             if(dueDateLblContainer) dueDateLblContainer.style.display = 'none';
         }
 
-        // Proper Company Name Display Setup
-        const companyName = state.senderDetails.split('\n')[0] || '';
-        const remainder = state.senderDetails.substring(companyName.length).trim().replace(/\n/g, '<br>');
-        document.getElementById('prev-sender').innerHTML = `<strong style="font-size: 1.1em; display: block; margin-bottom: 4px;">${companyName}</strong>${remainder}`;
+        // Bug Fix: Proper Company Name Split and Formatting
+        if(document.getElementById('prev-sender')) {
+            const lines = (state.senderDetails || '').split('\n');
+            const companyName = lines.shift() || '';
+            const remainder = lines.join('<br>');
+            document.getElementById('prev-sender').innerHTML = `<strong style="font-size: 1.1em; display: block; margin-bottom: 4px;">${companyName}</strong>${remainder}`;
+        }
         
-        document.getElementById('prev-client').textContent = state.clientDetails;
-        document.getElementById('prev-payment-details').textContent = state.paymentDetails;
+        if(document.getElementById('prev-client')) document.getElementById('prev-client').textContent = state.clientDetails;
         
-        document.getElementById('lbl-from').textContent = langDict.from;
-        document.getElementById('lbl-to').textContent = langDict.to;
-        document.getElementById('lbl-date').textContent = langDict.date;
-        document.getElementById('lbl-due').textContent = langDict.due;
-        document.getElementById('lbl-desc').textContent = langDict.desc;
-        document.getElementById('lbl-qty').textContent = langDict.qty;
-        document.getElementById('lbl-price').textContent = langDict.price;
-        document.getElementById('lbl-total').textContent = langDict.total;
-        document.getElementById('lbl-subtotal').textContent = langDict.subtotal;
-        document.getElementById('lbl-discount').textContent = langDict.discount;
-        document.getElementById('lbl-payment').textContent = langDict.payment;
-        document.getElementById('lbl-grandtotal').textContent = langDict.gtotal;
+        // Dynamic Payment Links rendering in preview
+        let finalPaymentDetails = state.paymentDetails || '';
+        if(state.paymentLinks) {
+            const pl = state.paymentLinks;
+            const linkArr = [];
+            if(pl.stripe) linkArr.push(`Stripe: ${pl.stripe}`);
+            if(pl.paypal) linkArr.push(`PayPal: ${pl.paypal}`);
+            if(pl.wise) linkArr.push(`Wise: ${pl.wise}`);
+            if(pl.bank) linkArr.push(`Bank Transfer:\n${pl.bank}`);
+            
+            if(linkArr.length > 0) {
+                finalPaymentDetails += (finalPaymentDetails ? '\n\n' : '') + linkArr.join('\n');
+            }
+        }
+        if(document.getElementById('prev-payment-details')) document.getElementById('prev-payment-details').textContent = finalPaymentDetails;
         
-        document.getElementById('lbl-payment').parentElement.style.display = state.paymentDetails ? 'block' : 'none';
+        const setLbl = (id, text) => { if(document.getElementById(id)) document.getElementById(id).textContent = text; };
+        setLbl('lbl-from', langDict.from);
+        setLbl('lbl-to', langDict.to);
+        setLbl('lbl-date', langDict.date);
+        setLbl('lbl-due', langDict.due);
+        setLbl('lbl-desc', langDict.desc);
+        setLbl('lbl-qty', langDict.qty);
+        setLbl('lbl-price', langDict.price);
+        setLbl('lbl-total', langDict.total);
+        setLbl('lbl-subtotal', langDict.subtotal);
+        setLbl('lbl-discount', langDict.discount);
+        setLbl('lbl-payment', langDict.payment);
+        setLbl('lbl-grandtotal', langDict.gtotal);
+        
+        const lblPayment = document.getElementById('lbl-payment');
+        if(lblPayment && lblPayment.parentElement) lblPayment.parentElement.style.display = finalPaymentDetails ? 'block' : 'none';
 
         const sigContainer = document.getElementById('sig-container');
         const sigImg = document.getElementById('prev-sig');
-        if(state.sigDataUrl) {
-            sigImg.src = state.sigDataUrl;
-            sigContainer.classList.remove('hidden');
-        } else {
-            sigContainer.classList.add('hidden');
+        if(sigContainer && sigImg) {
+            if(state.sigDataUrl) {
+                sigImg.src = state.sigDataUrl;
+                sigContainer.classList.remove('hidden');
+            } else {
+                sigContainer.classList.add('hidden');
+            }
         }
 
         const badge = document.getElementById('prev-status-badge');
-        badge.textContent = state.status;
-        badge.className = `inline-block mt-2 px-2 py-0.5 text-xs font-bold uppercase rounded ${state.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : state.status === 'Unpaid' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`;
+        if(badge) {
+            badge.textContent = state.status;
+            badge.className = `inline-block mt-2 px-2 py-0.5 text-xs font-bold uppercase rounded ${state.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : state.status === 'Unpaid' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`;
+        }
 
-        document.getElementById('prev-items-body').innerHTML = state.items.filter(i => i.desc || i.price > 0).map(item => `
-            <tr class="border-b border-slate-100">
-                <td class="py-2.5 font-medium text-slate-700">${item.desc}</td>
-                <td class="py-2.5 text-center text-slate-500">${item.qty}</td>
-                <td class="py-2.5 text-end text-slate-500">${formatMoney(item.price)}</td>
-                <td class="py-2.5 text-end font-semibold text-slate-800">${formatMoney(item.qty * item.price)}</td>
-            </tr>
-        `).join('');
+        if(document.getElementById('prev-items-body')) {
+            document.getElementById('prev-items-body').innerHTML = state.items.filter(i => i.desc || i.price > 0).map(item => `
+                <tr class="border-b border-slate-100">
+                    <td class="py-2.5 font-medium text-slate-700">${item.desc}</td>
+                    <td class="py-2.5 text-center text-slate-500">${item.qty}</td>
+                    <td class="py-2.5 text-end text-slate-500">${formatMoney(item.price)}</td>
+                    <td class="py-2.5 text-end font-semibold text-slate-800">${formatMoney(item.qty * item.price)}</td>
+                </tr>
+            `).join('');
+        }
 
         calculate();
-        document.getElementById('prev-subtotal').textContent = formatMoney(calcTotals.subtotal);
-        document.getElementById('prev-discount').textContent = `-${formatMoney(calcTotals.discount)}`;
-        document.getElementById('prev-discount-row').style.display = calcTotals.discount > 0 ? 'flex' : 'none';
+        if(document.getElementById('prev-subtotal')) document.getElementById('prev-subtotal').textContent = formatMoney(calcTotals.subtotal);
+        if(document.getElementById('prev-discount')) document.getElementById('prev-discount').textContent = `-${formatMoney(calcTotals.discount)}`;
+        if(document.getElementById('prev-discount-row')) document.getElementById('prev-discount-row').style.display = calcTotals.discount > 0 ? 'flex' : 'none';
         
         let taxLabel = state.region === 'USA' ? `${langDict.tax} (${getTaxRate()}%)` : state.region === 'UK' ? 'VAT (20%)' : state.region === 'CAN' ? 'GST (5%)' : 'GST (10%)';
-        document.getElementById('prev-tax-label').textContent = taxLabel;
-        document.getElementById('prev-tax').textContent = formatMoney(calcTotals.tax);
-        document.getElementById('prev-total').textContent = formatMoney(calcTotals.total);
+        if(document.getElementById('prev-tax-label')) document.getElementById('prev-tax-label').textContent = taxLabel;
+        if(document.getElementById('prev-tax')) document.getElementById('prev-tax').textContent = formatMoney(calcTotals.tax);
+        if(document.getElementById('prev-total')) document.getElementById('prev-total').textContent = formatMoney(calcTotals.total);
 
-        // Render Notes & Terms dynamically into preview block matching values
         const notesContainer = document.getElementById('prev-notes-terms-container');
         const notesBox = document.getElementById('prev-notes-box');
         const notesContent = document.getElementById('prev-notes-content');
         const termsBox = document.getElementById('prev-terms-box');
         const termsContent = document.getElementById('prev-terms-content');
 
-        if ((state.notes && state.notes.trim()) || (state.terms && state.terms.trim())) {
-            notesContainer.classList.remove('hidden');
-            if (state.notes && state.notes.trim()) {
-                notesBox.classList.remove('hidden');
-                notesContent.textContent = state.notes;
+        if(notesContainer) {
+            if ((state.notes && state.notes.trim()) || (state.terms && state.terms.trim())) {
+                notesContainer.classList.remove('hidden');
+                if (state.notes && state.notes.trim()) {
+                    notesBox.classList.remove('hidden');
+                    notesContent.textContent = state.notes;
+                } else {
+                    notesBox.classList.add('hidden');
+                }
+                if (state.terms && state.terms.trim()) {
+                    termsBox.classList.remove('hidden');
+                    termsContent.textContent = state.terms;
+                } else {
+                    termsBox.classList.add('hidden');
+                }
             } else {
-                notesBox.classList.add('hidden');
+                notesContainer.classList.add('hidden');
             }
-            if (state.terms && state.terms.trim()) {
-                termsBox.classList.remove('hidden');
-                termsContent.textContent = state.terms;
-            } else {
-                termsBox.classList.add('hidden');
-            }
-        } else {
-            notesContainer.classList.add('hidden');
         }
 
-        // Updated Upload QR Implementation
         const qrContainer = document.getElementById('qr-code-container');
-        if (state.showQR && state.uploadedQrDataUrl) {
-            qrContainer.classList.remove('hidden');
-            qrContainer.innerHTML = `<img src="${state.uploadedQrDataUrl}" style="max-width: 100px; max-height: 100px; object-fit: contain; margin-top: 10px;" />`;
-        } else {
-            qrContainer.classList.add('hidden');
+        if(qrContainer) {
+            if (state.showQR && state.uploadedQrDataUrl) {
+                qrContainer.classList.remove('hidden');
+                qrContainer.innerHTML = `<img src="${state.uploadedQrDataUrl}" style="max-width: 100px; max-height: 100px; object-fit: contain; margin-top: 10px;" />`;
+            } else {
+                qrContainer.classList.add('hidden');
+            }
         }
     }
 
@@ -783,45 +1150,50 @@ document.addEventListener('DOMContentLoaded', () => {
             monthlyData[month] = (monthlyData[month] || 0) + (status === 'Paid' ? h.total : 0);
         });
 
-        document.getElementById('dash-revenue').textContent = formatMoney(totalRev);
-        document.getElementById('dash-count').textContent = count;
-        document.getElementById('dash-paid').textContent = paid;
-        document.getElementById('dash-unpaid').textContent = unpaid;
+        if(document.getElementById('dash-revenue')) document.getElementById('dash-revenue').textContent = formatMoney(totalRev);
+        if(document.getElementById('dash-count')) document.getElementById('dash-count').textContent = count;
+        if(document.getElementById('dash-paid')) document.getElementById('dash-paid').textContent = paid;
+        if(document.getElementById('dash-unpaid')) document.getElementById('dash-unpaid').textContent = unpaid;
 
-        // Charts Logic
         if(typeof Chart !== 'undefined') {
-            const ctxRev = document.getElementById('revenueChart').getContext('2d');
-            if(chartsInstance.revenue) chartsInstance.revenue.destroy();
-            chartsInstance.revenue = new Chart(ctxRev, {
-                type: 'line',
-                data: {
-                    labels: Object.keys(monthlyData).reverse(),
-                    datasets: [{ label: 'Revenue', data: Object.values(monthlyData).reverse(), borderColor: '#4f46e5', tension: 0.4, fill: true, backgroundColor: 'rgba(79, 70, 229, 0.1)' }]
-                },
-                options: { responsive: true, plugins: { legend: { display: false } } }
-            });
+            const ctxRevEl = document.getElementById('revenueChart');
+            if(ctxRevEl) {
+                const ctxRev = ctxRevEl.getContext('2d');
+                if(chartsInstance.revenue) chartsInstance.revenue.destroy();
+                chartsInstance.revenue = new Chart(ctxRev, {
+                    type: 'line',
+                    data: {
+                        labels: Object.keys(monthlyData).reverse(),
+                        datasets: [{ label: 'Revenue', data: Object.values(monthlyData).reverse(), borderColor: '#4f46e5', tension: 0.4, fill: true, backgroundColor: 'rgba(79, 70, 229, 0.1)' }]
+                    },
+                    options: { responsive: true, plugins: { legend: { display: false } } }
+                });
+            }
 
-            const ctxStat = document.getElementById('statusChart').getContext('2d');
-            if(chartsInstance.status) chartsInstance.status.destroy();
-            chartsInstance.status = new Chart(ctxStat, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(statusData),
-                    datasets: [{ data: Object.values(statusData), backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'] }]
-                },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
+            const ctxStatEl = document.getElementById('statusChart');
+            if(ctxStatEl) {
+                const ctxStat = ctxStatEl.getContext('2d');
+                if(chartsInstance.status) chartsInstance.status.destroy();
+                chartsInstance.status = new Chart(ctxStat, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(statusData),
+                        datasets: [{ data: Object.values(statusData), backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'] }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
         }
     }
 
-    document.getElementById('btn-lang-toggle').addEventListener('click', (e) => {
+    document.getElementById('btn-lang-toggle')?.addEventListener('click', (e) => {
         state.lang = state.lang === 'en' ? 'ur' : 'en';
         e.target.textContent = state.lang.toUpperCase();
         saveState();
         renderPreview();
     });
 
-    document.getElementById('logo-upload').addEventListener('change', function(e) {
+    document.getElementById('logo-upload')?.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
@@ -834,7 +1206,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.getElementById('sig-upload').addEventListener('change', function(e) {
+    document.getElementById('sig-upload')?.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
@@ -847,7 +1219,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Upload QR Flow Setup
     let qrUploadInput = document.getElementById('qr-upload-input-dynamic');
     if (!qrUploadInput) {
         qrUploadInput = document.createElement('input');
@@ -872,29 +1243,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             reader.readAsDataURL(file);
         }
-        e.target.value = ''; // Reset for re-uploading same file if needed
+        e.target.value = '';
     });
 
-    // Repurpose toggle-qr to open the file selection dialogue or just toggle visibility if already uploaded
     const toggleQrElement = document.getElementById('toggle-qr');
     if (toggleQrElement) {
         toggleQrElement.addEventListener('click', e => {
             if (toggleQrElement.type === 'checkbox') {
                 e.preventDefault(); 
                 if (state.uploadedQrDataUrl && state.showQR) {
-                    state.showQR = false; // Toggle off if already shown
+                    state.showQR = false;
                     toggleQrElement.checked = false;
                     saveState();
                     renderPreview();
                 } else {
-                    qrUploadInput.click(); // Trigger upload
+                    qrUploadInput.click();
                 }
             } else {
-                qrUploadInput.click(); // If it's a button, just trigger upload
+                qrUploadInput.click();
             }
         });
     }
 
+    // Input Listeners for Live Preview
     ['doc-type', 'currency', 'region', 'doc-template', 'discount-type', 'doc-status'].forEach(id => {
         const el = document.getElementById(id);
         if(!el) return;
@@ -903,7 +1274,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (id === 'doc-template') state.template_id = e.target.value;
             else state[key] = e.target.value;
             
-            if(id === 'region') document.getElementById('tax-input-container').style.display = state.region === 'USA' ? 'flex' : 'none';
+            if(id === 'region') {
+                const taxContainer = document.getElementById('tax-input-container');
+                if(taxContainer) taxContainer.style.display = state.region === 'USA' ? 'flex' : 'none';
+            }
             
             saveState();
             if(id === 'currency') renderItemsEditor(); 
@@ -914,6 +1288,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ['doc-number', 'doc-date', 'doc-due-date', 'sender-details', 'client-details', 'payment-details', 'discount-value', 'tax-rate-manual', 'invoice-notes', 'invoice-terms'].forEach(id => {
         const el = document.getElementById(id);
         if(!el) return;
+        // Bind input event for instant live preview updates
         el.addEventListener('input', e => {
             if (id === 'invoice-notes') {
                 state.notes = e.target.value;
@@ -928,59 +1303,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    document.getElementById('btn-add-item').addEventListener('click', () => {
+    document.getElementById('btn-add-item')?.addEventListener('click', () => {
         state.items.push({ id: crypto.randomUUID(), desc: '', qty: 1, price: 0 });
         saveState();
         renderItemsEditor(); 
         renderPreview();
     });
 
-    document.getElementById('btn-reset').addEventListener('click', () => {
-        if(confirm("Are you sure you want to clear current input data? (Library and history are kept)")) {
-            localStorage.removeItem('invoiceStatePro');
-            state = { ...defaultState, items: [{ id: crypto.randomUUID(), desc: '', qty: 1, price: 0 }], lang: state.lang };
-            syncDOMWithState();
-            renderItemsEditor();
-            renderPreview();
-            showToast("Workspace cleared.");
-        }
-    });
-
+    // Fix PDF Export logic (Full Page A4, High Quality, No cropped content)
     const btnPdf = document.getElementById('btn-pdf');
-    btnPdf.addEventListener('click', async () => {
-        if (!validateInvoice()) return;
-        
-        const element = document.getElementById('doc-preview');
-        btnPdf.classList.add('is-loading');
-        showToast("Compiling PDF asynchronously...");
+    if(btnPdf) {
+        btnPdf.addEventListener('click', async () => {
+            if (!validateInvoice()) return;
+            
+            const element = document.getElementById('doc-preview');
+            btnPdf.classList.add('is-loading');
+            showToast("Compiling PDF asynchronously...");
 
-        await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 50)));
+            await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 50)));
 
-        const options = {
-            margin: [0, 0, 0, 0],
-            filename: `${state.docNumber || 'Invoice'}.pdf`,
-            image: { type: 'jpeg', quality: 1.0 },
-            html2canvas: { 
-                scale: 2, 
-                useCORS: true, 
-                letterRendering: true,
-                windowWidth: element.scrollWidth // Crucial to prevent layout shifting
-            },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-        
-        try {
-            await html2pdf().set(options).from(element).save();
-            showToast("Export completed successfully.");
-        } catch (error) {
-            showToast("Error generating PDF.");
-            console.error(error);
-        } finally {
-            btnPdf.classList.remove('is-loading');
-        }
-    });
+            const options = {
+                margin: [10, 10, 10, 10], // Proper margins
+                filename: `${state.docNumber || 'Invoice'}.pdf`,
+                image: { type: 'jpeg', quality: 1.0 }, // High quality
+                html2canvas: { 
+                    scale: 2, // Correct scaling
+                    useCORS: true, 
+                    letterRendering: true,
+                    windowWidth: element.scrollWidth,
+                    scrollY: 0
+                },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
+            };
+            
+            try {
+                await html2pdf().set(options).from(element).save();
+                showToast("Export completed successfully.");
+            } catch (error) {
+                showToast("Error generating PDF.");
+                console.error(error);
+            } finally {
+                btnPdf.classList.remove('is-loading');
+            }
+        });
+    }
 
-    document.getElementById('btn-dark-toggle').addEventListener('click', () => {
+    document.getElementById('btn-dark-toggle')?.addEventListener('click', () => {
         document.documentElement.classList.toggle('dark');
     });
 
