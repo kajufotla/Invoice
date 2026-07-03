@@ -153,7 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
         paymentDetails: '',
         items: [{ id: crypto.randomUUID(), desc: 'Web Development Services', qty: 1, price: 1500.00 }],
         discountType: 'fixed', discountValue: 0, taxRateManual: 0, status: 'Pending', template_id: 'classic',
-        logoDataUrl: null, sigDataUrl: null, generateQR: false, lang: 'en'
+        logoDataUrl: null, sigDataUrl: null, generateQR: false, lang: 'en',
+        notes: '', terms: ''
     };
 
     let state = { ...defaultState };
@@ -174,6 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateClientDropdown();
         updateProductDatalist();
         updateDashboard();
+        loadCompanyProfile();
     }
 
     async function syncCloud() {
@@ -211,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderItemsEditor();
                 renderPreview();
                 updateDashboard();
+                loadCompanyProfile();
                 showToast("Cloud data synced successfully.");
             }
         } catch(e) { console.error("Cloud load error", e); }
@@ -233,6 +236,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('doc-template').value = state.template_id;
         document.getElementById('toggle-qr').checked = state.generateQR;
         document.getElementById('tax-input-container').style.display = state.region === 'USA' ? 'flex' : 'none';
+        
+        document.getElementById('invoice-notes').value = state.notes || '';
+        document.getElementById('invoice-terms').value = state.terms || '';
         
         document.getElementById('btn-lang-toggle').textContent = state.lang.toUpperCase();
     }
@@ -265,6 +271,79 @@ document.addEventListener('DOMContentLoaded', () => {
         calcTotals = { subtotal: sub, discount: disc, tax: tax, total: afterDisc + tax };
     }
 
+    // Auto Invoice Number Generation
+    document.getElementById('btn-auto-invoice').addEventListener('click', () => {
+        let maxNum = 0;
+        if (library.history && library.history.length > 0) {
+            library.history.forEach(h => {
+                const match = h.docNumber.match(/\d+/);
+                if (match) {
+                    const num = parseInt(match[0], 10);
+                    if (num > maxNum) maxNum = num;
+                }
+            });
+        }
+        const nextNum = maxNum > 0 ? maxNum + 1 : 1001;
+        const prefix = state.docType === 'Invoice' ? 'INV-' : state.docType === 'Receipt' ? 'REC-' : 'QTE-';
+        state.docNumber = prefix + nextNum.toString().padStart(4, '0');
+        document.getElementById('doc-number').value = state.docNumber;
+        saveState();
+        renderPreview();
+        showToast(`Generated: ${state.docNumber}`);
+    });
+
+    // Company Profile Operations
+    document.getElementById('btn-save-profile').addEventListener('click', () => {
+        const name = document.getElementById('prof-company-name').value.trim();
+        const address = document.getElementById('prof-company-address').value.trim();
+        if (!name) return showToast("Company Name is required.");
+        const profile = { name, address };
+        localStorage.setItem('invoiceCompanyProfile', JSON.stringify(profile));
+        state.senderDetails = `${name}\n${address}`;
+        document.getElementById('sender-details').value = state.senderDetails;
+        saveState();
+        renderPreview();
+        showToast("Company profile saved locally.");
+    });
+
+    function loadCompanyProfile() {
+        const profileStr = localStorage.getItem('invoiceCompanyProfile');
+        if (profileStr) {
+            try {
+                const profile = JSON.parse(profileStr);
+                document.getElementById('prof-company-name').value = profile.name || '';
+                document.getElementById('prof-company-address').value = profile.address || '';
+            } catch(e){}
+        }
+    }
+
+    // Duplicate Invoice Operations
+    document.getElementById('btn-duplicate').addEventListener('click', () => {
+        if (!state.docNumber) return showToast("No active template instance to duplicate.");
+        state.docNumber = state.docNumber + "-DUP";
+        document.getElementById('doc-number').value = state.docNumber;
+        saveState();
+        renderPreview();
+        showToast("Invoice duplicated as variant.");
+    });
+
+    // Print Friendly View Framework Toggles
+    const btnPrintMode = document.getElementById('btn-print-mode');
+    const btnExitPrint = document.getElementById('btn-exit-print-preview');
+    if (btnPrintMode) {
+        btnPrintMode.addEventListener('click', () => {
+            document.body.classList.add('print-preview-active');
+            if (btnExitPrint) btnExitPrint.classList.remove('hidden');
+            window.print();
+        });
+    }
+    if (btnExitPrint) {
+        btnExitPrint.addEventListener('click', () => {
+            document.body.classList.remove('print-preview-active');
+            btnExitPrint.classList.add('hidden');
+        });
+    }
+
     document.getElementById('btn-save-client').addEventListener('click', () => {
         if(!state.clientDetails.trim()) return showToast("Client details are empty.");
         if(!library.clients.includes(state.clientDetails)) {
@@ -294,6 +373,39 @@ document.addEventListener('DOMContentLoaded', () => {
             return `<option value="${i}">${shortName}</option>`;
         }).join('');
     }
+
+    // Advanced Client Database Panel Management
+    const clientsModal = document.getElementById('clients-modal');
+    document.getElementById('btn-manage-clients').addEventListener('click', () => {
+        renderClientsDbList();
+        clientsModal.classList.remove('hidden');
+    });
+    document.getElementById('btn-close-clients').addEventListener('click', () => clientsModal.classList.add('hidden'));
+
+    function renderClientsDbList() {
+        const container = document.getElementById('clients-db-list');
+        if (!library.clients || library.clients.length === 0) {
+            container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No database client profiles stored.</p>`;
+            return;
+        }
+        container.innerHTML = library.clients.map((c, i) => `
+            <li class="flex items-center justify-between p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm">
+                <p class="text-xs font-mono font-medium truncate max-w-[300px] text-slate-700 dark:text-slate-300">${c.split('\n')[0]}</p>
+                <button class="btn-del-client text-[10px] bg-rose-50 text-rose-600 hover:bg-rose-100 px-2 py-1 rounded font-bold transition" data-index="${i}">Delete</button>
+            </li>
+        `).join('');
+    }
+
+    document.getElementById('clients-db-list').addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-del-client')) {
+            const index = parseInt(e.target.dataset.index, 10);
+            library.clients.splice(index, 1);
+            saveLibrary();
+            updateClientDropdown();
+            renderClientsDbList();
+            showToast("Client configuration dropped from records.");
+        }
+    });
 
     function saveProductToLibrary(desc, price) {
         if(!desc.trim()) return;
@@ -545,6 +657,31 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('prev-tax').textContent = formatMoney(calcTotals.tax);
         document.getElementById('prev-total').textContent = formatMoney(calcTotals.total);
 
+        // Render Notes & Terms dynamically into preview block matching values
+        const notesContainer = document.getElementById('prev-notes-terms-container');
+        const notesBox = document.getElementById('prev-notes-box');
+        const notesContent = document.getElementById('prev-notes-content');
+        const termsBox = document.getElementById('prev-terms-box');
+        const termsContent = document.getElementById('prev-terms-content');
+
+        if ((state.notes && state.notes.trim()) || (state.terms && state.terms.trim())) {
+            notesContainer.classList.remove('hidden');
+            if (state.notes && state.notes.trim()) {
+                notesBox.classList.remove('hidden');
+                notesContent.textContent = state.notes;
+            } else {
+                notesBox.classList.add('hidden');
+            }
+            if (state.terms && state.terms.trim()) {
+                termsBox.classList.remove('hidden');
+                termsContent.textContent = state.terms;
+            } else {
+                termsBox.classList.add('hidden');
+            }
+        } else {
+            notesContainer.classList.add('hidden');
+        }
+
         // Update QR Code
         const qrContainer = document.getElementById('qr-code-container');
         if (state.generateQR && typeof QRCode !== 'undefined') {
@@ -659,10 +796,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    ['doc-number', 'doc-date', 'doc-due-date', 'sender-details', 'client-details', 'payment-details', 'discount-value', 'tax-rate-manual'].forEach(id => {
+    ['doc-number', 'doc-date', 'doc-due-date', 'sender-details', 'client-details', 'payment-details', 'discount-value', 'tax-rate-manual', 'invoice-notes', 'invoice-terms'].forEach(id => {
         document.getElementById(id).addEventListener('input', e => {
-            const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-            state[key === 'docDate' ? 'date' : key] = e.target.value;
+            if (id === 'invoice-notes') {
+                state.notes = e.target.value;
+            } else if (id === 'invoice-terms') {
+                state.terms = e.target.value;
+            } else {
+                const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+                state[key === 'docDate' ? 'date' : key] = e.target.value;
+            }
             saveState();
             renderPreview();
         });
