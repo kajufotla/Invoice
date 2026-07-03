@@ -146,6 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let defaultState = {
+        id: null,
         docType: 'Invoice', currency: 'USD', region: 'USA',
         docNumber: 'INV-0001', date: new Date().toISOString().split('T')[0], dueDate: '',
         senderDetails: 'My Company LLC\nNew York, NY 10001',
@@ -153,23 +154,44 @@ document.addEventListener('DOMContentLoaded', () => {
         paymentDetails: '',
         items: [{ id: crypto.randomUUID(), desc: 'Web Development Services', qty: 1, price: 1500.00 }],
         discountType: 'fixed', discountValue: 0, taxRateManual: 0, status: 'Pending', template_id: 'classic',
-        logoDataUrl: null, sigDataUrl: null, generateQR: false, lang: 'en',
+        logoDataUrl: null, sigDataUrl: null, uploadedQrDataUrl: null, showQR: false, lang: 'en',
         notes: '', terms: ''
     };
 
     let state = { ...defaultState };
     let library = { clients: [], products: [], history: [] };
-    let qrCodeObj = null;
     let chartsInstance = { revenue: null, status: null };
+
+    // Validation Function
+    function validateInvoice() {
+        if (!state.senderDetails || !state.senderDetails.trim()) {
+            showToast("Validation Error: Company Name / Sender Details are required.");
+            return false;
+        }
+        if (!state.clientDetails || !state.clientDetails.trim()) {
+            showToast("Validation Error: Client Information is required.");
+            return false;
+        }
+        if (!state.docNumber || !state.docNumber.trim()) {
+            showToast("Validation Error: Invoice Number is required.");
+            return false;
+        }
+        const hasValidItem = state.items.some(i => i.desc && i.desc.trim() !== '');
+        if (!hasValidItem || state.items.length === 0) {
+            showToast("Validation Error: At least one item with a description is required.");
+            return false;
+        }
+        return true;
+    }
 
     async function loadAppData() {
         const savedState = localStorage.getItem('invoiceStatePro');
         const savedLib = localStorage.getItem('invoiceLibraryPro');
         if (savedState) {
-            try { state = { ...state, ...JSON.parse(savedState) }; } catch(e){}
+            try { state = { ...defaultState, ...JSON.parse(savedState) }; } catch(e){}
         }
         if (savedLib) {
-            try { library = { ...library, ...JSON.parse(savedLib) }; } catch(e){}
+            try { library = { clients: [], products: [], history: [], ...JSON.parse(savedLib) }; } catch(e){}
         }
         syncDOMWithState();
         updateClientDropdown();
@@ -205,8 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const docSnap = await getDoc(doc(window.firebaseDb, "users", uid));
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                if(data.state) state = { ...state, ...JSON.parse(data.state) };
-                if(data.library) library = { ...library, ...JSON.parse(data.library) };
+                if(data.state) state = { ...defaultState, ...JSON.parse(data.state) };
+                if(data.library) library = { clients: [], products: [], history: [], ...JSON.parse(data.library) };
                 syncDOMWithState();
                 updateClientDropdown();
                 updateProductDatalist();
@@ -234,7 +256,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('tax-rate-manual').value = state.taxRateManual;
         document.getElementById('doc-status').value = state.status;
         document.getElementById('doc-template').value = state.template_id;
-        document.getElementById('toggle-qr').checked = state.generateQR;
+        
+        const toggleQr = document.getElementById('toggle-qr');
+        if (toggleQr) toggleQr.checked = state.showQR;
+
         document.getElementById('tax-input-container').style.display = state.region === 'USA' ? 'flex' : 'none';
         
         document.getElementById('invoice-notes').value = state.notes || '';
@@ -421,8 +446,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('btn-save-invoice').addEventListener('click', () => {
+        if (!validateInvoice()) return;
+
+        if (!state.id) {
+            state.id = crypto.randomUUID();
+        }
+
+        const duplicateCheck = library.history.find(h => h.docNumber.trim() === state.docNumber.trim() && h.id !== state.id);
+        if(duplicateCheck) {
+            return showToast("Error: Invoice Number already exists! Prevented saving duplicate.");
+        }
+
         const record = {
-            id: Date.now().toString(),
+            id: state.id,
             date: new Date().toLocaleString(),
             docNumber: state.docNumber,
             clientInfo: state.clientDetails.split('\n')[0],
@@ -432,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stateSnapshot: JSON.stringify(state)
         };
         
-        const existingIdx = library.history.findIndex(h => h.docNumber === state.docNumber);
+        const existingIdx = library.history.findIndex(h => h.id === state.id);
         if(existingIdx > -1) library.history[existingIdx] = record;
         else library.history.unshift(record);
         
@@ -458,7 +494,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Features Logic (Share, Email)
     const shareModal = document.getElementById('share-modal');
-    document.getElementById('btn-share').addEventListener('click', () => shareModal.classList.remove('hidden'));
+    document.getElementById('btn-share').addEventListener('click', async () => {
+        if (!validateInvoice()) return;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: `Invoice ${state.docNumber}`,
+                    text: `Please find the details for invoice ${state.docNumber} from ${state.senderDetails.split('\n')[0]}.\nTotal: ${formatMoney(calcTotals.total)}`,
+                    url: window.location.href
+                });
+                showToast("Shared successfully.");
+            } catch (err) {
+                console.error('Error sharing:', err);
+                shareModal.classList.remove('hidden');
+            }
+        } else {
+            shareModal.classList.remove('hidden');
+        }
+    });
+
     document.getElementById('btn-close-share').addEventListener('click', () => shareModal.classList.add('hidden'));
     document.getElementById('btn-copy-link').addEventListener('click', () => {
         navigator.clipboard.writeText(document.getElementById('share-link-input').value);
@@ -466,9 +521,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('btn-email').addEventListener('click', () => {
+        if (!validateInvoice()) return;
+        
         const subject = encodeURIComponent(`Invoice ${state.docNumber} from ${state.senderDetails.split('\n')[0]}`);
-        const body = encodeURIComponent(`Please find the details for invoice ${state.docNumber} attached.\nTotal: ${formatMoney(calcTotals.total)}\nDue Date: ${state.dueDate}\n\nThank you for your business!`);
-        window.open(`mailto:?subject=${subject}&body=${body}`);
+        const body = encodeURIComponent(`Hello,\n\nPlease find the details for invoice ${state.docNumber} below.\n\nTotal: ${formatMoney(calcTotals.total)}\nDue Date: ${state.dueDate || 'N/A'}\n\nThank you for your business!`);
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        showToast("Opening Email client...");
     });
 
     const historyModal = document.getElementById('history-modal');
@@ -507,7 +565,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(e.target.classList.contains('btn-load-history')) {
             const record = library.history.find(h => h.id === id);
             if(record) {
-                state = JSON.parse(record.stateSnapshot);
+                state = { ...defaultState, ...JSON.parse(record.stateSnapshot) };
                 saveState();
                 syncDOMWithState();
                 renderItemsEditor();
@@ -605,8 +663,23 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('prev-title').textContent = langDict[typeKey] || state.docType.toUpperCase();
         document.getElementById('prev-number-label').textContent = `# ${state.docNumber}`;
         document.getElementById('prev-date').textContent = state.date;
-        document.getElementById('prev-due-date').textContent = state.dueDate;
-        document.getElementById('prev-sender').textContent = state.senderDetails;
+        
+        // Proper Due Date Handling
+        const prevDueDate = document.getElementById('prev-due-date');
+        const dueDateLblContainer = document.getElementById('lbl-due').parentElement;
+        if (state.dueDate) {
+            prevDueDate.textContent = state.dueDate;
+            if(dueDateLblContainer) dueDateLblContainer.style.display = '';
+        } else {
+            prevDueDate.textContent = '';
+            if(dueDateLblContainer) dueDateLblContainer.style.display = 'none';
+        }
+
+        // Proper Company Name Display Setup
+        const companyName = state.senderDetails.split('\n')[0] || '';
+        const remainder = state.senderDetails.substring(companyName.length).trim().replace(/\n/g, '<br>');
+        document.getElementById('prev-sender').innerHTML = `<strong style="font-size: 1.1em; display: block; margin-bottom: 4px;">${companyName}</strong>${remainder}`;
+        
         document.getElementById('prev-client').textContent = state.clientDetails;
         document.getElementById('prev-payment-details').textContent = state.paymentDetails;
         
@@ -682,13 +755,11 @@ document.addEventListener('DOMContentLoaded', () => {
             notesContainer.classList.add('hidden');
         }
 
-        // Update QR Code
+        // Updated Upload QR Implementation
         const qrContainer = document.getElementById('qr-code-container');
-        if (state.generateQR && typeof QRCode !== 'undefined') {
+        if (state.showQR && state.uploadedQrDataUrl) {
             qrContainer.classList.remove('hidden');
-            qrContainer.innerHTML = '';
-            const paymentStr = `Pay Invoice ${state.docNumber} - Total: ${calcTotals.total} ${state.currency}`;
-            new QRCode(qrContainer, { text: paymentStr, width: 80, height: 80, colorDark: "#0f172a", colorLight: "#ffffff" });
+            qrContainer.innerHTML = `<img src="${state.uploadedQrDataUrl}" style="max-width: 100px; max-height: 100px; object-fit: contain; margin-top: 10px;" />`;
         } else {
             qrContainer.classList.add('hidden');
         }
@@ -776,14 +847,58 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.getElementById('toggle-qr').addEventListener('change', e => {
-        state.generateQR = e.target.checked;
-        saveState();
-        renderPreview();
+    // Upload QR Flow Setup
+    let qrUploadInput = document.getElementById('qr-upload-input-dynamic');
+    if (!qrUploadInput) {
+        qrUploadInput = document.createElement('input');
+        qrUploadInput.type = 'file';
+        qrUploadInput.accept = 'image/*';
+        qrUploadInput.id = 'qr-upload-input-dynamic';
+        qrUploadInput.style.display = 'none';
+        document.body.appendChild(qrUploadInput);
+    }
+    
+    qrUploadInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                state.uploadedQrDataUrl = event.target.result;
+                state.showQR = true; 
+                const toggle = document.getElementById('toggle-qr');
+                if (toggle && toggle.type === 'checkbox') toggle.checked = true;
+                saveState();
+                renderPreview();
+            }
+            reader.readAsDataURL(file);
+        }
+        e.target.value = ''; // Reset for re-uploading same file if needed
     });
 
+    // Repurpose toggle-qr to open the file selection dialogue or just toggle visibility if already uploaded
+    const toggleQrElement = document.getElementById('toggle-qr');
+    if (toggleQrElement) {
+        toggleQrElement.addEventListener('click', e => {
+            if (toggleQrElement.type === 'checkbox') {
+                e.preventDefault(); 
+                if (state.uploadedQrDataUrl && state.showQR) {
+                    state.showQR = false; // Toggle off if already shown
+                    toggleQrElement.checked = false;
+                    saveState();
+                    renderPreview();
+                } else {
+                    qrUploadInput.click(); // Trigger upload
+                }
+            } else {
+                qrUploadInput.click(); // If it's a button, just trigger upload
+            }
+        });
+    }
+
     ['doc-type', 'currency', 'region', 'doc-template', 'discount-type', 'doc-status'].forEach(id => {
-        document.getElementById(id).addEventListener('change', e => { 
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.addEventListener('change', e => { 
             const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
             if (id === 'doc-template') state.template_id = e.target.value;
             else state[key] = e.target.value;
@@ -797,7 +912,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     ['doc-number', 'doc-date', 'doc-due-date', 'sender-details', 'client-details', 'payment-details', 'discount-value', 'tax-rate-manual', 'invoice-notes', 'invoice-terms'].forEach(id => {
-        document.getElementById(id).addEventListener('input', e => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        el.addEventListener('input', e => {
             if (id === 'invoice-notes') {
                 state.notes = e.target.value;
             } else if (id === 'invoice-terms') {
@@ -831,6 +948,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btnPdf = document.getElementById('btn-pdf');
     btnPdf.addEventListener('click', async () => {
+        if (!validateInvoice()) return;
+        
         const element = document.getElementById('doc-preview');
         btnPdf.classList.add('is-loading');
         showToast("Compiling PDF asynchronously...");
@@ -838,10 +957,15 @@ document.addEventListener('DOMContentLoaded', () => {
         await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 50)));
 
         const options = {
-            margin: 0,
+            margin: [0, 0, 0, 0],
             filename: `${state.docNumber || 'Invoice'}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+            image: { type: 'jpeg', quality: 1.0 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true, 
+                letterRendering: true,
+                windowWidth: element.scrollWidth // Crucial to prevent layout shifting
+            },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
         
