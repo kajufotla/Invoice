@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let defaultState = {
-        docType: 'Invoice', currency: 'USD', region: 'USA',
+        docType: 'Invoice', currency: 'USD', region: 'United States (USA)',
         docNumber: 'INV-0001', date: new Date().toISOString().split('T')[0], dueDate: '',
         senderDetails: 'My Company LLC\nNew York, NY 10001',
         clientDetails: 'Acme Corp\nSan Francisco, CA 94105',
@@ -235,7 +235,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('doc-status').value = state.status;
         document.getElementById('doc-template').value = state.template_id;
         document.getElementById('toggle-qr').checked = state.generateQR;
-        document.getElementById('tax-input-container').style.display = state.region === 'USA' ? 'flex' : 'none';
+        
+        // Show manual tax input only for USA
+        document.getElementById('tax-input-container').style.display = (state.region === 'USA' || state.region === 'United States (USA)') ? 'flex' : 'none';
         
         document.getElementById('invoice-notes').value = state.notes || '';
         document.getElementById('invoice-terms').value = state.terms || '';
@@ -271,8 +273,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getTaxRate() {
         switch(state.region) {
-            case 'UK': return 20; case 'CAN': return 5; case 'AUS': return 10;
-            case 'USA': return parseFloat(state.taxRateManual) || 0; default: return 0;
+            case 'UK': 
+            case 'United Kingdom (UK)': return 20;
+            case 'CAN': 
+            case 'Canada': return 5;
+            case 'AUS': 
+            case 'Australia': return 10;
+            case 'Germany': return 19;
+            case 'France': return 20;
+            case 'UAE': 
+            case 'United Arab Emirates (UAE)': return 5;
+            case 'New Zealand': return 15;
+            case 'USA': 
+            case 'United States (USA)': return parseFloat(state.taxRateManual) || 0;
+            default: return 0;
         }
     }
 
@@ -666,8 +680,16 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('prev-discount').textContent = `-${formatMoney(calcTotals.discount)}`;
         document.getElementById('prev-discount-row').style.display = calcTotals.discount > 0 ? 'flex' : 'none';
         
-        let taxLabel = state.region === 'USA' ? `${langDict.tax} (${getTaxRate()}%)` : state.region === 'UK' ? 'VAT (20%)' : state.region === 'CAN' ? 'GST (5%)' : 'GST (10%)';
-        document.getElementById('prev-tax-label').textContent = taxLabel;
+        // Updated Region Tax Labels Logic
+        let taxLabelStr = `${langDict.tax} (${getTaxRate()}%)`;
+        const reg = state.region;
+        if (reg === 'UK' || reg === 'United Kingdom (UK)' || reg === 'Germany' || reg === 'France' || reg === 'UAE' || reg === 'United Arab Emirates (UAE)') {
+            taxLabelStr = `VAT (${getTaxRate()}%)`;
+        } else if (reg === 'CAN' || reg === 'Canada' || reg === 'AUS' || reg === 'Australia' || reg === 'New Zealand') {
+            taxLabelStr = `GST (${getTaxRate()}%)`;
+        }
+        
+        document.getElementById('prev-tax-label').textContent = taxLabelStr;
         document.getElementById('prev-tax').textContent = formatMoney(calcTotals.tax);
         document.getElementById('prev-total').textContent = formatMoney(calcTotals.total);
 
@@ -834,7 +856,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (id === 'doc-template') state.template_id = e.target.value;
             else state[key] = e.target.value;
             
-            if(id === 'region') document.getElementById('tax-input-container').style.display = state.region === 'USA' ? 'flex' : 'none';
+            if(id === 'region') {
+                document.getElementById('tax-input-container').style.display = (state.region === 'USA' || state.region === 'United States (USA)') ? 'flex' : 'none';
+            }
             
             saveState();
             if(id === 'currency') renderItemsEditor(); 
