@@ -75,7 +75,7 @@
 
     <div id="app-layout" class="flex flex-col h-screen overflow-hidden hidden">
         
-        <header class="h-16 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between glass-panel z-30 shrink-0 shadow-sm">
+        <header class="h-16 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between glass-panel z-30 shrink-0 shadow-sm no-print">
             <div class="flex items-center gap-6">
                 <div class="flex items-center gap-3">
                     <span class="font-bold text-xl tracking-tight bg-gradient-to-r from-brand-600 to-indigo-500 bg-clip-text text-transparent">InvoiceSuite Pro</span>
@@ -87,6 +87,10 @@
                 </nav>
             </div>
             <div class="flex items-center gap-3">
+                <button id="btn-print-mode" class="px-3 py-1.5 text-xs font-semibold border rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-300 dark:border-slate-600 shadow-sm text-slate-600 dark:text-slate-300 transition flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Print
+                </button>
                 <button id="btn-lang-toggle" class="px-3 py-1.5 text-xs font-bold border rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-300 dark:border-slate-600 shadow-sm transition uppercase">EN</button>
                 <button id="btn-history" class="px-3 py-1.5 text-xs font-semibold border rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-300 dark:border-slate-600 shadow-sm text-slate-600 hover:text-brand-600 dark:text-slate-300 dark:hover:text-brand-400 transition flex items-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -100,7 +104,7 @@
             </div>
         </header>
 
-        <div id="view-dashboard" class="flex-1 overflow-y-auto p-8 bg-slate-50 dark:bg-slate-900 hidden">
+        <div id="view-dashboard" class="flex-1 overflow-y-auto p-8 bg-slate-50 dark:bg-slate-900 hidden no-print">
             <div class="max-w-7xl mx-auto space-y-6">
                 <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Overview</h2>
@@ -144,7 +148,7 @@
         <div id="view-editor" class="flex flex-1 overflow-hidden">
             <main class="flex-1 grid grid-cols-1 xl:grid-cols-2 overflow-hidden bg-slate-50 dark:bg-slate-900/40">
                 
-                <section class="h-full overflow-y-auto p-6 space-y-6 no-print border-r border-slate-200 dark:border-slate-800/80">
+                <section id="editor-controls-pane" class="h-full overflow-y-auto p-6 space-y-6 no-print border-r border-slate-200 dark:border-slate-800/80">
                     
                     <div class="flex flex-wrap items-center justify-between bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700 rounded-xl shadow-premium gap-4">
                         <div class="flex items-center gap-2">
@@ -225,6 +229,18 @@
                                 </select>
                             </div>
                         </div>
+                        
+                        <div class="border-t border-slate-100 dark:border-slate-700/60 pt-4 mt-2">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Company Profile</label>
+                                <button id="btn-save-profile" class="text-[10px] text-brand-600 font-bold hover:underline">Save Profile</button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <input type="text" id="prof-company-name" placeholder="Company Name" class="w-full px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition">
+                                <input type="text" id="prof-company-address" placeholder="Address, State, Zip" class="w-full px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition">
+                            </div>
+                        </div>
+
                         <div class="flex items-center gap-2 pt-2">
                             <input type="checkbox" id="toggle-qr" class="rounded border-slate-300 text-brand-600 focus:ring-brand-500">
                             <label for="toggle-qr" class="text-xs font-medium text-slate-600 dark:text-slate-400">Generate Payment QR Code</label>
@@ -234,7 +250,10 @@
                     <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-premium space-y-5">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                             <div>
-                                <label class="block text-xs font-medium mb-1.5 text-slate-500">Doc #</label>
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <label class="block text-xs font-medium text-slate-500">Doc #</label>
+                                    <button id="btn-auto-invoice" class="text-[10px] text-brand-600 font-bold hover:underline">Auto Gen</button>
+                                </div>
                                 <input type="text" id="doc-number" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500">
                             </div>
                             <div>
@@ -259,6 +278,7 @@
                                             <option value="">Load...</option>
                                         </select>
                                         <button id="btn-save-client" class="text-[10px] text-brand-600 font-semibold hover:underline">Save Client</button>
+                                        <button id="btn-manage-clients" class="text-[10px] text-slate-500 font-medium hover:underline">Manage</button>
                                     </div>
                                 </div>
                                 <textarea id="client-details" rows="3" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 font-mono text-xs outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500"></textarea>
@@ -315,7 +335,11 @@
                     <div class="h-12"></div>
                 </section>
 
-                <section class="h-full overflow-y-auto p-6 bg-slate-200/50 dark:bg-slate-950/20 flex justify-center">
+                <section id="preview-container-pane" class="h-full overflow-y-auto p-6 bg-slate-200/50 dark:bg-slate-950/20 flex justify-center relative">
+                    <button id="btn-exit-print-preview" class="fixed top-4 right-4 z-50 bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-bold px-4 py-2 rounded-xl shadow-2xl transition items-center gap-1 hidden">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        Close Print View
+                    </button>
                     <div id="capture-box" class="w-full max-w-[210mm]">
                         <div class="a4-document bg-white text-slate-900 p-[20mm] min-h-[297mm] template-classic shadow-2xl rounded-sm transition-all relative flex flex-col" id="doc-preview" dir="ltr">
                             
@@ -355,7 +379,7 @@
                                         </tr>
                                     </thead>
                                     <tbody id="prev-items-body" class="divide-y divide-slate-100"></tbody>
-                                </table>
+                                    </table>
 
                                 <div class="flex justify-between items-start pt-4 border-t-2 border-slate-100">
                                     <div class="w-1/2 text-sm pe-4">
@@ -407,7 +431,7 @@
         </div>
     </div>
 
-    <div id="share-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="share-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 no-print">
         <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col">
             <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
                 <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Share Invoice</h2>
@@ -425,7 +449,7 @@
         </div>
     </div>
 
-    <div id="history-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div id="history-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 no-print">
         <div class="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[80vh]">
             <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 rounded-t-2xl">
                 <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Saved Invoices</h2>
@@ -455,6 +479,20 @@
 
             <div class="p-4 overflow-y-auto flex-1 bg-slate-50 dark:bg-slate-900">
                 <ul id="history-list" class="space-y-2"></ul>
+            </div>
+        </div>
+    </div>
+
+    <div id="clients-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[75vh]">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 rounded-t-2xl">
+                <h2 class="text-md font-bold text-slate-800 dark:text-slate-100">Manage Client Database</h2>
+                <button id="btn-close-clients" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1 bg-slate-50 dark:bg-slate-900">
+                <ul id="clients-db-list" class="space-y-2"></ul>
             </div>
         </div>
     </div>
