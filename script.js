@@ -146,14 +146,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let defaultState = {
-        docType: 'Invoice', currency: 'USD', region: 'United States (USA)',
+        docType: 'Invoice', currency: 'USD', region: 'USA',
         docNumber: 'INV-0001', date: new Date().toISOString().split('T')[0], dueDate: '',
         senderDetails: 'My Company LLC\nNew York, NY 10001',
         clientDetails: 'Acme Corp\nSan Francisco, CA 94105',
         paymentDetails: '',
         items: [{ id: crypto.randomUUID(), desc: 'Web Development Services', qty: 1, price: 1500.00 }],
         discountType: 'fixed', discountValue: 0, taxRateManual: 0, status: 'Pending', template_id: 'classic',
-        logoDataUrl: null, sigDataUrl: null, uploadedQrDataUrl: null, generateQR: false, lang: 'en',
+        logoDataUrl: null, sigDataUrl: null, generateQR: false, lang: 'en',
         notes: '', terms: ''
     };
 
@@ -235,28 +235,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('doc-status').value = state.status;
         document.getElementById('doc-template').value = state.template_id;
         document.getElementById('toggle-qr').checked = state.generateQR;
-        
-        // Show manual tax input only for USA
-        document.getElementById('tax-input-container').style.display = (state.region === 'USA' || state.region === 'United States (USA)') ? 'flex' : 'none';
+        document.getElementById('tax-input-container').style.display = state.region === 'USA' ? 'flex' : 'none';
         
         document.getElementById('invoice-notes').value = state.notes || '';
         document.getElementById('invoice-terms').value = state.terms || '';
         
         document.getElementById('btn-lang-toggle').textContent = state.lang.toUpperCase();
-
-        const qrPreviewImg = document.getElementById('qr-preview-img');
-        const qrPreviewContainer = document.getElementById('qr-preview-container');
-        if (qrPreviewImg) {
-            if (state.uploadedQrDataUrl) {
-                qrPreviewImg.src = state.uploadedQrDataUrl;
-                qrPreviewImg.classList.remove('hidden');
-                if (qrPreviewContainer) qrPreviewContainer.classList.remove('hidden');
-            } else {
-                qrPreviewImg.src = '';
-                qrPreviewImg.classList.add('hidden');
-                if (qrPreviewContainer) qrPreviewContainer.classList.add('hidden');
-            }
-        }
     }
 
     loadAppData();
@@ -273,20 +257,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getTaxRate() {
         switch(state.region) {
-            case 'UK': 
-            case 'United Kingdom (UK)': return 20;
-            case 'CAN': 
-            case 'Canada': return 5;
-            case 'AUS': 
-            case 'Australia': return 10;
-            case 'Germany': return 19;
-            case 'France': return 20;
-            case 'UAE': 
-            case 'United Arab Emirates (UAE)': return 5;
-            case 'New Zealand': return 15;
-            case 'USA': 
-            case 'United States (USA)': return parseFloat(state.taxRateManual) || 0;
-            default: return 0;
+            case 'UK': return 20; case 'CAN': return 5; case 'AUS': return 10;
+            case 'USA': return parseFloat(state.taxRateManual) || 0; default: return 0;
         }
     }
 
@@ -680,16 +652,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('prev-discount').textContent = `-${formatMoney(calcTotals.discount)}`;
         document.getElementById('prev-discount-row').style.display = calcTotals.discount > 0 ? 'flex' : 'none';
         
-        // Updated Region Tax Labels Logic
-        let taxLabelStr = `${langDict.tax} (${getTaxRate()}%)`;
-        const reg = state.region;
-        if (reg === 'UK' || reg === 'United Kingdom (UK)' || reg === 'Germany' || reg === 'France' || reg === 'UAE' || reg === 'United Arab Emirates (UAE)') {
-            taxLabelStr = `VAT (${getTaxRate()}%)`;
-        } else if (reg === 'CAN' || reg === 'Canada' || reg === 'AUS' || reg === 'Australia' || reg === 'New Zealand') {
-            taxLabelStr = `GST (${getTaxRate()}%)`;
-        }
-        
-        document.getElementById('prev-tax-label').textContent = taxLabelStr;
+        let taxLabel = state.region === 'USA' ? `${langDict.tax} (${getTaxRate()}%)` : state.region === 'UK' ? 'VAT (20%)' : state.region === 'CAN' ? 'GST (5%)' : 'GST (10%)';
+        document.getElementById('prev-tax-label').textContent = taxLabel;
         document.getElementById('prev-tax').textContent = formatMoney(calcTotals.tax);
         document.getElementById('prev-total').textContent = formatMoney(calcTotals.total);
 
@@ -720,10 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update QR Code
         const qrContainer = document.getElementById('qr-code-container');
-        if (state.uploadedQrDataUrl) {
-            qrContainer.classList.remove('hidden');
-            qrContainer.innerHTML = `<img src="${state.uploadedQrDataUrl}" class="w-20 h-20 object-contain" alt="Payment QR Code" />`;
-        } else if (state.generateQR && typeof QRCode !== 'undefined') {
+        if (state.generateQR && typeof QRCode !== 'undefined') {
             qrContainer.classList.remove('hidden');
             qrContainer.innerHTML = '';
             const paymentStr = `Pay Invoice ${state.docNumber} - Total: ${calcTotals.total} ${state.currency}`;
@@ -815,35 +776,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Custom QR Upload Logic
-    const qrUploadEl = document.getElementById('qr-upload');
-    if (qrUploadEl) {
-        qrUploadEl.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    state.uploadedQrDataUrl = event.target.result;
-                    saveState();
-                    syncDOMWithState();
-                    renderPreview();
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
-    const btnRemoveQr = document.getElementById('btn-remove-qr');
-    if (btnRemoveQr) {
-        btnRemoveQr.addEventListener('click', () => {
-            state.uploadedQrDataUrl = null;
-            if (qrUploadEl) qrUploadEl.value = '';
-            saveState();
-            syncDOMWithState();
-            renderPreview();
-        });
-    }
-
     document.getElementById('toggle-qr').addEventListener('change', e => {
         state.generateQR = e.target.checked;
         saveState();
@@ -856,9 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (id === 'doc-template') state.template_id = e.target.value;
             else state[key] = e.target.value;
             
-            if(id === 'region') {
-                document.getElementById('tax-input-container').style.display = (state.region === 'USA' || state.region === 'United States (USA)') ? 'flex' : 'none';
-            }
+            if(id === 'region') document.getElementById('tax-input-container').style.display = state.region === 'USA' ? 'flex' : 'none';
             
             saveState();
             if(id === 'currency') renderItemsEditor(); 
