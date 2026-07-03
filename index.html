@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <script>
@@ -15,7 +15,10 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: { 
+                        sans: ['Inter', 'sans-serif'],
+                        urdu: ['Noto Nastaliq Urdu', 'serif']
+                    },
                     colors: {
                         brand: { 50: '#f5f3ff', 100: '#ede9fe', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' }
                     }
@@ -48,6 +51,8 @@
         .template-classic { font-family: 'Inter', sans-serif; }
         .template-modern { font-family: 'Georgia', serif; letter-spacing: 0.02em; }
         .template-minimal { font-family: monospace; text-transform: uppercase; font-size: 0.8rem; }
+        
+        [dir="rtl"] { font-family: 'Noto Nastaliq Urdu', 'Inter', sans-serif; }
 
         .is-loading { pointer-events: none; opacity: 0.7; position: relative; }
         .is-loading::after {
@@ -58,23 +63,31 @@
         .is-loading > span { opacity: 0; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* Hide file input */
         input[type="file"] { display: none; }
+        
+        /* Modal Transitions */
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.2s ease-out; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 antialiased min-h-screen">
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 antialiased min-h-screen flex flex-col">
 
     <div id="app-layout" class="flex flex-col h-screen overflow-hidden">
         
         <header class="h-16 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between glass-panel z-30 shrink-0">
             <div class="flex items-center gap-4">
                 <span class="font-bold text-xl tracking-tight bg-gradient-to-r from-brand-600 to-indigo-500 bg-clip-text text-transparent">InvoiceSuite Pro</span>
-                <span id="badge-plan" class="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">Pro Version</span>
+                <span class="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider rounded bg-brand-100 text-brand-800 dark:bg-brand-900/30 dark:text-brand-400">v2.0</span>
             </div>
             <div class="flex items-center gap-3">
-                <button id="btn-reset" class="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition">Clear Data</button>
+                <button id="btn-lang-toggle" class="px-3 py-1.5 text-xs font-bold border rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 transition uppercase">EN</button>
+                <button id="btn-history" class="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-brand-600 dark:text-slate-300 dark:hover:text-brand-400 transition flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    History
+                </button>
+                <button id="btn-reset" class="px-3 py-1.5 text-xs font-semibold text-rose-500 hover:text-rose-700 transition">Clear Data</button>
                 <button id="btn-dark-toggle" aria-label="Toggle Dark Mode" class="p-2 border rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M14 12a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                 </button>
             </div>
         </header>
@@ -94,32 +107,22 @@
                             </select>
                         </div>
                         <div class="flex items-center gap-2">
+                            <button id="btn-save-invoice" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-lg transition">Save</button>
                             <button id="btn-pdf" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
                                 <span>Export PDF</span>
                             </button>
                         </div>
                     </div>
 
-                    <!-- Branding / Logo Upload Panel -->
                     <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
-                        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Branding</h3>
-                        <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-lg cursor-pointer transition text-slate-500 dark:text-slate-400 hover:text-brand-600 relative overflow-hidden">
-                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                <svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                                <p class="text-xs font-semibold">Click to upload business logo</p>
-                                <p class="text-[10px]">PNG or JPG</p>
-                            </div>
-                            <input type="file" id="logo-upload" accept="image/png, image/jpeg" />
-                        </label>
-                        <div id="logo-remove-wrapper" class="hidden text-right">
-                            <button id="btn-remove-logo" class="text-xs text-rose-500 hover:text-rose-700">Remove Logo</button>
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Settings & Branding</h3>
+                            <label class="cursor-pointer text-xs font-semibold text-brand-600 hover:text-brand-700">
+                                Upload Logo <input type="file" id="logo-upload" accept="image/png, image/jpeg" />
+                            </label>
                         </div>
-                    </div>
-
-                    <!-- Configuration Panels -->
-                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
-                        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Settings</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
                                 <label class="block text-xs font-medium mb-1 text-slate-500">Type</label>
                                 <select id="doc-type" class="w-full px-3 py-1.5 text-sm border rounded-lg dark:bg-slate-900 dark:border-slate-700 outline-none">
@@ -135,31 +138,30 @@
                                     <option value="GBP">GBP (£)</option>
                                     <option value="CAD">CAD ($)</option>
                                     <option value="AUD">AUD ($)</option>
+                                    <option value="PKR">PKR (Rs)</option>
+                                    <option value="EUR">EUR (€)</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium mb-1 text-slate-500">Region (Tax)</label>
                                 <select id="region" class="w-full px-3 py-1.5 text-sm border rounded-lg dark:bg-slate-900 dark:border-slate-700 outline-none">
-                                    <option value="USA">USA (Custom)</option>
+                                    <option value="USA">Custom</option>
                                     <option value="UK">UK (VAT 20%)</option>
-                                    <option value="CAN">Canada (GST 5%)</option>
-                                    <option value="AUS">Australia (GST 10%)</option>
+                                    <option value="CAN">CAN (GST 5%)</option>
+                                    <option value="AUS">AUS (GST 10%)</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                             <div>
-                                <label class="block text-xs font-medium mb-1 text-slate-500">Template Engine</label>
+                                <label class="block text-xs font-medium mb-1 text-slate-500">Template</label>
                                 <select id="doc-template" class="w-full px-3 py-1.5 text-sm border rounded-lg dark:bg-slate-900 dark:border-slate-700 outline-none">
-                                    <option value="classic">Classic Corporate</option>
-                                    <option value="modern">Modern Editorial</option>
-                                    <option value="minimal">Minimal Technical</option>
+                                    <option value="classic">Classic</option>
+                                    <option value="modern">Modern</option>
+                                    <option value="minimal">Minimal</option>
                                 </select>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Meta Data Panel -->
                     <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
@@ -180,35 +182,53 @@
                                 <label class="block text-xs font-medium mb-1 text-slate-500">From</label>
                                 <textarea id="sender-details" rows="3" class="w-full px-3 py-1.5 text-sm border rounded-lg dark:bg-slate-900 dark:border-slate-700 font-mono text-xs outline-none"></textarea>
                             </div>
-                            <div>
-                                <label class="block text-xs font-medium mb-1 text-slate-500">To</label>
+                            <div class="relative">
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="block text-xs font-medium text-slate-500">To (Client)</label>
+                                    <div class="flex gap-2">
+                                        <select id="lib-clients" class="text-[10px] bg-slate-100 dark:bg-slate-700 border-none rounded px-1 outline-none cursor-pointer max-w-[80px]">
+                                            <option value="">Load...</option>
+                                        </select>
+                                        <button id="btn-save-client" class="text-[10px] text-brand-600 hover:underline">Save Client</button>
+                                    </div>
+                                </div>
                                 <textarea id="client-details" rows="3" class="w-full px-3 py-1.5 text-sm border rounded-lg dark:bg-slate-900 dark:border-slate-700 font-mono text-xs outline-none"></textarea>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Transaction Array -->
                     <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
-                        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Line Items</h3>
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Line Items</h3>
+                        </div>
                         
+                        <datalist id="library-products"></datalist>
+
                         <div id="items-container" class="space-y-3"></div>
 
                         <button id="btn-add-item" class="w-full py-2 border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-lg text-xs font-semibold transition text-slate-500 dark:text-slate-400 hover:text-brand-600 outline-none">
                             + Add Item
                         </button>
 
-                        <div class="pt-4 border-t border-slate-100 dark:border-slate-700 flex flex-col items-end gap-3">
-                            <div class="flex items-center gap-3 text-xs">
-                                <span class="text-slate-400 font-medium">Discount:</span>
-                                <select id="discount-type" class="px-2 py-1 border rounded bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 outline-none">
-                                    <option value="fixed">Fixed</option>
-                                    <option value="percent">Percentage</option>
-                                </select>
-                                <input type="number" id="discount-value" min="0" step="0.01" class="w-20 px-2 py-1 border rounded text-right dark:bg-slate-900 dark:border-slate-700 outline-none">
+                        <div class="pt-4 border-t border-slate-100 dark:border-slate-700 flex flex-col md:flex-row justify-between items-end gap-4">
+                            <div class="w-full md:w-1/2 space-y-2">
+                                <label class="block text-xs font-medium text-slate-500">Payment Details / Notes</label>
+                                <textarea id="payment-details" rows="2" placeholder="Bank Name, IBAN, Mobile Wallet, etc." class="w-full px-3 py-1.5 text-xs border rounded-lg dark:bg-slate-900 dark:border-slate-700 outline-none"></textarea>
                             </div>
-                            <div class="flex items-center gap-3 text-xs" id="tax-input-container">
-                                <span class="text-slate-400 font-medium">Tax Rate (%):</span>
-                                <input type="number" id="tax-rate-manual" min="0" step="0.01" class="w-20 px-2 py-1 border rounded text-right dark:bg-slate-900 dark:border-slate-700 outline-none">
+                            
+                            <div class="flex flex-col items-end gap-3 w-full md:w-auto">
+                                <div class="flex items-center gap-3 text-xs">
+                                    <span class="text-slate-400 font-medium">Discount:</span>
+                                    <select id="discount-type" class="px-2 py-1 border rounded bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 outline-none">
+                                        <option value="fixed">Fixed</option>
+                                        <option value="percent">%</option>
+                                    </select>
+                                    <input type="number" id="discount-value" min="0" step="0.01" class="w-20 px-2 py-1 border rounded text-right dark:bg-slate-900 dark:border-slate-700 outline-none">
+                                </div>
+                                <div class="flex items-center gap-3 text-xs" id="tax-input-container">
+                                    <span class="text-slate-400 font-medium">Tax Rate (%):</span>
+                                    <input type="number" id="tax-rate-manual" min="0" step="0.01" class="w-20 px-2 py-1 border rounded text-right dark:bg-slate-900 dark:border-slate-700 outline-none">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -217,61 +237,67 @@
 
                 <section class="h-full overflow-y-auto p-6 bg-slate-200/50 dark:bg-slate-950/20 flex justify-center">
                     <div id="capture-box" class="w-full max-w-[210mm]">
-                        <div class="a4-document bg-white text-slate-900 p-[20mm] min-h-[297mm] template-classic shadow-xl rounded-sm transition-all relative" id="doc-preview">
+                        <div class="a4-document bg-white text-slate-900 p-[20mm] min-h-[297mm] template-classic shadow-xl rounded-sm transition-all relative" id="doc-preview" dir="ltr">
                             
                             <div id="tpl-header-block" class="flex justify-between items-start mb-12">
-                                <div>
-                                    <!-- Dynamic Logo Injection -->
+                                <div class="text-start">
                                     <img id="prev-logo" class="max-h-16 max-w-[200px] object-contain mb-4 hidden" alt="Business Logo">
                                     <h1 class="text-4xl font-extrabold tracking-tight text-brand-600 uppercase mb-1" id="prev-title">INVOICE</h1>
                                     <p class="text-sm font-bold text-slate-700" id="prev-number-label"># INV-0001</p>
                                     <span id="prev-status-badge" class="inline-block mt-2 px-2 py-0.5 text-xs font-bold uppercase rounded bg-slate-100 text-slate-800">Pending</span>
                                 </div>
-                                <div class="text-right text-xs space-y-1 mt-auto">
-                                    <p><span class="text-slate-400 uppercase font-medium">Date:</span> <strong id="prev-date" class="text-slate-800"></strong></p>
-                                    <p><span class="text-slate-400 uppercase font-medium">Due:</span> <strong id="prev-due-date" class="text-slate-800"></strong></p>
+                                <div class="text-end text-xs space-y-1 mt-auto">
+                                    <p><span class="text-slate-400 uppercase font-medium" id="lbl-date">Date:</span> <strong id="prev-date" class="text-slate-800"></strong></p>
+                                    <p><span class="text-slate-400 uppercase font-medium" id="lbl-due">Due:</span> <strong id="prev-due-date" class="text-slate-800"></strong></p>
                                 </div>
                             </div>
 
                             <div id="tpl-address-block" class="grid grid-cols-2 gap-8 mb-12 text-sm">
-                                <div>
-                                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">From</h3>
+                                <div class="text-start">
+                                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2" id="lbl-from">From</h3>
                                     <p id="prev-sender" class="whitespace-pre-line text-slate-700 leading-relaxed font-medium"></p>
                                 </div>
-                                <div>
-                                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">To</h3>
+                                <div class="text-start">
+                                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2" id="lbl-to">To</h3>
                                     <p id="prev-client" class="whitespace-pre-line text-slate-700 leading-relaxed font-medium"></p>
                                 </div>
                             </div>
 
                             <table class="w-full border-collapse mb-8 text-sm">
                                 <thead>
-                                    <tr class="border-b-2 border-slate-900 text-xs font-bold uppercase tracking-wider text-slate-400 text-left">
-                                        <th class="py-2">Description</th>
-                                        <th class="py-2 text-center w-16">Qty</th>
-                                        <th class="py-2 text-right w-28">Unit Price</th>
-                                        <th class="py-2 text-right w-32">Total</th>
+                                    <tr class="border-b-2 border-slate-900 text-xs font-bold uppercase tracking-wider text-slate-400">
+                                        <th class="py-2 text-start" id="lbl-desc">Description</th>
+                                        <th class="py-2 text-center w-16" id="lbl-qty">Qty</th>
+                                        <th class="py-2 text-end w-28" id="lbl-price">Unit Price</th>
+                                        <th class="py-2 text-end w-32" id="lbl-total">Total</th>
                                     </tr>
                                 </thead>
                                 <tbody id="prev-items-body" class="divide-y divide-slate-100"></tbody>
                             </table>
 
-                            <div class="w-64 ml-auto text-sm space-y-2 pt-4 border-t-2 border-slate-100">
-                                <div class="flex justify-between">
-                                    <span class="text-slate-400 font-medium">Subtotal</span>
-                                    <span id="prev-subtotal" class="font-semibold text-slate-800"></span>
+                            <div class="flex justify-between items-start pt-4 border-t-2 border-slate-100">
+                                <div class="w-1/2 text-sm pe-4">
+                                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1" id="lbl-payment">Payment Details</h3>
+                                    <p id="prev-payment-details" class="whitespace-pre-line text-slate-600 text-xs font-medium leading-relaxed"></p>
                                 </div>
-                                <div class="flex justify-between text-emerald-600 hidden" id="prev-discount-row">
-                                    <span class="font-medium">Discount</span>
-                                    <span id="prev-discount"></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span id="prev-tax-label" class="text-slate-400 font-medium">Tax</span>
-                                    <span id="prev-tax" class="font-semibold text-slate-800"></span>
-                                </div>
-                                <div class="flex justify-between text-lg font-bold pt-2 border-t border-slate-900 text-brand-600">
-                                    <span>Total</span>
-                                    <span id="prev-total"></span>
+                                
+                                <div class="w-64 ms-auto text-sm space-y-2">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-400 font-medium" id="lbl-subtotal">Subtotal</span>
+                                        <span id="prev-subtotal" class="font-semibold text-slate-800"></span>
+                                    </div>
+                                    <div class="flex justify-between text-emerald-600 hidden" id="prev-discount-row">
+                                        <span class="font-medium" id="lbl-discount">Discount</span>
+                                        <span id="prev-discount"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span id="prev-tax-label" class="text-slate-400 font-medium">Tax</span>
+                                        <span id="prev-tax" class="font-semibold text-slate-800"></span>
+                                    </div>
+                                    <div class="flex justify-between text-lg font-bold pt-2 border-t border-slate-900 text-brand-600">
+                                        <span id="lbl-grandtotal">Total</span>
+                                        <span id="prev-total"></span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -279,6 +305,21 @@
                     </div>
                 </section>
             </main>
+        </div>
+    </div>
+
+    <div id="history-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[80vh]">
+            <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100">Saved Invoices</h2>
+                <button id="btn-close-history" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1">
+                <ul id="history-list" class="space-y-2">
+                    </ul>
+            </div>
         </div>
     </div>
 
@@ -293,30 +334,40 @@
                 setTimeout(() => toastEl.classList.add('translate-y-24', 'opacity-0'), 3000);
             }
 
+            // --- DICTIONARY FOR RTL/TRANSLATION ---
+            const dict = {
+                en: { dir: 'ltr', invoice: "INVOICE", receipt: "RECEIPT", quote: "QUOTE", from: "From", to: "To", desc: "Description", qty: "Qty", price: "Unit Price", total: "Total", subtotal: "Subtotal", tax: "Tax", discount: "Discount", payment: "Payment Details", due: "Due:", date: "Date:", gtotal: "Total" },
+                ur: { dir: 'rtl', invoice: "رسید", receipt: "وصولی", quote: "تخمینہ", from: "کی طرف سے", to: "کے نام", desc: "تفصیل", qty: "تعداد", price: "قیمت", total: "کل", subtotal: "میزان", tax: "ٹیکس", discount: "رعایت", payment: "ادائیگی کی تفصیلات", due: "آخری تاریخ:", date: "تاریخ:", gtotal: "کل رقم" }
+            };
+
             // --- APP STATE MANAGEMENT & LOCAL STORAGE ---
             let defaultState = {
                 docType: 'Invoice', currency: 'USD', region: 'USA',
                 docNumber: 'INV-0001', date: new Date().toISOString().split('T')[0], dueDate: '',
                 senderDetails: 'My Company LLC\nNew York, NY 10001',
                 clientDetails: 'Acme Corp\nSan Francisco, CA 94105',
+                paymentDetails: '',
                 items: [{ id: crypto.randomUUID(), desc: 'Web Development Services', qty: 1, price: 1500.00 }],
                 discountType: 'fixed', discountValue: 0, taxRateManual: 0, status: 'Pending', template_id: 'classic',
-                logoDataUrl: null
+                logoDataUrl: null, lang: 'en'
             };
 
             let state = { ...defaultState };
+            let library = { clients: [], products: [], history: [] };
 
-            function loadState() {
-                const saved = localStorage.getItem('invoiceStatePro');
-                if (saved) {
-                    try { state = { ...state, ...JSON.parse(saved) }; } 
-                    catch (e) { console.error("Could not parse saved state"); }
+            function loadAppData() {
+                const savedState = localStorage.getItem('invoiceStatePro');
+                const savedLib = localStorage.getItem('invoiceLibraryPro');
+                if (savedState) {
+                    try { state = { ...state, ...JSON.parse(savedState) }; } catch(e){}
+                }
+                if (savedLib) {
+                    try { library = { ...library, ...JSON.parse(savedLib) }; } catch(e){}
                 }
             }
 
-            function saveState() {
-                localStorage.setItem('invoiceStatePro', JSON.stringify(state));
-            }
+            function saveState() { localStorage.setItem('invoiceStatePro', JSON.stringify(state)); }
+            function saveLibrary() { localStorage.setItem('invoiceLibraryPro', JSON.stringify(library)); }
 
             function syncDOMWithState() {
                 document.getElementById('doc-type').value = state.docType;
@@ -327,25 +378,29 @@
                 document.getElementById('doc-due-date').value = state.dueDate;
                 document.getElementById('sender-details').value = state.senderDetails;
                 document.getElementById('client-details').value = state.clientDetails;
+                document.getElementById('payment-details').value = state.paymentDetails;
                 document.getElementById('discount-type').value = state.discountType;
                 document.getElementById('discount-value').value = state.discountValue;
                 document.getElementById('tax-rate-manual').value = state.taxRateManual;
                 document.getElementById('doc-status').value = state.status;
                 document.getElementById('doc-template').value = state.template_id;
                 document.getElementById('tax-input-container').style.display = state.region === 'USA' ? 'flex' : 'none';
+                
+                document.getElementById('btn-lang-toggle').textContent = state.lang.toUpperCase();
             }
 
             // Initialization 
-            loadState();
+            loadAppData();
             syncDOMWithState();
+            updateClientDropdown();
+            updateProductDatalist();
 
             let calcTotals = { subtotal: 0, discount: 0, tax: 0, total: 0 };
             const itemsContainer = document.getElementById('items-container');
-            const btnPdf = document.getElementById('btn-pdf');
 
             // --- CORE UTILS ---
             function formatMoney(amount) {
-                const locales = { 'USD': 'en-US', 'GBP': 'en-GB', 'CAD': 'en-CA', 'AUD': 'en-AU' };
+                const locales = { 'USD': 'en-US', 'GBP': 'en-GB', 'CAD': 'en-CA', 'AUD': 'en-AU', 'EUR': 'en-IE', 'PKR': 'en-PK' };
                 return new Intl.NumberFormat(locales[state.currency] || 'en-US', {
                     style: 'currency', currency: state.currency
                 }).format(amount);
@@ -367,7 +422,121 @@
                 calcTotals = { subtotal: sub, discount: disc, tax: tax, total: afterDisc + tax };
             }
 
-            // --- ITEM EVENT LISTENERS (FIXED FOCUS ISSUE) ---
+            // --- LIBRARY FEATURES ---
+            document.getElementById('btn-save-client').addEventListener('click', () => {
+                if(!state.clientDetails.trim()) return showToast("Client details are empty.");
+                if(!library.clients.includes(state.clientDetails)) {
+                    library.clients.push(state.clientDetails);
+                    saveLibrary();
+                    updateClientDropdown();
+                    showToast("Client saved to library.");
+                } else {
+                    showToast("Client already in library.");
+                }
+            });
+
+            document.getElementById('lib-clients').addEventListener('change', (e) => {
+                if(e.target.value !== "") {
+                    state.clientDetails = library.clients[parseInt(e.target.value)];
+                    document.getElementById('client-details').value = state.clientDetails;
+                    saveState();
+                    renderPreview();
+                    e.target.value = ""; // reset dropdown
+                }
+            });
+
+            function updateClientDropdown() {
+                const select = document.getElementById('lib-clients');
+                select.innerHTML = '<option value="">Load...</option>' + library.clients.map((c, i) => {
+                    const shortName = c.split('\n')[0].substring(0, 20);
+                    return `<option value="${i}">${shortName}</option>`;
+                }).join('');
+            }
+
+            function saveProductToLibrary(desc, price) {
+                if(!desc.trim()) return;
+                const existing = library.products.find(p => p.desc === desc);
+                if(existing) { existing.price = price; } 
+                else { library.products.push({desc, price}); }
+                saveLibrary();
+                updateProductDatalist();
+            }
+
+            function updateProductDatalist() {
+                document.getElementById('library-products').innerHTML = library.products.map(p => `<option value="${p.desc}">`).join('');
+            }
+
+            // --- HISTORY FEATURES ---
+            document.getElementById('btn-save-invoice').addEventListener('click', () => {
+                const record = {
+                    id: Date.now().toString(),
+                    date: new Date().toLocaleString(),
+                    docNumber: state.docNumber,
+                    clientInfo: state.clientDetails.split('\n')[0],
+                    total: calcTotals.total,
+                    currency: state.currency,
+                    stateSnapshot: JSON.stringify(state)
+                };
+                
+                // Update if same Doc Number exists to prevent clutter, or push new
+                const existingIdx = library.history.findIndex(h => h.docNumber === state.docNumber);
+                if(existingIdx > -1) library.history[existingIdx] = record;
+                else library.history.unshift(record);
+                
+                saveLibrary();
+                showToast("Invoice saved to History.");
+            });
+
+            const historyModal = document.getElementById('history-modal');
+            document.getElementById('btn-history').addEventListener('click', () => {
+                renderHistoryList();
+                historyModal.classList.remove('hidden');
+            });
+            document.getElementById('btn-close-history').addEventListener('click', () => historyModal.classList.add('hidden'));
+
+            function renderHistoryList() {
+                const list = document.getElementById('history-list');
+                if(library.history.length === 0) {
+                    list.innerHTML = `<p class="text-sm text-slate-500 text-center py-6">No saved invoices yet.</p>`;
+                    return;
+                }
+                list.innerHTML = library.history.map(h => `
+                    <li class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 rounded-lg">
+                        <div>
+                            <p class="font-semibold text-sm text-brand-600">${h.docNumber} <span class="text-slate-400 text-xs font-normal">(${h.date})</span></p>
+                            <p class="text-xs text-slate-500">${h.clientInfo} • ${h.currency} ${h.total.toFixed(2)}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="btn-load-history px-3 py-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-xs font-medium rounded" data-id="${h.id}">Load</button>
+                            <button class="btn-del-history px-2 py-1 bg-rose-100 text-rose-600 hover:bg-rose-200 text-xs font-medium rounded" data-id="${h.id}">Del</button>
+                        </div>
+                    </li>
+                `).join('');
+            }
+
+            document.getElementById('history-list').addEventListener('click', (e) => {
+                const id = e.target.dataset.id;
+                if(!id) return;
+                if(e.target.classList.contains('btn-load-history')) {
+                    const record = library.history.find(h => h.id === id);
+                    if(record) {
+                        state = JSON.parse(record.stateSnapshot);
+                        saveState();
+                        syncDOMWithState();
+                        renderItemsEditor();
+                        renderPreview();
+                        historyModal.classList.add('hidden');
+                        showToast("Invoice loaded.");
+                    }
+                } else if(e.target.classList.contains('btn-del-history')) {
+                    library.history = library.history.filter(h => h.id !== id);
+                    saveLibrary();
+                    renderHistoryList();
+                }
+            });
+
+
+            // --- ITEM EVENT LISTENERS ---
             itemsContainer.addEventListener('input', (e) => {
                 if (e.target.tagName === 'INPUT') {
                     const id = e.target.dataset.id;
@@ -375,7 +544,16 @@
                     const item = state.items.find(i => i.id === id);
                     if(item) {
                         item[field] = field === 'desc' ? e.target.value : parseFloat(e.target.value) || 0;
-                        // Update DOM directly instead of fully re-rendering the item input list
+                        
+                        // Auto-fill price from library if desc matches
+                        if(field === 'desc') {
+                            const libItem = library.products.find(p => p.desc === e.target.value);
+                            if(libItem) {
+                                item.price = libItem.price;
+                                e.target.closest('.grid').querySelector('[data-field="price"]').value = libItem.price;
+                            }
+                        }
+
                         const row = e.target.closest('.grid');
                         const totalEl = row.querySelector('.item-total');
                         if (totalEl) totalEl.textContent = formatMoney(item.qty * item.price);
@@ -383,6 +561,15 @@
                         saveState();
                         renderPreview(); 
                     }
+                }
+            });
+
+            // Save product to library on blur (loss of focus)
+            itemsContainer.addEventListener('focusout', (e) => {
+                if(e.target.tagName === 'INPUT' && (e.target.dataset.field === 'desc' || e.target.dataset.field === 'price')) {
+                    const id = e.target.dataset.id;
+                    const item = state.items.find(i => i.id === id);
+                    if(item && item.desc && item.price > 0) saveProductToLibrary(item.desc, item.price);
                 }
             });
 
@@ -395,7 +582,7 @@
                         state.items.push({ id: crypto.randomUUID(), desc: '', qty: 1, price: 0 });
                     }
                     saveState();
-                    renderItemsEditor(); // Safe to re-render inputs entirely on structural changes
+                    renderItemsEditor(); 
                     renderPreview();
                 }
             });
@@ -403,11 +590,11 @@
             function renderItemsEditor() {
                 itemsContainer.innerHTML = state.items.map(item => `
                     <div class="grid grid-cols-[2fr_1fr_1fr_1fr_40px] gap-2 items-center">
-                        <input type="text" placeholder="Description" value="${item.desc}" data-id="${item.id}" data-field="desc" class="px-2 py-1 text-xs border rounded dark:bg-slate-900 dark:border-slate-700 outline-none">
+                        <input type="text" list="library-products" placeholder="Description" value="${item.desc}" data-id="${item.id}" data-field="desc" class="px-2 py-1 text-xs border rounded dark:bg-slate-900 dark:border-slate-700 outline-none">
                         <input type="number" min="1" step="1" value="${item.qty}" data-id="${item.id}" data-field="qty" class="px-2 py-1 text-xs border rounded text-center dark:bg-slate-900 dark:border-slate-700 outline-none">
                         <input type="number" min="0" step="0.01" value="${item.price}" data-id="${item.id}" data-field="price" class="px-2 py-1 text-xs border rounded text-right dark:bg-slate-900 dark:border-slate-700 outline-none">
                         <div class="text-right text-xs font-semibold px-2 item-total">${formatMoney(item.qty * item.price)}</div>
-                        <button class="p-1 border rounded hover:bg-red-50 text-red-500 dark:border-slate-700 dark:hover:bg-red-950/20 del-item outline-none" data-id="${item.id}">
+                        <button class="p-1 border rounded hover:bg-rose-50 text-rose-500 dark:border-slate-700 dark:hover:bg-rose-950/20 del-item outline-none" data-id="${item.id}">
                             <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>
@@ -418,26 +605,47 @@
                 const previewEl = document.getElementById('doc-preview');
                 previewEl.className = `a4-document bg-white text-slate-900 p-[20mm] min-h-[297mm] transition-all template-${state.template_id}`;
                 
+                // Language & RTL apply
+                const langDict = dict[state.lang];
+                previewEl.setAttribute('dir', langDict.dir);
+                
                 // Handle Logo
                 const logoImg = document.getElementById('prev-logo');
-                const btnRemoveLogo = document.getElementById('logo-remove-wrapper');
                 if (state.logoDataUrl) {
                     logoImg.src = state.logoDataUrl;
                     logoImg.classList.remove('hidden');
-                    btnRemoveLogo.classList.remove('hidden');
                 } else {
                     logoImg.src = '';
                     logoImg.classList.add('hidden');
-                    btnRemoveLogo.classList.add('hidden');
                 }
 
-                document.getElementById('prev-title').textContent = state.docType.toUpperCase();
+                // Apply Translations & Core Text
+                const typeKey = state.docType.toLowerCase();
+                document.getElementById('prev-title').textContent = langDict[typeKey] || state.docType.toUpperCase();
                 document.getElementById('prev-number-label').textContent = `# ${state.docNumber}`;
                 document.getElementById('prev-date').textContent = state.date;
                 document.getElementById('prev-due-date').textContent = state.dueDate;
                 document.getElementById('prev-sender').textContent = state.senderDetails;
                 document.getElementById('prev-client').textContent = state.clientDetails;
+                document.getElementById('prev-payment-details').textContent = state.paymentDetails;
                 
+                // Dictionary Labels
+                document.getElementById('lbl-from').textContent = langDict.from;
+                document.getElementById('lbl-to').textContent = langDict.to;
+                document.getElementById('lbl-date').textContent = langDict.date;
+                document.getElementById('lbl-due').textContent = langDict.due;
+                document.getElementById('lbl-desc').textContent = langDict.desc;
+                document.getElementById('lbl-qty').textContent = langDict.qty;
+                document.getElementById('lbl-price').textContent = langDict.price;
+                document.getElementById('lbl-total').textContent = langDict.total;
+                document.getElementById('lbl-subtotal').textContent = langDict.subtotal;
+                document.getElementById('lbl-discount').textContent = langDict.discount;
+                document.getElementById('lbl-payment').textContent = langDict.payment;
+                document.getElementById('lbl-grandtotal').textContent = langDict.gtotal;
+                
+                // Toggle Payment Info visibility
+                document.getElementById('lbl-payment').parentElement.style.display = state.paymentDetails ? 'block' : 'none';
+
                 const badge = document.getElementById('prev-status-badge');
                 badge.textContent = state.status;
                 badge.className = `inline-block mt-2 px-2 py-0.5 text-xs font-bold uppercase rounded ${state.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : state.status === 'Unpaid' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`;
@@ -446,8 +654,8 @@
                     <tr class="border-b border-slate-100">
                         <td class="py-3 font-medium text-slate-700">${item.desc}</td>
                         <td class="py-3 text-center text-slate-500">${item.qty}</td>
-                        <td class="py-3 text-right text-slate-500">${formatMoney(item.price)}</td>
-                        <td class="py-3 text-right font-semibold text-slate-800">${formatMoney(item.qty * item.price)}</td>
+                        <td class="py-3 text-end text-slate-500">${formatMoney(item.price)}</td>
+                        <td class="py-3 text-end font-semibold text-slate-800">${formatMoney(item.qty * item.price)}</td>
                     </tr>
                 `).join('');
 
@@ -456,11 +664,19 @@
                 document.getElementById('prev-discount').textContent = `-${formatMoney(calcTotals.discount)}`;
                 document.getElementById('prev-discount-row').style.display = calcTotals.discount > 0 ? 'flex' : 'none';
                 
-                let taxLabel = state.region === 'USA' ? `Tax (${getTaxRate()}%)` : state.region === 'UK' ? 'VAT (20%)' : state.region === 'CAN' ? 'GST (5%)' : 'GST (10%)';
+                let taxLabel = state.region === 'USA' ? `${langDict.tax} (${getTaxRate()}%)` : state.region === 'UK' ? 'VAT (20%)' : state.region === 'CAN' ? 'GST (5%)' : 'GST (10%)';
                 document.getElementById('prev-tax-label').textContent = taxLabel;
                 document.getElementById('prev-tax').textContent = formatMoney(calcTotals.tax);
                 document.getElementById('prev-total').textContent = formatMoney(calcTotals.total);
             }
+
+            // EN/UR Language Toggle
+            document.getElementById('btn-lang-toggle').addEventListener('click', (e) => {
+                state.lang = state.lang === 'en' ? 'ur' : 'en';
+                e.target.textContent = state.lang.toUpperCase();
+                saveState();
+                renderPreview();
+            });
 
             // Logo Upload Handler
             document.getElementById('logo-upload').addEventListener('change', function(e) {
@@ -474,13 +690,6 @@
                     }
                     reader.readAsDataURL(file);
                 }
-            });
-
-            document.getElementById('btn-remove-logo').addEventListener('click', () => {
-                state.logoDataUrl = null;
-                document.getElementById('logo-upload').value = ''; // Reset file input
-                saveState();
-                renderPreview();
             });
 
             // Input Event Listeners
@@ -498,12 +707,12 @@
                 });
             });
 
-            ['doc-number', 'doc-date', 'doc-due-date', 'sender-details', 'client-details', 'discount-value', 'tax-rate-manual'].forEach(id => {
+            ['doc-number', 'doc-date', 'doc-due-date', 'sender-details', 'client-details', 'payment-details', 'discount-value', 'tax-rate-manual'].forEach(id => {
                 document.getElementById(id).addEventListener('input', e => {
                     const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
                     state[key === 'docDate' ? 'date' : key] = e.target.value;
                     saveState();
-                    renderPreview(); // Real-time preview ONLY (stops focus break on settings inputs)
+                    renderPreview();
                 });
             });
 
@@ -516,17 +725,18 @@
 
             // Clear Data Hook
             document.getElementById('btn-reset').addEventListener('click', () => {
-                if(confirm("Are you sure you want to clear all invoice data?")) {
+                if(confirm("Are you sure you want to clear current input data? (Library and history are kept)")) {
                     localStorage.removeItem('invoiceStatePro');
-                    state = { ...defaultState, items: [{ id: crypto.randomUUID(), desc: '', qty: 1, price: 0 }] };
+                    state = { ...defaultState, items: [{ id: crypto.randomUUID(), desc: '', qty: 1, price: 0 }], lang: state.lang };
                     syncDOMWithState();
                     renderItemsEditor();
                     renderPreview();
-                    showToast("Data cleared successfully.");
+                    showToast("Workspace cleared.");
                 }
             });
 
             // Non-blocking PDF Export 
+            const btnPdf = document.getElementById('btn-pdf');
             btnPdf.addEventListener('click', async () => {
                 const element = document.getElementById('doc-preview');
                 btnPdf.classList.add('is-loading');
