@@ -65,14 +65,52 @@
 
         input[type="file"] { display: none; }
         
-        /* Modal Transitions */
         .modal-enter { opacity: 0; transform: scale(0.95); }
         .modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.2s ease-out; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 antialiased min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 antialiased min-h-screen flex flex-col relative">
 
-    <div id="app-layout" class="flex flex-col h-screen overflow-hidden">
+    <!-- Auth Container (Login Form) -->
+    <div id="auth-container" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-sm transition-opacity duration-300">
+        <div class="glass-panel w-full max-w-md p-8 rounded-2xl shadow-2xl relative">
+            <h2 class="text-2xl font-extrabold text-center mb-6 bg-gradient-to-r from-brand-600 to-indigo-500 bg-clip-text text-transparent">Login to InvoiceSuite</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Email</label>
+                    <input type="email" id="auth-email" placeholder="you@example.com" class="w-full px-4 py-2 text-sm border rounded-lg bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Password</label>
+                    <input type="password" id="auth-password" placeholder="••••••••" class="w-full px-4 py-2 text-sm border rounded-lg bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
+                </div>
+                <div id="re-password-container" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">Re-enter Password</label>
+                    <input type="password" id="auth-re-password" placeholder="••••••••" class="w-full px-4 py-2 text-sm border rounded-lg bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition">
+                </div>
+                
+                <div class="flex justify-between items-center text-xs">
+                    <button id="btn-toggle-auth" class="text-brand-600 hover:text-brand-700 font-bold transition">Create an account</button>
+                    <button id="btn-forgot-password" class="text-slate-500 hover:text-brand-600 transition font-medium">Forgot Password?</button>
+                </div>
+
+                <button id="btn-auth-action" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-lg shadow-md transition mt-2">Login</button>
+                
+                <div class="flex items-center my-4 before:flex-1 before:border-t before:border-slate-200 dark:before:border-slate-700 after:flex-1 after:border-t after:border-slate-200 dark:after:border-slate-700">
+                    <span class="px-3 text-xs text-slate-400 font-semibold uppercase tracking-wider">OR</span>
+                </div>
+
+                <button id="btn-google-login" class="w-full py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-lg shadow-sm transition flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Login with Google
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Layout (Hidden by default until logged in) -->
+    <div id="app-layout" class="flex flex-col h-screen overflow-hidden hidden">
         
         <header class="h-16 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between glass-panel z-30 shrink-0">
             <div class="flex items-center gap-4">
@@ -86,6 +124,7 @@
                     History
                 </button>
                 <button id="btn-reset" class="px-3 py-1.5 text-xs font-semibold text-rose-500 hover:text-rose-700 transition">Clear Data</button>
+                <button id="btn-logout" class="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-500 transition">Logout</button>
                 <button id="btn-dark-toggle" aria-label="Toggle Dark Mode" class="p-2 border rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-200 dark:border-slate-700 transition">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                 </button>
@@ -317,14 +356,141 @@
                 </button>
             </div>
             <div class="p-4 overflow-y-auto flex-1">
-                <ul id="history-list" class="space-y-2">
-                    </ul>
+                <ul id="history-list" class="space-y-2"></ul>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-6 right-6 px-4 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl shadow-xl font-medium text-sm transform translate-y-24 opacity-0 transition duration-300 ease-out z-50 pointer-events-none"></div>
+    <div id="toast" class="fixed bottom-6 right-6 px-4 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl shadow-xl font-medium text-sm transform translate-y-24 opacity-0 transition duration-300 ease-out z-[110] pointer-events-none"></div>
 
+    <!-- Firebase Auth Module -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBURD...",
+            authDomain: "invoice-57140.firebaseapp.com",
+            projectId: "invoice-57140",
+            storageBucket: "invoice-57140.firebasestorage.app",
+            messagingSenderId: "138676617410",
+            appId: "1:138676617410:web:c9a794133716a3f1e7bb5b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // UI Elements
+        const authContainer = document.getElementById('auth-container');
+        const appLayout = document.getElementById('app-layout');
+        const btnGoogleLogin = document.getElementById('btn-google-login');
+        const btnAuthAction = document.getElementById('btn-auth-action');
+        const btnToggleAuth = document.getElementById('btn-toggle-auth');
+        const btnForgotPass = document.getElementById('btn-forgot-password');
+        const btnLogout = document.getElementById('btn-logout');
+        
+        const emailInput = document.getElementById('auth-email');
+        const passInput = document.getElementById('auth-password');
+        const repassInput = document.getElementById('auth-re-password');
+        const repassContainer = document.getElementById('re-password-container');
+        const toastEl = document.getElementById('toast');
+
+        let isSignUp = false;
+
+        function showAuthToast(msg) {
+            toastEl.textContent = msg;
+            toastEl.classList.remove('translate-y-24', 'opacity-0');
+            setTimeout(() => toastEl.classList.add('translate-y-24', 'opacity-0'), 3000);
+        }
+
+        // Toggle Login/Signup
+        btnToggleAuth.addEventListener('click', () => {
+            isSignUp = !isSignUp;
+            if(isSignUp) {
+                repassContainer.classList.remove('hidden');
+                btnAuthAction.textContent = 'Sign Up';
+                btnToggleAuth.textContent = 'Already have an account? Login';
+            } else {
+                repassContainer.classList.add('hidden');
+                btnAuthAction.textContent = 'Login';
+                btnToggleAuth.textContent = 'Create an account';
+            }
+        });
+
+        // Email Auth (Login & Register)
+        btnAuthAction.addEventListener('click', () => {
+            const email = emailInput.value;
+            const password = passInput.value;
+            
+            if(!email || !password) return showAuthToast("Please enter email and password.");
+
+            if(isSignUp) {
+                const repass = repassInput.value;
+                if(password !== repass) return showAuthToast("Passwords do not match!");
+                
+                btnAuthAction.textContent = 'Loading...';
+                createUserWithEmailAndPassword(auth, email, password)
+                    .then(() => showAuthToast("Account created successfully!"))
+                    .catch(err => {
+                        showAuthToast(err.message);
+                        btnAuthAction.textContent = 'Sign Up';
+                    });
+            } else {
+                btnAuthAction.textContent = 'Loading...';
+                signInWithEmailAndPassword(auth, email, password)
+                    .then(() => showAuthToast("Logged in successfully!"))
+                    .catch(err => {
+                        showAuthToast("Login failed: " + err.message);
+                        btnAuthAction.textContent = 'Login';
+                    });
+            }
+        });
+
+        // Google Auth
+        btnGoogleLogin.addEventListener('click', () => {
+            signInWithPopup(auth, provider)
+                .then(() => showAuthToast("Logged in with Google!"))
+                .catch(err => showAuthToast("Google Login failed: " + err.message));
+        });
+
+        // Forgot Password
+        btnForgotPass.addEventListener('click', () => {
+            const email = emailInput.value;
+            if(!email) return showAuthToast("Please enter your email first to reset password.");
+            sendPasswordResetEmail(auth, email)
+                .then(() => showAuthToast("Password reset email sent!"))
+                .catch(err => showAuthToast(err.message));
+        });
+
+        // Logout
+        if(btnLogout) {
+            btnLogout.addEventListener('click', () => {
+                signOut(auth).then(() => {
+                    showAuthToast("Logged out successfully.");
+                }).catch((error) => {
+                    showAuthToast("Error logging out.");
+                });
+            });
+        }
+
+        // Auth State Listener (Hides App/Shows Form based on login state)
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                authContainer.classList.add('hidden');
+                appLayout.classList.remove('hidden');
+                btnAuthAction.textContent = isSignUp ? 'Sign Up' : 'Login';
+            } else {
+                authContainer.classList.remove('hidden');
+                appLayout.classList.add('hidden');
+                emailInput.value = '';
+                passInput.value = '';
+                repassInput.value = '';
+            }
+        });
+    </script>
+
+    <!-- Main App Script (No changes here) -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const toastEl = document.getElementById('toast');
@@ -334,13 +500,11 @@
                 setTimeout(() => toastEl.classList.add('translate-y-24', 'opacity-0'), 3000);
             }
 
-            // --- DICTIONARY FOR RTL/TRANSLATION ---
             const dict = {
                 en: { dir: 'ltr', invoice: "INVOICE", receipt: "RECEIPT", quote: "QUOTE", from: "From", to: "To", desc: "Description", qty: "Qty", price: "Unit Price", total: "Total", subtotal: "Subtotal", tax: "Tax", discount: "Discount", payment: "Payment Details", due: "Due:", date: "Date:", gtotal: "Total" },
                 ur: { dir: 'rtl', invoice: "رسید", receipt: "وصولی", quote: "تخمینہ", from: "کی طرف سے", to: "کے نام", desc: "تفصیل", qty: "تعداد", price: "قیمت", total: "کل", subtotal: "میزان", tax: "ٹیکس", discount: "رعایت", payment: "ادائیگی کی تفصیلات", due: "آخری تاریخ:", date: "تاریخ:", gtotal: "کل رقم" }
             };
 
-            // --- APP STATE MANAGEMENT & LOCAL STORAGE ---
             let defaultState = {
                 docType: 'Invoice', currency: 'USD', region: 'USA',
                 docNumber: 'INV-0001', date: new Date().toISOString().split('T')[0], dueDate: '',
@@ -389,7 +553,6 @@
                 document.getElementById('btn-lang-toggle').textContent = state.lang.toUpperCase();
             }
 
-            // Initialization 
             loadAppData();
             syncDOMWithState();
             updateClientDropdown();
@@ -398,7 +561,6 @@
             let calcTotals = { subtotal: 0, discount: 0, tax: 0, total: 0 };
             const itemsContainer = document.getElementById('items-container');
 
-            // --- CORE UTILS ---
             function formatMoney(amount) {
                 const locales = { 'USD': 'en-US', 'GBP': 'en-GB', 'CAD': 'en-CA', 'AUD': 'en-AU', 'EUR': 'en-IE', 'PKR': 'en-PK' };
                 return new Intl.NumberFormat(locales[state.currency] || 'en-US', {
@@ -422,7 +584,6 @@
                 calcTotals = { subtotal: sub, discount: disc, tax: tax, total: afterDisc + tax };
             }
 
-            // --- LIBRARY FEATURES ---
             document.getElementById('btn-save-client').addEventListener('click', () => {
                 if(!state.clientDetails.trim()) return showToast("Client details are empty.");
                 if(!library.clients.includes(state.clientDetails)) {
@@ -441,7 +602,7 @@
                     document.getElementById('client-details').value = state.clientDetails;
                     saveState();
                     renderPreview();
-                    e.target.value = ""; // reset dropdown
+                    e.target.value = ""; 
                 }
             });
 
@@ -466,7 +627,6 @@
                 document.getElementById('library-products').innerHTML = library.products.map(p => `<option value="${p.desc}">`).join('');
             }
 
-            // --- HISTORY FEATURES ---
             document.getElementById('btn-save-invoice').addEventListener('click', () => {
                 const record = {
                     id: Date.now().toString(),
@@ -478,7 +638,6 @@
                     stateSnapshot: JSON.stringify(state)
                 };
                 
-                // Update if same Doc Number exists to prevent clutter, or push new
                 const existingIdx = library.history.findIndex(h => h.docNumber === state.docNumber);
                 if(existingIdx > -1) library.history[existingIdx] = record;
                 else library.history.unshift(record);
@@ -535,8 +694,6 @@
                 }
             });
 
-
-            // --- ITEM EVENT LISTENERS ---
             itemsContainer.addEventListener('input', (e) => {
                 if (e.target.tagName === 'INPUT') {
                     const id = e.target.dataset.id;
@@ -545,7 +702,6 @@
                     if(item) {
                         item[field] = field === 'desc' ? e.target.value : parseFloat(e.target.value) || 0;
                         
-                        // Auto-fill price from library if desc matches
                         if(field === 'desc') {
                             const libItem = library.products.find(p => p.desc === e.target.value);
                             if(libItem) {
@@ -564,7 +720,6 @@
                 }
             });
 
-            // Save product to library on blur (loss of focus)
             itemsContainer.addEventListener('focusout', (e) => {
                 if(e.target.tagName === 'INPUT' && (e.target.dataset.field === 'desc' || e.target.dataset.field === 'price')) {
                     const id = e.target.dataset.id;
@@ -605,11 +760,9 @@
                 const previewEl = document.getElementById('doc-preview');
                 previewEl.className = `a4-document bg-white text-slate-900 p-[20mm] min-h-[297mm] transition-all template-${state.template_id}`;
                 
-                // Language & RTL apply
                 const langDict = dict[state.lang];
                 previewEl.setAttribute('dir', langDict.dir);
                 
-                // Handle Logo
                 const logoImg = document.getElementById('prev-logo');
                 if (state.logoDataUrl) {
                     logoImg.src = state.logoDataUrl;
@@ -619,7 +772,6 @@
                     logoImg.classList.add('hidden');
                 }
 
-                // Apply Translations & Core Text
                 const typeKey = state.docType.toLowerCase();
                 document.getElementById('prev-title').textContent = langDict[typeKey] || state.docType.toUpperCase();
                 document.getElementById('prev-number-label').textContent = `# ${state.docNumber}`;
@@ -629,7 +781,6 @@
                 document.getElementById('prev-client').textContent = state.clientDetails;
                 document.getElementById('prev-payment-details').textContent = state.paymentDetails;
                 
-                // Dictionary Labels
                 document.getElementById('lbl-from').textContent = langDict.from;
                 document.getElementById('lbl-to').textContent = langDict.to;
                 document.getElementById('lbl-date').textContent = langDict.date;
@@ -643,7 +794,6 @@
                 document.getElementById('lbl-payment').textContent = langDict.payment;
                 document.getElementById('lbl-grandtotal').textContent = langDict.gtotal;
                 
-                // Toggle Payment Info visibility
                 document.getElementById('lbl-payment').parentElement.style.display = state.paymentDetails ? 'block' : 'none';
 
                 const badge = document.getElementById('prev-status-badge');
@@ -670,7 +820,6 @@
                 document.getElementById('prev-total').textContent = formatMoney(calcTotals.total);
             }
 
-            // EN/UR Language Toggle
             document.getElementById('btn-lang-toggle').addEventListener('click', (e) => {
                 state.lang = state.lang === 'en' ? 'ur' : 'en';
                 e.target.textContent = state.lang.toUpperCase();
@@ -678,7 +827,6 @@
                 renderPreview();
             });
 
-            // Logo Upload Handler
             document.getElementById('logo-upload').addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
@@ -692,7 +840,6 @@
                 }
             });
 
-            // Input Event Listeners
             ['doc-type', 'currency', 'region', 'doc-template', 'discount-type', 'doc-status'].forEach(id => {
                 document.getElementById(id).addEventListener('change', e => { 
                     const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
@@ -702,7 +849,7 @@
                     if(id === 'region') document.getElementById('tax-input-container').style.display = state.region === 'USA' ? 'flex' : 'none';
                     
                     saveState();
-                    if(id === 'currency') renderItemsEditor(); // Refresh currency format in input list
+                    if(id === 'currency') renderItemsEditor(); 
                     renderPreview();
                 });
             });
@@ -723,7 +870,6 @@
                 renderPreview();
             });
 
-            // Clear Data Hook
             document.getElementById('btn-reset').addEventListener('click', () => {
                 if(confirm("Are you sure you want to clear current input data? (Library and history are kept)")) {
                     localStorage.removeItem('invoiceStatePro');
@@ -735,7 +881,6 @@
                 }
             });
 
-            // Non-blocking PDF Export 
             const btnPdf = document.getElementById('btn-pdf');
             btnPdf.addEventListener('click', async () => {
                 const element = document.getElementById('doc-preview');
@@ -767,7 +912,6 @@
                 document.documentElement.classList.toggle('dark');
             });
 
-            // Initial Render
             renderItemsEditor();
             renderPreview();
         });
