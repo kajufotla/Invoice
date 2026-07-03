@@ -71,7 +71,6 @@
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 antialiased min-h-screen flex flex-col relative">
 
-    <!-- Auth Container (Login Form) -->
     <div id="auth-container" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-sm transition-opacity duration-300">
         <div class="glass-panel w-full max-w-md p-8 rounded-2xl shadow-2xl relative">
             <h2 class="text-2xl font-extrabold text-center mb-6 bg-gradient-to-r from-brand-600 to-indigo-500 bg-clip-text text-transparent">Login to InvoiceSuite</h2>
@@ -109,7 +108,6 @@
         </div>
     </div>
 
-    <!-- Main App Layout (Hidden by default until logged in) -->
     <div id="app-layout" class="flex flex-col h-screen overflow-hidden hidden">
         
         <header class="h-16 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between glass-panel z-30 shrink-0">
@@ -363,18 +361,19 @@
 
     <div id="toast" class="fixed bottom-6 right-6 px-4 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl shadow-xl font-medium text-sm transform translate-y-24 opacity-0 transition duration-300 ease-out z-[110] pointer-events-none"></div>
 
-    <!-- Firebase Auth Module -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
+        // Your provided Firebase Config
         const firebaseConfig = {
-            apiKey: "AIzaSyBURD...",
+            apiKey: "AIzaSyBURDkNr9TMqzrf0BRx0J4VJVJe_rEJZus",
             authDomain: "invoice-57140.firebaseapp.com",
             projectId: "invoice-57140",
             storageBucket: "invoice-57140.firebasestorage.app",
             messagingSenderId: "138676617410",
-            appId: "1:138676617410:web:c9a794133716a3f1e7bb5b"
+            appId: "1:138676617410:web:c9a794133716a3f1e7bb5b",
+            measurementId: "G-C4TSL5SZBK"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -490,7 +489,6 @@
         });
     </script>
 
-    <!-- Main App Script (No changes here) -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const toastEl = document.getElementById('toast');
