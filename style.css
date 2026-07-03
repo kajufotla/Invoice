@@ -1,4 +1,4 @@
-body { 
+Body { 
     font-family: 'Inter', sans-serif; 
     transition: background-color 0.3s ease, color 0.3s ease; 
 }
@@ -53,3 +53,37 @@ input[type="file"] { display: none; }
 
 /* Smooth transitions for inputs */
 input, select, textarea { transition: all 0.2s ease; }
+
+/* Global CSS Print Optimization Ruleset */
+@media print {
+    .no-print, header, nav, section.no-print, #editor-controls-pane {
+        display: none !important;
+    }
+    body, html, #app-layout, main {
+        background: #ffffff !important;
+        color: #000000 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    #preview-container-pane {
+        padding: 0 !important;
+        background: transparent !important;
+        overflow: visible !important;
+        display: block !important;
+    }
+    .a4-document {
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+}
+
+/* Framework UI Mode Toggles */
+body.print-preview-active #editor-controls-pane {
+    display: none !important;
+}
+body.print-preview-active #preview-container-pane {
+    width: 100% !important;
+    grid-column: span 2 / span 2 !important;
+}
