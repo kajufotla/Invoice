@@ -1,1 +1,134 @@
+<!-- /quote-generator/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Quote & Estimate Generator USA/UK | Online Tool</title>
+    <meta name="description" content="Create professional business quotes and estimates quickly. Win more clients with our clean, SaaS-style PDF quote generator. Free to use.">
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-mode="quote">
 
+    <nav class="navbar print-hide">
+        <a href="../index.html" class="navbar-brand">DocuMaker Free</a>
+        <div class="nav-links">
+            <a href="../invoice-generator/index.html">Make Invoice</a>
+            <a href="../receipt-generator/index.html">Make Receipt</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="app-layout">
+            <!-- Sidebar Editor -->
+            <aside class="editor-section print-hide">
+                <h1 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Quote Generator</h1>
+                
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="businessName">Your Business Name</label>
+                        <input type="text" id="businessName" placeholder="e.g., Acme Corp LLC">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="clientName">Quote For</label>
+                        <input type="text" id="clientName" placeholder="e.g., John Smith">
+                    </div>
+                    <div class="form-group">
+                        <label for="docDate">Date</label>
+                        <input type="date" id="docDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="currency">Currency</label>
+                        <select id="currency">
+                            <option value="$">USD ($)</option>
+                            <option value="£">GBP (£)</option>
+                            <option value="€">EUR (€)</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="itemDesc">Service / Scope of Work</label>
+                        <input type="text" id="itemDesc" value="Website Redesign Proposal">
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Estimated Amount</label>
+                        <input type="number" id="amount" value="2500.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="taxRate">Estimated Tax (%)</label>
+                        <input type="number" id="taxRate" value="0" min="0" step="0.1">
+                    </div>
+                </div>
+
+                <div class="actions" style="margin-top: 1.5rem;">
+                    <button class="btn btn-primary btn-block" onclick="triggerPrint()">Download PDF / Print</button>
+                    <button class="btn btn-secondary btn-block" onclick="copyDetails()">Copy Quote Text</button>
+                </div>
+            </aside>
+
+            <!-- Document Preview Section -->
+            <main class="preview-section">
+                <div class="document" id="printable-doc">
+                    <div class="doc-header">
+                        <div>
+                            <div class="doc-type" id="out-doc-type"></div>
+                            <div style="margin-top: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">
+                                No. <span id="out-doc-id"></span>
+                            </div>
+                        </div>
+                        <div class="doc-meta">
+                            <div>Date: <strong id="out-date"></strong></div>
+                        </div>
+                    </div>
+                    <div class="doc-grid">
+                        <div class="doc-block">
+                            <h3>From</h3>
+                            <p id="out-business"></p>
+                        </div>
+                        <div class="doc-block">
+                            <h3 id="to-label"></h3>
+                            <p id="out-client"></p>
+                        </div>
+                    </div>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th style="width: 150px;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td id="out-desc"></td>
+                                <td id="out-amount-row"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="doc-summary">
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span id="out-subtotal"></span>
+                        </div>
+                        <div class="summary-row" id="tax-row">
+                            <span>Tax (<span id="out-tax-rate">0</span>%)</span>
+                            <span id="out-tax-amount"></span>
+                        </div>
+                        <div class="summary-row total">
+                            <span id="total-label"></span>
+                            <span id="out-total"></span>
+                        </div>
+                    </div>
+                    <div class="footer-note" id="out-footer"></div>
+                </div>
+            </main>
+        </div>
+
+        <section class="seo-content print-hide">
+            <h2>Send Professional Business Quotes</h2>
+            <p>Pitch your services properly using our free quote generator. Sending a clean, well-formatted PDF estimate shows clients you mean business. Easily save as a PDF and attach it to your emails.</p>
+        </section>
+    </div>
+
+    <div class="toast" id="toast">Copied to clipboard!</div>
+    <script src="../assets/script.js"></script>
+</body>
+</html>
