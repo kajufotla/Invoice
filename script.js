@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         paymentDetails: '',
         items: [{ id: crypto.randomUUID(), desc: 'Web Development Services', qty: 1, price: 1500.00 }],
         discountType: 'fixed', discountValue: 0, taxRateManual: 0, status: 'Pending', template_id: 'classic',
-        logoDataUrl: null, sigDataUrl: null, generateQR: false, lang: 'en',
+        logoDataUrl: null, sigDataUrl: null, uploadedQrDataUrl: null, generateQR: false, lang: 'en',
         notes: '', terms: ''
     };
 
@@ -241,6 +241,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('invoice-terms').value = state.terms || '';
         
         document.getElementById('btn-lang-toggle').textContent = state.lang.toUpperCase();
+
+        const qrPreviewImg = document.getElementById('qr-preview-img');
+        const qrPreviewContainer = document.getElementById('qr-preview-container');
+        if (qrPreviewImg) {
+            if (state.uploadedQrDataUrl) {
+                qrPreviewImg.src = state.uploadedQrDataUrl;
+                qrPreviewImg.classList.remove('hidden');
+                if (qrPreviewContainer) qrPreviewContainer.classList.remove('hidden');
+            } else {
+                qrPreviewImg.src = '';
+                qrPreviewImg.classList.add('hidden');
+                if (qrPreviewContainer) qrPreviewContainer.classList.add('hidden');
+            }
+        }
     }
 
     loadAppData();
@@ -684,7 +698,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update QR Code
         const qrContainer = document.getElementById('qr-code-container');
-        if (state.generateQR && typeof QRCode !== 'undefined') {
+        if (state.uploadedQrDataUrl) {
+            qrContainer.classList.remove('hidden');
+            qrContainer.innerHTML = `<img src="${state.uploadedQrDataUrl}" class="w-20 h-20 object-contain" alt="Payment QR Code" />`;
+        } else if (state.generateQR && typeof QRCode !== 'undefined') {
             qrContainer.classList.remove('hidden');
             qrContainer.innerHTML = '';
             const paymentStr = `Pay Invoice ${state.docNumber} - Total: ${calcTotals.total} ${state.currency}`;
@@ -775,6 +792,35 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.readAsDataURL(file);
         }
     });
+
+    // Custom QR Upload Logic
+    const qrUploadEl = document.getElementById('qr-upload');
+    if (qrUploadEl) {
+        qrUploadEl.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    state.uploadedQrDataUrl = event.target.result;
+                    saveState();
+                    syncDOMWithState();
+                    renderPreview();
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    const btnRemoveQr = document.getElementById('btn-remove-qr');
+    if (btnRemoveQr) {
+        btnRemoveQr.addEventListener('click', () => {
+            state.uploadedQrDataUrl = null;
+            if (qrUploadEl) qrUploadEl.value = '';
+            saveState();
+            syncDOMWithState();
+            renderPreview();
+        });
+    }
 
     document.getElementById('toggle-qr').addEventListener('change', e => {
         state.generateQR = e.target.checked;
