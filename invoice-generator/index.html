@@ -1,1 +1,144 @@
+<!-- /invoice-generator/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Invoice Generator Online USA/UK | Create PDF Invoices</title>
+    <meta name="description" content="Use our free invoice generator to create professional invoices instantly. Perfect for freelancers in the USA and UK. Download your invoice as a PDF.">
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body data-mode="invoice">
 
+    <nav class="navbar print-hide">
+        <a href="../index.html" class="navbar-brand">DocuMaker Free</a>
+        <div class="nav-links">
+            <a href="../receipt-generator/index.html">Make Receipt</a>
+            <a href="../quote-generator/index.html">Make Quote</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="app-layout">
+            <!-- Sidebar Editor -->
+            <aside class="editor-section print-hide">
+                <h1 style="font-size: 1.25rem; margin-bottom: 1.5rem;">Invoice Generator</h1>
+                
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label for="businessName">Your Business Name</label>
+                        <input type="text" id="businessName" placeholder="e.g., Acme Corp LLC">
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="clientName">Client / Bill To</label>
+                        <input type="text" id="clientName" placeholder="e.g., Jane Doe">
+                    </div>
+                    <div class="form-group">
+                        <label for="docDate">Date</label>
+                        <input type="date" id="docDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="currency">Currency</label>
+                        <select id="currency">
+                            <option value="$">USD ($)</option>
+                            <option value="£">GBP (£)</option>
+                            <option value="€">EUR (€)</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="itemDesc">Item Description</label>
+                        <input type="text" id="itemDesc" value="Web Design Services">
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Amount</label>
+                        <input type="number" id="amount" value="1500.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="taxRate">Tax Rate (%) - Optional</label>
+                        <input type="number" id="taxRate" value="0" min="0" step="0.1">
+                    </div>
+                </div>
+
+                <div class="actions" style="margin-top: 1.5rem;">
+                    <button class="btn btn-primary btn-block" onclick="triggerPrint()">Download PDF / Print</button>
+                    <button class="btn btn-secondary btn-block" onclick="copyDetails()">Copy Invoice Text</button>
+                </div>
+            </aside>
+
+            <!-- Document Preview -->
+            <main class="preview-section">
+                <!-- HTML Document structure matched by script.js -->
+                <div class="document" id="printable-doc">
+                    <div class="doc-header">
+                        <div>
+                            <div class="doc-type" id="out-doc-type">INVOICE</div>
+                            <div style="margin-top: 0.5rem; color: var(--text-muted); font-size: 0.875rem;">
+                                No. <span id="out-doc-id"></span>
+                            </div>
+                        </div>
+                        <div class="doc-meta">
+                            <div>Date: <strong id="out-date"></strong></div>
+                        </div>
+                    </div>
+                    <div class="doc-grid">
+                        <div class="doc-block">
+                            <h3>From</h3>
+                            <p id="out-business"></p>
+                        </div>
+                        <div class="doc-block">
+                            <h3 id="to-label">Bill To</h3>
+                            <p id="out-client"></p>
+                        </div>
+                    </div>
+                    <table class="doc-table">
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th style="width: 150px;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td id="out-desc"></td>
+                                <td id="out-amount-row"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="doc-summary">
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span id="out-subtotal"></span>
+                        </div>
+                        <div class="summary-row" id="tax-row">
+                            <span>Tax (<span id="out-tax-rate">0</span>%)</span>
+                            <span id="out-tax-amount"></span>
+                        </div>
+                        <div class="summary-row total">
+                            <span id="total-label">Total Due</span>
+                            <span id="out-total"></span>
+                        </div>
+                    </div>
+                    <div class="footer-note" id="out-footer"></div>
+                </div>
+            </main>
+        </div>
+
+        <section class="seo-content print-hide">
+            <h2>Free Online Invoice Generator for USA & UK</h2>
+            <p>Creating invoices shouldn't be complicated. Our free invoice generator is built for modern freelancers and small business owners who need to quickly bill clients. Simply fill out the form on the left, and watch the real-time preview update. When ready, click "Download PDF".</p>
+            
+            <div class="faq-item">
+                <h3>How do I save the invoice as a PDF?</h3>
+                <p>Click the "Download PDF / Print" button. When the browser print dialog opens, change the destination or printer to "Save as PDF".</p>
+            </div>
+            <div class="faq-item">
+                <h3>Can I add taxes to my invoice?</h3>
+                <p>Yes. Enter your local tax percentage (like VAT in the UK or state tax in the USA) in the Tax field, and the total will automatically calculate.</p>
+            </div>
+        </section>
+    </div>
+
+    <div class="toast" id="toast">Copied to clipboard!</div>
+    <script src="../assets/script.js"></script>
+</body>
+</html>
