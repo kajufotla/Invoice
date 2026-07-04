@@ -142,7 +142,6 @@ export async function checkPublicInvoice() {
                 `;  
                 renderPreview();   
                   
-                // Inject floating print button   
                 const floatBtn = document.createElement('button');  
                 floatBtn.innerText = 'Print / Save PDF';  
                 floatBtn.className = 'no-print print:hidden fixed bottom-8 right-8 bg-slate-900 text-white px-8 py-3 rounded-full shadow-lg font-medium tracking-wide hover:bg-slate-800 hover:-translate-y-0.5 transform transition-all duration-200 ring-4 ring-slate-900/10';  
@@ -165,182 +164,206 @@ export function renderPreview() {
     const langDict = dict[store.state.lang] || dict['en'];  
     previewEl.setAttribute('dir', langDict.dir || 'ltr');  
       
-    const logoImg = document.getElementById('prev-logo');  
-    if(logoImg) {  
-        if (store.state.logoDataUrl) {  
-            logoImg.src = store.state.logoDataUrl;  
-            logoImg.classList.remove('hidden');  
-        } else {  
-            logoImg.src = '';  
-            logoImg.classList.add('hidden');  
+    // 1. HEADER & LOGO SECTION
+    try {
+        const logoImg = document.getElementById('prev-logo');  
+        if(logoImg) {  
+            if (store.state.logoDataUrl) {  
+                logoImg.src = store.state.logoDataUrl;  
+                logoImg.classList.remove('hidden');  
+            } else {  
+                logoImg.src = '';  
+                logoImg.classList.add('hidden');  
+            }  
         }  
-    }  
 
-    if(document.getElementById('prev-company-name')) {  
-        document.getElementById('prev-company-name').textContent = store.state.companyName || '';  
-    }  
+        if(document.getElementById('prev-company-name')) {  
+            document.getElementById('prev-company-name').textContent = store.state.companyName || '';  
+        }  
 
-    const typeKey = store.state.docType ? store.state.docType.toLowerCase() : 'invoice';  
-    if(document.getElementById('prev-title')) {
-        document.getElementById('prev-title').textContent = langDict[typeKey] || (store.state.docType ? store.state.docType.toUpperCase() : 'INVOICE');  
-    }
-    if(document.getElementById('prev-number-label')) {
-        document.getElementById('prev-number-label').textContent = `# ${store.state.docNumber || ''}`;  
-    }
-    if(document.getElementById('prev-date')) {
-        document.getElementById('prev-date').textContent = store.state.date || '';  
-    }
-      
-    const prevDueDate = document.getElementById('prev-due-date');  
-    const dueDateLblContainer = document.getElementById('lbl-due')?.parentElement;  
-    if (store.state.dueDate) {  
-        if(prevDueDate) prevDueDate.textContent = store.state.dueDate;  
-        if(dueDateLblContainer) dueDateLblContainer.style.display = '';  
-    } else {  
-        if(prevDueDate) prevDueDate.textContent = '';  
-        if(dueDateLblContainer) dueDateLblContainer.style.display = 'none';  
-    }  
+        const typeKey = store.state.docType ? store.state.docType.toLowerCase() : 'invoice';  
+        if(document.getElementById('prev-title')) {
+            document.getElementById('prev-title').textContent = langDict[typeKey] || (store.state.docType ? store.state.docType.toUpperCase() : 'INVOICE');  
+        }
+        if(document.getElementById('prev-number-label')) {
+            document.getElementById('prev-number-label').textContent = `# ${store.state.docNumber || ''}`;  
+        }
+    } catch(e) { console.warn("Header preview error:", e); }
 
-    if(document.getElementById('prev-sender')) {  
-        const lines = (store.state.senderDetails || '').split('\n');  
-        let companyName = store.state.companyName;  
+    // 2. DATES & CLIENT SECTION
+    try {
+        if(document.getElementById('prev-date')) {
+            document.getElementById('prev-date').textContent = store.state.date || '';  
+        }
+          
+        const prevDueDate = document.getElementById('prev-due-date');  
+        const dueDateLblContainer = document.getElementById('lbl-due')?.parentElement;  
+        if (store.state.dueDate) {  
+            if(prevDueDate) prevDueDate.textContent = store.state.dueDate;  
+            if(dueDateLblContainer) dueDateLblContainer.style.display = '';  
+        } else {  
+            if(prevDueDate) prevDueDate.textContent = '';  
+            if(dueDateLblContainer) dueDateLblContainer.style.display = 'none';  
+        }  
 
-        if (companyName) {  
-            if (lines.length > 0 && lines[0].trim() === companyName.trim()) {  
+        if(document.getElementById('prev-sender')) {  
+            const lines = (store.state.senderDetails || '').split('\n');  
+            let companyName = store.state.companyName;  
+
+            if (companyName && lines.length > 0 && lines[0].trim() === companyName.trim()) {  
                 lines.shift();  
+            } else if (!companyName) {  
+                companyName = lines.shift() || '';  
             }  
-        } else {  
-            companyName = lines.shift() || '';  
-        }  
 
-        const addressRemainder = lines.join('<br>');  
+            const addressRemainder = lines.join('<br>');  
+            document.getElementById('prev-sender').innerHTML = companyName   
+                ? `<strong class="text-[15px] font-bold text-slate-900 block mb-1">${companyName}</strong>${addressRemainder}`   
+                : addressRemainder;  
+        }  
           
-        document.getElementById('prev-sender').innerHTML = companyName   
-            ? `<strong class="text-[15px] font-bold text-slate-900 block mb-1">${companyName}</strong>${addressRemainder}`   
-            : addressRemainder;  
-    }  
-      
-    if(document.getElementById('prev-client')) {
-        document.getElementById('prev-client').textContent = store.state.clientDetails || '';  
-    }
-      
-    let finalPaymentDetails = store.state.paymentDetails || '';  
-    if(store.state.paymentLinks) {  
-        const pl = store.state.paymentLinks;  
-        const linkArr = [];  
-        if(pl.stripe) linkArr.push(`Stripe: ${pl.stripe}`);  
-        if(pl.paypal) linkArr.push(`PayPal: ${pl.paypal}`);  
-        if(pl.wise) linkArr.push(`Wise: ${pl.wise}`);  
-        if(pl.bank) linkArr.push(`Bank Transfer:\n${pl.bank}`);  
+        if(document.getElementById('prev-client')) {
+            document.getElementById('prev-client').textContent = store.state.clientDetails || '';  
+        }
+    } catch(e) { console.warn("Client details preview error:", e); }
+
+    // 3. LABELS & BADGES
+    try {
+        const setLbl = (id, text) => { const el = document.getElementById(id); if(el) el.textContent = text; };  
+        setLbl('lbl-from', langDict.from || 'From');  
+        setLbl('lbl-to', langDict.to || 'To');  
+        setLbl('lbl-date', langDict.date || 'Date');  
+        setLbl('lbl-due', langDict.due || 'Due Date');  
+        setLbl('lbl-desc', langDict.desc || 'Description');  
+        setLbl('lbl-qty', langDict.qty || 'Qty');  
+        setLbl('lbl-price', langDict.price || 'Price');  
+        setLbl('lbl-total', langDict.total || 'Total');  
+        setLbl('lbl-subtotal', langDict.subtotal || 'Subtotal');  
+        setLbl('lbl-discount', langDict.discount || 'Discount');  
+        setLbl('lbl-payment', langDict.payment || 'Payment Details');  
+        setLbl('lbl-grandtotal', langDict.gtotal || 'Grand Total');  
+
+        const badge = document.getElementById('prev-status-badge');  
+        if(badge && store.state.status) {  
+            badge.textContent = store.state.status;  
+            badge.className = `inline-flex items-center px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-md border ${  
+                store.state.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' :   
+                store.state.status === 'Unpaid' ? 'bg-rose-50 text-rose-700 border-rose-200/60' :   
+                'bg-amber-50 text-amber-700 border-amber-200/60'  
+            }`;  
+        } 
+    } catch(e) { console.warn("Labels preview error:", e); }
+
+    // 4. ITEMS & AMOUNTS CALCULATIONS (Fixed Amount Bug)
+    try {
+        if(document.getElementById('prev-items-body') && store.state.items) {  
+            document.getElementById('prev-items-body').innerHTML = store.state.items.filter(i => i.desc || Number(i.price) > 0).map(item => {
+                // Ensure absolute numerical calculation to prevent string bugs
+                const qty = Number(item.qty) || 0;
+                const price = Number(item.price) || 0;
+                const total = qty * price;
+                
+                return `  
+                <tr class="avoid-break hover:bg-slate-50/50 transition-colors">  
+                    <td class="py-4 px-5 text-slate-800 break-words whitespace-pre-wrap">${item.desc || ''}</td>  
+                    <td class="py-4 px-5 text-center text-slate-500">${qty}</td>  
+                    <td class="py-4 px-5 text-right text-slate-500 whitespace-nowrap">${formatMoney(price)}</td>  
+                    <td class="py-4 px-5 text-right font-medium text-slate-900 whitespace-nowrap">${formatMoney(total)}</td>  
+                </tr>  
+                `;
+            }).join('');  
+        }  
+
+        // Call the parent calculate function
+        if(typeof calculate === 'function') calculate();  
+        
+        // Safety Fallback incase store.calcTotals drops
+        if(!store.calcTotals) store.calcTotals = { subtotal: 0, discount: 0, tax: 0, total: 0 };
+
+        if(document.getElementById('prev-subtotal')) {
+            document.getElementById('prev-subtotal').textContent = formatMoney(store.calcTotals.subtotal || 0);  
+        }
+        if(document.getElementById('prev-discount')) {
+            document.getElementById('prev-discount').textContent = `-${formatMoney(store.calcTotals.discount || 0)}`;  
+        }
+        if(document.getElementById('prev-discount-row')) {
+            document.getElementById('prev-discount-row').style.display = ((store.calcTotals.discount || 0) > 0) ? 'flex' : 'none';  
+        }
           
-        if(linkArr.length > 0) {  
-            finalPaymentDetails += (finalPaymentDetails ? '\n\n' : '') + linkArr.join('\n');  
-        }  
-    }  
-    if(document.getElementById('prev-payment-details')) {
-        document.getElementById('prev-payment-details').textContent = finalPaymentDetails;  
-    }
-      
-    const setLbl = (id, text) => { if(document.getElementById(id)) document.getElementById(id).textContent = text; };  
-    setLbl('lbl-from', langDict.from || 'From');  
-    setLbl('lbl-to', langDict.to || 'To');  
-    setLbl('lbl-date', langDict.date || 'Date');  
-    setLbl('lbl-due', langDict.due || 'Due Date');  
-    setLbl('lbl-desc', langDict.desc || 'Description');  
-    setLbl('lbl-qty', langDict.qty || 'Qty');  
-    setLbl('lbl-price', langDict.price || 'Price');  
-    setLbl('lbl-total', langDict.total || 'Total');  
-    setLbl('lbl-subtotal', langDict.subtotal || 'Subtotal');  
-    setLbl('lbl-discount', langDict.discount || 'Discount');  
-    setLbl('lbl-payment', langDict.payment || 'Payment Details');  
-    setLbl('lbl-grandtotal', langDict.gtotal || 'Grand Total');  
-      
-    const lblPayment = document.getElementById('lbl-payment');  
-    if(lblPayment && lblPayment.parentElement) lblPayment.parentElement.style.display = finalPaymentDetails ? 'block' : 'none';  
+        let taxLabel = store.state.region === 'USA' ? `${langDict.tax || 'Tax'} (${getTaxRate()}%)` : store.state.region === 'UK' ? 'VAT (20%)' : store.state.region === 'CAN' ? 'GST (5%)' : 'GST (10%)';  
+        if(document.getElementById('prev-tax-label')) document.getElementById('prev-tax-label').textContent = taxLabel;  
+        if(document.getElementById('prev-tax')) document.getElementById('prev-tax').textContent = formatMoney(store.calcTotals.tax || 0);  
+        if(document.getElementById('prev-total')) document.getElementById('prev-total').textContent = formatMoney(store.calcTotals.total || 0);  
+    } catch(e) { console.warn("Items and amounts calculation error:", e); }
 
-    const sigContainer = document.getElementById('sig-container');  
-    const sigImg = document.getElementById('prev-sig');  
-    if(sigContainer && sigImg) {  
-        if(store.state.sigDataUrl) {  
-            sigImg.src = store.state.sigDataUrl;  
-            sigContainer.classList.remove('hidden');  
-        } else {  
-            sigContainer.classList.add('hidden');  
-        }  
-    }  
-
-    const badge = document.getElementById('prev-status-badge');  
-    if(badge && store.state.status) {  
-        badge.textContent = store.state.status;  
-        badge.className = `inline-flex items-center px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-md border ${  
-            store.state.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' :   
-            store.state.status === 'Unpaid' ? 'bg-rose-50 text-rose-700 border-rose-200/60' :   
-            'bg-amber-50 text-amber-700 border-amber-200/60'  
-        }`;  
-    }  
-
-    if(document.getElementById('prev-items-body') && store.state.items) {  
-        document.getElementById('prev-items-body').innerHTML = store.state.items.filter(i => i.desc || i.price > 0).map(item => `  
-            <tr class="avoid-break hover:bg-slate-50/50 transition-colors">  
-                <td class="py-4 px-5 text-slate-800 break-words whitespace-pre-wrap">${item.desc || ''}</td>  
-                <td class="py-4 px-5 text-center text-slate-500">${item.qty || 0}</td>  
-                <td class="py-4 px-5 text-right text-slate-500 whitespace-nowrap">${formatMoney(item.price || 0)}</td>  
-                <td class="py-4 px-5 text-right font-medium text-slate-900 whitespace-nowrap">${formatMoney((item.qty || 0) * (item.price || 0))}</td>  
-            </tr>  
-        `).join('');  
-    }  
-
-    calculate();  
-    if(document.getElementById('prev-subtotal') && store.calcTotals) {
-        document.getElementById('prev-subtotal').textContent = formatMoney(store.calcTotals.subtotal || 0);  
-    }
-    if(document.getElementById('prev-discount') && store.calcTotals) {
-        document.getElementById('prev-discount').textContent = `-${formatMoney(store.calcTotals.discount || 0)}`;  
-    }
-    if(document.getElementById('prev-discount-row') && store.calcTotals) {
-        document.getElementById('prev-discount-row').style.display = (store.calcTotals.discount > 0) ? 'flex' : 'none';  
-    }
-      
-    let taxLabel = store.state.region === 'USA' ? `${langDict.tax || 'Tax'} (${getTaxRate()}%)` : store.state.region === 'UK' ? 'VAT (20%)' : store.state.region === 'CAN' ? 'GST (5%)' : 'GST (10%)';  
-    if(document.getElementById('prev-tax-label')) document.getElementById('prev-tax-label').textContent = taxLabel;  
-    if(document.getElementById('prev-tax') && store.calcTotals) document.getElementById('prev-tax').textContent = formatMoney(store.calcTotals.tax || 0);  
-    if(document.getElementById('prev-total') && store.calcTotals) document.getElementById('prev-total').textContent = formatMoney(store.calcTotals.total || 0);  
-
-    const notesContainer = document.getElementById('prev-notes-terms-container');  
-    const notesBox = document.getElementById('prev-notes-box');  
-    const notesContent = document.getElementById('prev-notes-content');  
-    const termsBox = document.getElementById('prev-terms-box');  
-    const termsContent = document.getElementById('prev-terms-content');  
-
-    if(notesContainer) {  
-        if ((store.state.notes && store.state.notes.trim()) || (store.state.terms && store.state.terms.trim())) {  
-            notesContainer.classList.remove('hidden');  
-            if (store.state.notes && store.state.notes.trim()) {  
-                if(notesBox) notesBox.classList.remove('hidden');  
-                if(notesContent) notesContent.textContent = store.state.notes;  
-            } else {  
-                if(notesBox) notesBox.classList.add('hidden');  
+    // 5. FOOTER, NOTES & QR
+    try {
+        let finalPaymentDetails = store.state.paymentDetails || '';  
+        if(store.state.paymentLinks) {  
+            const pl = store.state.paymentLinks;  
+            const linkArr = [];  
+            if(pl.stripe) linkArr.push(`Stripe: ${pl.stripe}`);  
+            if(pl.paypal) linkArr.push(`PayPal: ${pl.paypal}`);  
+            if(pl.wise) linkArr.push(`Wise: ${pl.wise}`);  
+            if(pl.bank) linkArr.push(`Bank Transfer:\n${pl.bank}`);  
+              
+            if(linkArr.length > 0) {  
+                finalPaymentDetails += (finalPaymentDetails ? '\n\n' : '') + linkArr.join('\n');  
             }  
-            if (store.state.terms && store.state.terms.trim()) {  
-                if(termsBox) termsBox.classList.remove('hidden');  
-                if(termsContent) termsContent.textContent = store.state.terms;  
-            } else {  
-                if(termsBox) termsBox.classList.add('hidden');  
-            }  
-        } else {  
-            notesContainer.classList.add('hidden');  
         }  
-    }  
+        if(document.getElementById('prev-payment-details')) {
+            document.getElementById('prev-payment-details').textContent = finalPaymentDetails;  
+        }
+        const lblPayment = document.getElementById('lbl-payment');  
+        if(lblPayment && lblPayment.parentElement) lblPayment.parentElement.style.display = finalPaymentDetails ? 'block' : 'none';  
 
-    const qrContainer = document.getElementById('qr-code-container');  
-    if(qrContainer) {  
-        if (store.state.showQR && store.state.uploadedQrDataUrl) {  
-            qrContainer.classList.remove('hidden');  
-            qrContainer.innerHTML = `<img src="${store.state.uploadedQrDataUrl}" class="rounded-lg border border-slate-200 p-1.5 shadow-sm" style="max-width: 100px; max-height: 100px; object-fit: contain; margin-top: 12px;" />`;  
-        } else {  
-            qrContainer.classList.add('hidden');  
+        const notesContainer = document.getElementById('prev-notes-terms-container');  
+        const notesBox = document.getElementById('prev-notes-box');  
+        const notesContent = document.getElementById('prev-notes-content');  
+        const termsBox = document.getElementById('prev-terms-box');  
+        const termsContent = document.getElementById('prev-terms-content');  
+
+        if(notesContainer) {  
+            if ((store.state.notes && store.state.notes.trim()) || (store.state.terms && store.state.terms.trim())) {  
+                notesContainer.classList.remove('hidden');  
+                if (store.state.notes && store.state.notes.trim()) {  
+                    if(notesBox) notesBox.classList.remove('hidden');  
+                    if(notesContent) notesContent.textContent = store.state.notes;  
+                } else {  
+                    if(notesBox) notesBox.classList.add('hidden');  
+                }  
+                if (store.state.terms && store.state.terms.trim()) {  
+                    if(termsBox) termsBox.classList.remove('hidden');  
+                    if(termsContent) termsContent.textContent = store.state.terms;  
+                } else {  
+                    if(termsBox) termsBox.classList.add('hidden');  
+                }  
+            } else {  
+                notesContainer.classList.add('hidden');  
+            }  
         }  
-    }
+
+        const qrContainer = document.getElementById('qr-code-container');  
+        if(qrContainer) {  
+            if (store.state.showQR && store.state.uploadedQrDataUrl) {  
+                qrContainer.classList.remove('hidden');  
+                qrContainer.innerHTML = `<img src="${store.state.uploadedQrDataUrl}" class="rounded-lg border border-slate-200 p-1.5 shadow-sm" style="max-width: 100px; max-height: 100px; object-fit: contain; margin-top: 12px;" />`;  
+            } else {  
+                qrContainer.classList.add('hidden');  
+            }  
+        }
+
+        const sigContainer = document.getElementById('sig-container');  
+        const sigImg = document.getElementById('prev-sig');  
+        if(sigContainer && sigImg) {  
+            if(store.state.sigDataUrl) {  
+                sigImg.src = store.state.sigDataUrl;  
+                sigContainer.classList.remove('hidden');  
+            } else {  
+                sigContainer.classList.add('hidden');  
+            }  
+        }
+    } catch(e) { console.warn("Footer preview error:", e); }
 }
 
 export function setupPreviewAndExportListeners() {
@@ -414,10 +437,15 @@ export function setupPreviewAndExportListeners() {
         });  
     }  
 
-    // Logo & Signature Uploads  
+    // Logo & Signature Uploads (Fixed Size Quota Issue)
     document.getElementById('logo-upload')?.addEventListener('change', function(e) {  
         const file = e.target.files[0];  
         if (file) {  
+            if (file.size > 2.5 * 1024 * 1024) { // 2.5MB limit
+                showToast("Image is too large. Please upload an image under 2.5MB.");
+                e.target.value = '';
+                return;
+            }
             const reader = new FileReader();  
             reader.onload = function(event) {  
                 store.state.logoDataUrl = event.target.result;  
@@ -431,6 +459,11 @@ export function setupPreviewAndExportListeners() {
     document.getElementById('sig-upload')?.addEventListener('change', function(e) {  
         const file = e.target.files[0];  
         if (file) {  
+            if (file.size > 2.5 * 1024 * 1024) {
+                showToast("Signature image is too large. Please upload an image under 2.5MB.");
+                e.target.value = '';
+                return;
+            }
             const reader = new FileReader();  
             reader.onload = function(event) {  
                 store.state.sigDataUrl = event.target.result;  
