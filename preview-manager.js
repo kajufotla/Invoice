@@ -164,16 +164,36 @@ export function renderPreview() {
     const langDict = dict[store.state.lang] || dict['en'];  
     previewEl.setAttribute('dir', langDict.dir || 'ltr');  
       
-    // 1. HEADER & LOGO SECTION
+    // 1. HEADER & LOGO SECTION (DYNAMIC PLACEHOLDER ADDED)
     try {
         const logoImg = document.getElementById('prev-logo');  
         if(logoImg) {  
+            // Create interactive placeholder if it doesn't exist
+            let logoPlaceholder = document.getElementById('logo-placeholder');
+            if(!logoPlaceholder) {
+                logoPlaceholder = document.createElement('div');
+                logoPlaceholder.id = 'logo-placeholder';
+                // Tailwind styling for a clean, dashed "Add Logo" box that hides on print
+                logoPlaceholder.className = 'print:hidden no-print flex items-center justify-center w-32 h-16 bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg text-slate-400 text-xs font-semibold hover:bg-slate-100 transition-colors cursor-pointer avoid-break';
+                logoPlaceholder.innerText = '+ Add Logo';
+                logoPlaceholder.onclick = () => document.getElementById('logo-upload')?.click();
+                logoImg.parentNode.insertBefore(logoPlaceholder, logoImg.nextSibling);
+                
+                // Make the image itself clickable
+                logoImg.classList.add('cursor-pointer');
+                logoImg.onclick = () => document.getElementById('logo-upload')?.click();
+            }
+
             if (store.state.logoDataUrl) {  
                 logoImg.src = store.state.logoDataUrl;  
                 logoImg.classList.remove('hidden');  
+                logoPlaceholder.classList.add('hidden');
+                logoPlaceholder.classList.remove('flex');
             } else {  
                 logoImg.src = '';  
                 logoImg.classList.add('hidden');  
+                logoPlaceholder.classList.remove('hidden');
+                logoPlaceholder.classList.add('flex');
             }  
         }  
 
@@ -254,11 +274,10 @@ export function renderPreview() {
         } 
     } catch(e) { console.warn("Labels preview error:", e); }
 
-    // 4. ITEMS & AMOUNTS CALCULATIONS (Fixed Amount Bug)
+    // 4. ITEMS & AMOUNTS CALCULATIONS
     try {
         if(document.getElementById('prev-items-body') && store.state.items) {  
             document.getElementById('prev-items-body').innerHTML = store.state.items.filter(i => i.desc || Number(i.price) > 0).map(item => {
-                // Ensure absolute numerical calculation to prevent string bugs
                 const qty = Number(item.qty) || 0;
                 const price = Number(item.price) || 0;
                 const total = qty * price;
@@ -274,10 +293,7 @@ export function renderPreview() {
             }).join('');  
         }  
 
-        // Call the parent calculate function
         if(typeof calculate === 'function') calculate();  
-        
-        // Safety Fallback incase store.calcTotals drops
         if(!store.calcTotals) store.calcTotals = { subtotal: 0, discount: 0, tax: 0, total: 0 };
 
         if(document.getElementById('prev-subtotal')) {
@@ -296,7 +312,7 @@ export function renderPreview() {
         if(document.getElementById('prev-total')) document.getElementById('prev-total').textContent = formatMoney(store.calcTotals.total || 0);  
     } catch(e) { console.warn("Items and amounts calculation error:", e); }
 
-    // 5. FOOTER, NOTES & QR
+    // 5. FOOTER, NOTES, QR & SIGNATURE (DYNAMIC PLACEHOLDER ADDED)
     try {
         let finalPaymentDetails = store.state.paymentDetails || '';  
         if(store.state.paymentLinks) {  
@@ -356,17 +372,56 @@ export function renderPreview() {
         const sigContainer = document.getElementById('sig-container');  
         const sigImg = document.getElementById('prev-sig');  
         if(sigContainer && sigImg) {  
+            
+            // Create interactive placeholder for signature if it doesn't exist
+            let sigPlaceholder = document.getElementById('sig-placeholder');
+            if(!sigPlaceholder) {
+                sigPlaceholder = document.createElement('div');
+                sigPlaceholder.id = 'sig-placeholder';
+                sigPlaceholder.className = 'print:hidden no-print flex items-center justify-center w-full h-16 bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg text-slate-400 text-xs font-semibold hover:bg-slate-100 transition-colors cursor-pointer avoid-break mb-3';
+                sigPlaceholder.innerText = '+ Add Signature';
+                sigPlaceholder.onclick = () => document.getElementById('sig-upload')?.click();
+                sigImg.parentNode.insertBefore(sigPlaceholder, sigImg);
+                
+                // Make the signature image clickable
+                sigImg.classList.add('cursor-pointer');
+                sigImg.onclick = () => document.getElementById('sig-upload')?.click();
+            }
+
+            // Always show the signature container to hold the placeholder
+            sigContainer.classList.remove('hidden');
+
             if(store.state.sigDataUrl) {  
                 sigImg.src = store.state.sigDataUrl;  
-                sigContainer.classList.remove('hidden');  
+                sigImg.classList.remove('hidden');  
+                sigPlaceholder.classList.add('hidden');
+                sigPlaceholder.classList.remove('flex');
             } else {  
-                sigContainer.classList.add('hidden');  
+                sigImg.src = '';  
+                sigImg.classList.add('hidden');  
+                sigPlaceholder.classList.remove('hidden');
+                sigPlaceholder.classList.add('flex');
             }  
         }
     } catch(e) { console.warn("Footer preview error:", e); }
 }
 
 export function setupPreviewAndExportListeners() {
+    
+    // --- LIVE SYNC FIX FOR INPUTS (NOTES, TERMS, ETC) ---
+    // یہ فنکشن آپ کے اوپر والے فارم کو نیچے والے پریویو کے ساتھ فوراً جوڑ دے گا
+    const syncFields = ['notes', 'terms', 'clientDetails', 'senderDetails', 'companyName', 'docNumber'];
+    syncFields.forEach(id => {
+        // Find input elements by looking for id="notes", id="input-notes", etc.
+        const el = document.getElementById(id) || document.getElementById(`input-${id}`) || document.getElementById(`${id}-input`);
+        if(el) {
+            el.addEventListener('input', (e) => {
+                store.state[id] = e.target.value;
+                renderPreview(); // Update preview instantly
+            });
+        }
+    });
+
     // Share feature
     const shareModal = document.getElementById('share-modal');
     document.getElementById('btn-share')?.addEventListener('click', async () => {
@@ -437,11 +492,11 @@ export function setupPreviewAndExportListeners() {
         });  
     }  
 
-    // Logo & Signature Uploads (Fixed Size Quota Issue)
+    // Logo Upload
     document.getElementById('logo-upload')?.addEventListener('change', function(e) {  
         const file = e.target.files[0];  
         if (file) {  
-            if (file.size > 500 * 1024) { // 500KB limit for Firestore safety
+            if (file.size > 500 * 1024) { 
                 showToast("Image is too large. Please upload an image under 500KB.");
                 e.target.value = '';
                 return;
@@ -456,10 +511,11 @@ export function setupPreviewAndExportListeners() {
         }  
     });  
 
+    // Signature Upload
     document.getElementById('sig-upload')?.addEventListener('change', function(e) {  
         const file = e.target.files[0];  
         if (file) {  
-            if (file.size > 500 * 1024) { // 500KB limit for Firestore safety
+            if (file.size > 500 * 1024) { 
                 showToast("Signature image is too large. Please upload an image under 500KB.");
                 e.target.value = '';
                 return;
