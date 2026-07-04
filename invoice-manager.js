@@ -24,7 +24,7 @@ export function getTaxRate() {
 }
 
 export function calculate() {
-    let sub = store.state.items.reduce((acc, item) => acc + (item.qty * item.price), 0);
+    let sub = store.state.items.reduce((acc, item) => acc + (item.qty * item.price), 0); 
     let dVal = parseFloat(store.state.discountValue) || 0;
     let disc = store.state.discountType === 'percent' ? sub * (dVal / 100) : dVal;
     let afterDisc = Math.max(0, sub - disc);
