@@ -1,16 +1,16 @@
 <!DOCTYPE html> 
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SaaS Invoice Suite Pro</title>
+    <title>Enterprise Document Suite Pro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
     <script>
         tailwind.config = {
@@ -22,411 +22,739 @@
                         urdu: ['Noto Nastaliq Urdu', 'serif']
                     },
                     colors: {
-                        brand: { 50: '#f5f3ff', 100: '#ede9fe', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' },
-                        invoice: { primary: '#343090', light: '#f3f4fa' }
+                        brand: { 50: '#f5f3ff', 100: '#ede9fe', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 900: '#312e81' },
+                        invoice: { primary: '#0f172a', light: '#f8fafc' },
+                        surface: { 50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 800: '#1e293b', 900: '#0f172a' }
                     },
                     boxShadow: {
-                        'premium': '0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 0 3px rgba(0,0,0,0.02)',
+                        'card': '0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.04)',
+                        'floating': '0 10px 40px -10px rgba(0,0,0,0.08)',
                     }
                 }
             }
         }
     </script>
     
+    <style>
+        /* Printing system orchestration preserving style assets and preventing row breaks */
+        @media print {
+            body * { visibility: hidden; }
+            #capture-box, #capture-box * { visibility: visible; }
+            #capture-box {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 210mm !important;
+                min-height: 297mm !important;
+                background: white !important;
+                color: #0f172a !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            tr { page-break-inside: avoid !important; break-inside: avoid !important; }
+            @page { size: A4; margin: 0; }
+            .no-print { display: none !important; }
+        }
+        /* Custom scrollbar configurations */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+    </style>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50 antialiased min-h-screen flex flex-col relative">
+<body class="bg-surface-50 text-slate-800 dark:bg-surface-900 dark:text-slate-100 antialiased min-h-screen flex flex-col relative selection:bg-brand-500 selection:text-white">
 
     <div id="app-layout" class="flex flex-col h-screen overflow-hidden">
         
-        <header class="h-16 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between glass-panel z-30 shrink-0 shadow-sm no-print">
-            <div class="flex items-center gap-6">
+        <header role="banner" class="h-16 border-b border-slate-200 dark:border-slate-800/80 px-4 md:px-6 flex items-center justify-between bg-white/80 dark:bg-surface-900/80 backdrop-blur-md z-40 shrink-0 no-print">
+            <div class="flex items-center gap-6 lg:gap-10">
                 <div class="flex items-center gap-3">
-                    <span class="font-bold text-xl tracking-tight bg-gradient-to-r from-brand-600 to-indigo-500 bg-clip-text text-transparent">InvoiceSuite Pro</span>
-                    <span class="px-2 py-0.5 text-xs font-semibold uppercase tracking-wider rounded bg-brand-100 text-brand-800 dark:bg-brand-900/30 dark:text-brand-400">v2.0</span>
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white shadow-sm" aria-hidden="true">
+                        <svg class="w-4 h-4" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <span class="font-bold text-lg tracking-tight hidden sm:block" id="app-brand-title">DocumentSuite<span class="text-brand-600">Pro</span></span>
                 </div>
-                <nav class="hidden md:flex gap-4 border-l border-slate-200 dark:border-slate-700 pl-6">
-                    <button id="nav-editor" class="text-sm font-semibold text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 py-4 transition">Editor</button>
-                    <button id="nav-dashboard" class="text-sm font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 py-4 transition">Dashboard</button>
+                
+                <nav role="navigation" aria-label="Main Application Navigation" class="hidden md:flex gap-1 border-l border-slate-200 dark:border-slate-700 pl-6">
+                    <button type="button" id="nav-editor" aria-current="page" class="px-4 py-2 text-sm font-semibold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/20 rounded-md transition-colors">Editor</button>
+                    <button type="button" id="nav-dashboard" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors">Dashboard</button>
+                    <button type="button" id="nav-clients" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors hidden lg:block">Clients</button>
+                    <button type="button" id="nav-library" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors hidden lg:block">Library</button>
                 </nav>
             </div>
             
-            <div class="flex items-center gap-3">
-                <button id="btn-new-invoice" class="px-3 py-1.5 text-xs font-bold border border-brand-500 bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-400 rounded-lg hover:bg-brand-100 dark:hover:bg-brand-900/50 shadow-sm transition flex items-center gap-1">
-                    + New Invoice
+            <div class="flex items-center gap-2 sm:gap-3">
+                <div class="hidden sm:flex items-center mr-2 pr-4 border-r border-slate-200 dark:border-slate-700">
+                    <label for="doc-type-select" class="sr-only">Document Type</label>
+                    <select id="doc-type-select" aria-label="Document Type" class="bg-transparent text-sm font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer hover:text-brand-600 transition-colors">
+                        <option value="invoice">Invoice</option>
+                        <option value="quote">Quote / Estimate</option>
+                        <option value="receipt">Receipt</option>
+                        <option value="proforma">Proforma</option>
+                        <option value="po">Purchase Order</option>
+                    </select>
+                </div>
+
+                <button type="button" id="btn-new-invoice" class="px-4 py-1.5 text-sm font-semibold bg-brand-600 text-white rounded-md hover:bg-brand-700 shadow-sm transition flex items-center gap-2 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-surface-900 outline-none">
+                    <svg class="w-4 h-4" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span id="btn-text-new-doc" class="hidden sm:inline">New Doc</span>
                 </button>
-                <button id="btn-print-mode" class="px-3 py-1.5 text-xs font-semibold border rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-300 dark:border-slate-600 shadow-sm text-slate-600 dark:text-slate-300 transition flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                    Print
+                
+                <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" aria-hidden="true"></div>
+
+                <button type="button" id="btn-history" aria-label="Document History" class="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition tooltip-trigger">
+                    <svg class="w-5 h-5" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 </button>
-                <button id="btn-lang-toggle" class="px-3 py-1.5 text-xs font-bold border rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-300 dark:border-slate-600 shadow-sm transition uppercase">EN</button>
-                <button id="btn-history" class="px-3 py-1.5 text-xs font-semibold border rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-300 dark:border-slate-600 shadow-sm text-slate-600 hover:text-brand-600 dark:text-slate-300 dark:hover:text-brand-400 transition flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    History
+                <button type="button" id="btn-backup" aria-label="Data Management" class="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition tooltip-trigger">
+                    <svg class="w-5 h-5" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                 </button>
-                <button id="btn-backup" class="px-3 py-1.5 text-xs font-semibold border rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-300 dark:border-slate-600 shadow-sm text-slate-600 dark:text-slate-300 transition">Backup Data</button>
-                <button id="btn-reset" class="px-3 py-1.5 text-xs font-semibold text-rose-500 hover:text-rose-700 transition">Clear Data</button>
-                <button id="btn-dark-toggle" aria-label="Toggle Dark Mode" class="p-2 border rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border-slate-300 dark:border-slate-600 shadow-sm transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                <button type="button" id="btn-dark-toggle" aria-label="Toggle Theme" class="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition">
+                    <svg class="w-5 h-5" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+                <button type="button" id="btn-lang-toggle" aria-label="Language Toggle" class="hidden sm:block p-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition">
+                    EN
+                </button>
+                <button type="button" id="btn-reset" aria-label="Clear Data" class="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-md transition hidden sm:block">
+                    <svg class="w-5 h-5" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
             </div>
         </header>
 
-        <div id="view-dashboard" class="flex-1 overflow-y-auto p-8 bg-slate-50 dark:bg-slate-900 hidden no-print">
-            <div class="max-w-7xl mx-auto space-y-6">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100">Overview</h2>
-                    <div class="flex gap-2">
-                        <button class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-medium shadow-sm transition hover:bg-slate-50 dark:hover:bg-slate-700">Export Report</button>
+        <main class="flex-1 flex overflow-hidden relative">
+            
+            <section id="view-dashboard" role="region" aria-labelledby="dashboard-heading" class="flex-1 overflow-y-auto p-6 md:p-10 bg-surface-50 dark:bg-surface-900 hidden no-print w-full">
+                <div class="max-w-7xl mx-auto space-y-8">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div>
+                            <h2 id="dashboard-heading" class="text-3xl font-bold text-slate-900 dark:text-slate-50 tracking-tight">Financial Overview</h2>
+                            <p id="dashboard-subheading" class="text-slate-500 mt-1">Track your corporate invoicing performance across all clients.</p>
+                        </div>
+                        <button type="button" id="btn-export-report" class="px-4 py-2 bg-white dark:bg-surface-800 border border-slate-200 dark:border-slate-700 rounded-md text-sm font-semibold shadow-sm transition hover:bg-slate-50 dark:hover:bg-slate-800 focus:ring-2 focus:ring-brand-500 outline-none">
+                            Export Full Report
+                        </button>
                     </div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-premium">
-                        <p class="text-sm font-medium text-slate-500">Total Revenue</p>
-                        <p class="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1" id="dash-revenue">$0.00</p>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-premium">
-                        <p class="text-sm font-medium text-slate-500">Total Invoices</p>
-                        <p class="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1" id="dash-count">0</p>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-premium">
-                        <p class="text-sm font-medium text-emerald-600">Paid Invoices</p>
-                        <p class="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1" id="dash-paid">0</p>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-premium">
-                        <p class="text-sm font-medium text-rose-500">Unpaid / Pending</p>
-                        <p class="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1" id="dash-unpaid">0</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="view-editor" class="flex flex-1 overflow-hidden">
-            <main class="flex-1 grid grid-cols-1 xl:grid-cols-2 overflow-hidden bg-slate-50 dark:bg-slate-900/40">
-                
-                <section id="editor-controls-pane" class="h-full overflow-y-auto p-6 space-y-6 no-print border-r border-slate-200 dark:border-slate-800/80">
                     
-                    <div class="flex flex-wrap items-center justify-between bg-white dark:bg-slate-800 p-4 border border-slate-200 dark:border-slate-700 rounded-xl shadow-premium gap-4">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Status:</span>
-                            <select id="doc-status" class="px-2 py-1.5 text-xs font-medium border border-slate-300 dark:border-slate-600 rounded bg-slate-50 dark:bg-slate-900 shadow-sm outline-none focus:ring-2 focus:ring-brand-500/20 transition hover:border-slate-400">
-                                <option value="Draft">Draft</option>
-                                <option value="Pending" selected>Pending</option>
-                                <option value="Paid">Paid</option>
-                                <option value="Unpaid">Unpaid</option>
-                                <option value="Overdue">Overdue</option>
-                                <option value="Cancelled">Cancelled</option>
-                            </select>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white dark:bg-surface-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-card">
+                            <h3 id="lbl-dash-revenue" class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Revenue</h3>
+                            <p class="text-3xl font-black text-slate-900 dark:text-slate-50 mt-2 tracking-tight" id="dash-revenue">$0.00</p>
                         </div>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span id="auto-save-indicator" class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mr-2 px-2 py-1 rounded bg-slate-100 dark:bg-slate-700/50 hidden">Saved</span>
-                            
-                            <button id="btn-duplicate" class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-lg shadow-sm transition flex items-center gap-1">
-                                Duplicate
-                            </button>
-                            <button id="btn-save-invoice" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 text-xs font-semibold rounded-lg shadow-sm transition">Save to Local</button>
-                            <button id="btn-pdf" class="px-4 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shadow-md hover:shadow-lg transition">
-                                <span>Export PDF</span>
-                            </button>
+                        <div class="bg-white dark:bg-surface-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-card">
+                            <h3 id="lbl-dash-count" class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Documents</h3>
+                            <p class="text-3xl font-black text-slate-900 dark:text-slate-50 mt-2 tracking-tight" id="dash-count">0</p>
+                        </div>
+                        <div class="bg-white dark:bg-surface-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-card">
+                            <h3 id="lbl-dash-paid" class="text-sm font-semibold text-emerald-600 dark:text-emerald-500 uppercase tracking-wider">Paid Items</h3>
+                            <p class="text-3xl font-black text-slate-900 dark:text-slate-50 mt-2 tracking-tight" id="dash-paid">0</p>
+                        </div>
+                        <div class="bg-white dark:bg-surface-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-card">
+                            <h3 id="lbl-dash-unpaid" class="text-sm font-semibold text-rose-500 dark:text-rose-400 uppercase tracking-wider">Pending / Overdue</h3>
+                            <p class="text-3xl font-black text-slate-900 dark:text-slate-50 mt-2 tracking-tight" id="dash-unpaid">0</p>
                         </div>
                     </div>
+                </div>
+            </section>
 
-                    <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-premium space-y-5">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Settings & Branding</h3>
-                            <div class="flex gap-4 flex-wrap">
-                                <label class="cursor-pointer text-xs font-semibold text-brand-600 hover:text-brand-700 transition">
-                                    + Add Signature <input type="file" id="sig-upload" accept="image/png, image/jpeg" class="hidden" />
-                                </label>
-                                <label class="cursor-pointer text-xs font-semibold text-brand-600 hover:text-brand-700 transition">
-                                    Upload Logo <input type="file" id="logo-upload" accept="image/png, image/jpeg" class="hidden" />
-                                </label>
-                            </div>
-                        </div>
+            <div id="view-editor" class="flex flex-1 overflow-hidden relative w-full">
+                <div class="flex-1 grid grid-cols-1 xl:grid-cols-2 overflow-hidden bg-surface-50 dark:bg-surface-900/50 relative w-full">
+                    
+                    <section aria-label="Document Editor Controls" id="editor-controls-pane" class="h-full overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8 no-print border-r border-slate-200 dark:border-slate-800/80 custom-scrollbar pb-32">
                         
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
-                            <div>
-                                <label class="block text-xs font-medium mb-1.5 text-slate-500">Currency</label>
-                                <select id="currency" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition hover:border-slate-400">
-                                    <option value="PKR">PKR (Rs)</option>
-                                    <option value="USD">USD ($)</option>
-                                    <option value="GBP">GBP (£)</option>
-                                    <option value="EUR">EUR (€)</option>
+                        <div class="sticky top-0 z-10 bg-surface-50/90 dark:bg-surface-900/90 backdrop-blur-md pt-2 pb-4 -mx-2 px-2 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <label id="lbl-state" for="doc-status" class="text-[11px] font-bold text-slate-400 uppercase tracking-widest cursor-pointer">State</label>
+                                <select id="doc-status" aria-label="Document Status" class="pl-3 pr-8 py-1.5 text-sm font-semibold border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-surface-800 shadow-sm outline-none focus:ring-2 focus:ring-brand-500/50 transition cursor-pointer hover:border-brand-400 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_0.5rem_center] bg-no-repeat">
+                                    <option value="Draft" id="opt-draft">Draft</option>
+                                    <option value="Pending" id="opt-pending" selected>Pending</option>
+                                    <option value="Paid" id="opt-paid">Paid</option>
+                                    <option value="Unpaid" id="opt-unpaid">Unpaid</option>
+                                    <option value="Overdue" id="opt-overdue">Overdue</option>
+                                    <option value="Cancelled" id="opt-cancelled">Cancelled</option>
                                 </select>
+                                <span id="auto-save-indicator" role="status" aria-live="polite" class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 px-2 py-1 rounded hidden transition-opacity">Saved Locally</span>
                             </div>
-                        </div>
-                        
-                        <div class="border-t border-slate-100 dark:border-slate-700/60 pt-4 mt-2">
-                            <div class="flex justify-between items-center mb-2">
-                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Company Profile</label>
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <input type="text" id="prof-company-name" placeholder="Company Name" class="w-full px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition">
-                                <input type="text" id="prof-company-address" placeholder="Tagline (e.g., Innovate • Build)" class="w-full px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition">
-                                <input type="text" id="prof-company-tax-id" placeholder="Reg/Tax/VAT No. (Optional)" class="w-full px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition">
-                            </div>
-                        </div>
-                    </div>
+                            <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                                <button type="button" id="btn-print-mode" aria-label="Print Document" class="p-2 text-slate-500 hover:text-slate-900 bg-white dark:bg-surface-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm transition tooltip-trigger hidden sm:block outline-none focus:ring-2 focus:ring-brand-500">
+                                    <svg class="w-4 h-4" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                </button>
+                                <button type="button" id="btn-duplicate" class="px-4 py-2 bg-white dark:bg-surface-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold rounded-md shadow-sm transition outline-none focus:ring-2 focus:ring-brand-500">
+                                    Duplicate
+                                </button>
+                                <button type="button" id="btn-save-invoice" class="px-4 py-2 bg-brand-50 hover:bg-brand-100 dark:bg-brand-900/30 dark:hover:bg-brand-900/50 text-brand-700 dark:text-brand-300 text-sm font-semibold rounded-md shadow-sm transition outline-none focus:ring-2 focus:ring-brand-500">
+                                    Save to Local
+                                </button>
+                                
+                                <!-- Enterprise Addition: Dedicated Copy and Print Layout Action Modules -->
+                                <button type="button" id="btn-enterprise-copy" aria-label="Copy Invoice Data" class="px-4 py-2 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 font-semibold text-sm rounded-md shadow-sm transition outline-none focus:ring-2 focus:ring-amber-500 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                    <span id="lbl-btn-copy">Copy</span>
+                                </button>
+                                <button type="button" id="btn-enterprise-print" aria-label="Print Invoice Document" class="px-4 py-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 font-semibold text-sm rounded-md shadow-sm transition outline-none focus:ring-2 focus:ring-emerald-500 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                    <span id="lbl-btn-print">Print</span>
+                                </button>
 
-                    <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-premium space-y-5">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                            <div>
-                                <div class="flex justify-between items-center mb-1.5">
-                                    <label class="block text-xs font-medium text-slate-500">Doc #</label>
-                                </div>
-                                <input type="text" id="doc-number" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition hover:border-slate-400">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium mb-1.5 text-slate-500">Date Issued</label>
-                                <input type="date" id="doc-date" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition hover:border-slate-400">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium mb-1.5 text-slate-500">Due Date</label>
-                                <input type="date" id="doc-due-date" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition hover:border-slate-400">
+                                <button type="button" id="btn-pdf" class="px-5 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 text-sm font-semibold rounded-md shadow-card transition outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 dark:focus:ring-offset-surface-900 flex items-center gap-2">
+                                    <span id="lbl-btn-export">Export PDF</span>
+                                    <svg class="w-4 h-4" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                </button>
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <div class="flex justify-between items-center mb-1.5">
-                                    <label class="block text-xs font-medium text-slate-500">From</label>
-                                    <select id="saved-senders-dropdown" class="text-[10px] border border-slate-300 dark:border-slate-600 dark:bg-slate-900 rounded px-1.5 py-0.5 outline-none hidden text-slate-500"><option value="">Load Saved...</option></select>
+
+                        <div class="bg-white dark:bg-surface-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-card focus-within:ring-1 focus-within:ring-brand-500 transition-all" role="group" aria-labelledby="heading-company-profile">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 id="heading-company-profile" class="text-sm font-bold uppercase tracking-widest text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-brand-500" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                    Company Profile
+                                </h3>
+                                <div class="flex gap-4">
+                                    <label id="lbl-add-signature" for="sig-upload" class="cursor-pointer text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 transition flex items-center gap-1 bg-brand-50 dark:bg-brand-900/20 px-2 py-1 rounded">
+                                        <svg class="w-3 h-3" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                        Add Signature
+                                    </label>
+                                    <input type="file" id="sig-upload" accept="image/png, image/jpeg" class="sr-only" tabindex="-1" />
+                                    
+                                    <label id="lbl-upload-logo" for="logo-upload" class="cursor-pointer text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 transition flex items-center gap-1 bg-brand-50 dark:bg-brand-900/20 px-2 py-1 rounded">
+                                        <svg class="w-3 h-3" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        Upload Logo
+                                    </label>
+                                    <input type="file" id="logo-upload" accept="image/png, image/jpeg" class="sr-only" tabindex="-1" />
                                 </div>
-                                <textarea id="sender-details" rows="4" placeholder="123 Business Street, Suite 100&#10;Lahore, Pakistan&#10;info@skylinesolutions.com&#10;+92 300 1234567" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 font-mono text-xs outline-none focus:border-brand-500 shadow-sm transition hover:border-slate-400"></textarea>
                             </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                <div class="col-span-1 md:col-span-2">
+                                    <label id="lbl-prof-business-name" for="prof-company-name" class="block text-xs font-semibold mb-1.5 text-slate-500 uppercase tracking-wider">Business Name</label>
+                                    <input type="text" id="prof-company-name" placeholder="e.g. Acme Corporation" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-transparent outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm placeholder:text-slate-400">
+                                </div>
+                                <div class="col-span-1 md:col-span-2">
+                                    <label id="lbl-prof-tagline" for="prof-company-address" class="block text-xs font-semibold mb-1.5 text-slate-500 uppercase tracking-wider">Tagline / Slogan</label>
+                                    <input type="text" id="prof-company-address" placeholder="e.g. Innovate • Build • Scale" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-transparent outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm placeholder:text-slate-400">
+                                </div>
+                                <div class="col-span-1 md:col-span-2">
+                                    <label id="lbl-prof-tax-id" for="prof-company-tax-id" class="block text-xs font-semibold mb-1.5 text-slate-500 uppercase tracking-wider">Tax ID / VAT No.</label>
+                                    <input type="text" id="prof-company-tax-id" placeholder="Optional (e.g. GB123456789)" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-transparent outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm placeholder:text-slate-400">
+                                </div>
+                                <div class="col-span-1">
+                                    <label id="lbl-base-currency" for="currency" class="block text-xs font-semibold mb-1.5 text-slate-500 uppercase tracking-wider">Base Currency</label>
+                                    <select id="currency" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-surface-800 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm cursor-pointer">
+                                        <option value="PKR">PKR (Rs)</option>
+                                        <option value="USD">USD ($)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="CAD">CAD ($)</option>
+                                        <option value="AUD">AUD ($)</option>
+                                    </select>
+                                </div>
+                                <div class="col-span-1 md:col-span-2 lg:col-span-4">
+                                    <div class="flex justify-between items-center mb-1.5">
+                                        <label id="lbl-corporate-address" for="sender-details" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Corporate Address & Contact</label>
+                                        <select id="saved-senders-dropdown" aria-label="Load Saved Profile" class="text-xs bg-slate-100 dark:bg-surface-900 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 outline-none hidden text-slate-600 font-medium cursor-pointer hover:bg-slate-200 transition focus:ring-2 focus:ring-brand-500"><option value="">Load Profile...</option></select>
+                                    </div>
+                                    <textarea id="sender-details" rows="3" placeholder="123 Business Street, Suite 100&#10;London, UK&#10;contact@acmecorp.com" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-transparent font-mono outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm placeholder:text-slate-400"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-surface-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-card focus-within:ring-1 focus-within:ring-brand-500 transition-all" role="group" aria-labelledby="heading-client-logistics">
+                            <h3 id="heading-client-logistics" class="text-sm font-bold uppercase tracking-widest text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-6">
+                                <svg class="w-4 h-4 text-brand-500" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                Client & Document Logistics
+                            </h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-slate-700/60">
+                                <div>
+                                    <label id="lbl-doc-number-form" for="doc-number" class="block text-xs font-semibold mb-1.5 text-slate-500 uppercase tracking-wider">Document #</label>
+                                    <input type="text" id="doc-number" class="w-full px-3 py-2 text-sm font-mono border border-slate-300 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-surface-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-inner">
+                                </div>
+                                <div>
+                                    <label id="lbl-issue-date-form" for="doc-date" class="block text-xs font-semibold mb-1.5 text-slate-500 uppercase tracking-wider">Issue Date</label>
+                                    <input type="date" id="doc-date" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-transparent outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm cursor-text">
+                                </div>
+                                <div>
+                                    <label id="lbl-due-date-form" for="doc-due-date" class="block text-xs font-semibold mb-1.5 text-slate-500 uppercase tracking-wider">Due Date</label>
+                                    <input type="date" id="doc-due-date" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-transparent outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm cursor-text">
+                                </div>
+                            </div>
+
                             <div class="relative">
                                 <div class="flex justify-between items-center mb-1.5">
-                                    <label class="block text-xs font-medium text-slate-500">To (Client)</label>
-                                    <select id="saved-clients-dropdown" class="text-[10px] border border-slate-300 dark:border-slate-600 dark:bg-slate-900 rounded px-1.5 py-0.5 outline-none hidden text-slate-500"><option value="">Load Client...</option></select>
+                                    <label id="lbl-client-details" for="client-details" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Client Billing Details (To)</label>
+                                    <div class="flex items-center gap-2">
+                                        <button type="button" aria-label="Search CRM" class="text-[10px] uppercase font-bold text-brand-600 bg-brand-50 dark:bg-brand-900/30 px-2 py-1 rounded hidden sm:flex items-center gap-1 focus:ring-2 focus:ring-brand-500 outline-none">
+                                            <svg class="w-3 h-3" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg> CRM
+                                        </button>
+                                        <select id="saved-clients-dropdown" aria-label="Load Saved Client" class="text-xs bg-slate-100 dark:bg-surface-900 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 outline-none hidden text-slate-600 font-medium cursor-pointer hover:bg-slate-200 transition focus:ring-2 focus:ring-brand-500"><option value="">Load Client...</option></select>
+                                    </div>
                                 </div>
-                                <textarea id="client-details" rows="4" placeholder="ABC Enterprises&#10;456 Industrial Area&#10;Karachi, Pakistan&#10;contact@abcenterprises.com" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 font-mono text-xs outline-none focus:border-brand-500 shadow-sm transition hover:border-slate-400"></textarea>
-                                <input type="text" id="client-tax-id" placeholder="Client VAT / Tax No. (Optional)" class="w-full mt-2 px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition">
+                                <textarea id="client-details" rows="3" placeholder="Client Enterprise Ltd&#10;456 Innovation Park&#10;New York, NY 10001, USA&#10;accounts@cliententerprise.com" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-transparent font-mono outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm placeholder:text-slate-400"></textarea>
+                                
+                                <div class="mt-3">
+                                    <label id="lbl-client-tax-id" for="client-tax-id" class="block text-xs font-semibold mb-1 text-slate-500 uppercase tracking-wider">Client Tax / Business ID</label>
+                                    <input type="text" id="client-tax-id" placeholder="Optional (e.g. US Employer ID)" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-transparent outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm placeholder:text-slate-400">
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="bg-white dark:bg-slate-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-premium space-y-4">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400">Line Items</h3>
-                        </div>
-                        
-                        <div id="items-container" class="space-y-2"></div>
-
-                        <button id="btn-add-item" class="w-full py-2.5 mt-2 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-xs font-semibold transition text-slate-500 hover:text-brand-600 outline-none bg-slate-50 hover:bg-brand-50 dark:bg-slate-900 dark:hover:bg-brand-900/20">
-                            + Add Item
-                        </button>
-
-                        <div class="pt-5 border-t border-slate-200 dark:border-slate-700 flex flex-col md:flex-row justify-between items-end gap-5 mt-4">
-                            <div class="w-full md:w-1/2 space-y-2">
-                                <label class="block text-xs font-medium text-slate-500 mb-1">Payment Link</label>
-                                <input type="url" id="payment-link-input" placeholder="e.g. https://pay.skylinesolutions.com/INV-2025-0001" class="w-full px-3 py-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition hover:border-slate-400">
+                        <div class="bg-white dark:bg-surface-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-card focus-within:ring-1 focus-within:ring-brand-500 transition-all" role="group" aria-labelledby="heading-itemized-billing">
+                            <div class="flex justify-between items-center mb-4 pb-4 border-b border-slate-100 dark:border-slate-700/60">
+                                <h3 id="heading-itemized-billing" class="text-sm font-bold uppercase tracking-widest text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-brand-500" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                    Itemized Billing
+                                </h3>
+                                <button type="button" id="btn-browse-library" class="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 transition flex items-center gap-1 bg-brand-50 dark:bg-brand-900/20 px-3 py-1.5 rounded-md hidden sm:flex outline-none focus:ring-2 focus:ring-brand-500">
+                                    <svg class="w-3 h-3" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                                    Browse Library
+                                </button>
                             </div>
                             
-                            <div class="flex flex-col items-end gap-3 w-full md:w-auto">
-                                <div class="flex items-center gap-3 text-xs">
-                                    <span class="text-slate-500 font-medium">Discount:</span>
-                                    <select id="discount-type" class="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-slate-50 dark:bg-slate-900 outline-none">
-                                        <option value="fixed">Fixed</option>
-                                        <option value="percent">%</option>
-                                    </select>
-                                    <input type="number" id="discount-value" min="0" step="0.01" class="w-24 px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-right dark:bg-slate-900 outline-none">
-                                </div>
-                                <div class="flex items-center gap-2 text-xs" id="tax-input-container">
-                                    <input type="text" id="tax-name-input" value="TAX" placeholder="e.g. VAT" class="w-16 px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-center text-slate-500 font-medium bg-slate-50 dark:bg-slate-900 outline-none">
-                                    <span class="text-slate-500 font-medium">(%):</span>
-                                    <input type="number" id="tax-rate-manual" min="0" step="0.01" class="w-24 px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-right dark:bg-slate-900 outline-none">
-                                </div>
-                            </div>
-                        </div>
+                            <div id="items-container" class="space-y-3 mb-2"></div>
 
-                        <div class="pt-5 border-t border-slate-200 dark:border-slate-700 grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
-                            <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1.5">Notes</label>
-                                <textarea id="invoice-notes" rows="3" placeholder="Thank you for your business!&#10;If you have any questions, feel free to contact us." class="w-full px-3 py-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition"></textarea>
-                            </div>
-                            <div>
-                                <div class="flex justify-between items-center mb-1.5">
-                                    <label class="block text-xs font-medium text-slate-500">Terms & Conditions</label>
-                                    <select id="saved-terms-dropdown" class="text-[10px] border border-slate-300 dark:border-slate-600 dark:bg-slate-900 rounded px-1.5 py-0.5 outline-none hidden text-slate-500"><option value="">Load Terms...</option></select>
-                                </div>
-                                <textarea id="invoice-terms" rows="3" placeholder="• Payment is due by the due date mentioned above.&#10;• Late payments may incur additional charges." class="w-full px-3 py-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="h-12"></div>
-                </section>
+                            <button type="button" id="btn-add-item" class="w-full py-3 mt-4 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-lg text-sm font-semibold transition text-slate-500 hover:text-brand-600 outline-none bg-surface-50 hover:bg-brand-50 dark:bg-surface-900 dark:hover:bg-brand-900/20 focus:ring-2 focus:ring-brand-500/50 flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                <span id="lbl-add-line-item">Add New Line Item</span>
+                            </button>
 
-                <section id="preview-container-pane" class="h-full overflow-y-auto p-6 bg-slate-200/50 dark:bg-slate-950/20 flex justify-center relative">
-                    
-                    <div id="capture-box" class="w-full max-w-[210mm]">
-                        <div class="bg-white text-slate-900 p-[15mm] min-h-[297mm] shadow-2xl rounded-sm relative flex flex-col font-sans" id="doc-preview" dir="ltr">
-                            
-                            <div class="flex-1">
-                                <div id="tpl-header-block" class="flex justify-between items-start mb-8 pb-6 border-b border-slate-200">
-                                    <div class="flex items-start gap-4">
-                                        <div id="logo-wrapper" class="flex items-center justify-center">
-                                            <img id="prev-logo" class="max-h-24 max-w-[192px] object-contain hidden" alt="Business Logo">
-                                            <svg class="w-16 h-16 text-invoice-primary" viewBox="0 0 24 24" fill="currentColor" id="placeholder-logo">
-                                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <div id="prev-company-name" class="text-2xl font-bold text-slate-900 tracking-tight leading-none mb-1">Skyline Solutions</div>
-                                            <div id="prev-company-tagline" class="text-xs text-slate-500 mb-2 font-medium">Innovate • Build • Deliver</div>
-                                            <div id="prev-company-tax-id" class="text-[11px] font-bold text-slate-700 tracking-wide mb-3 hidden"></div>
-                                            
-                                            <div id="prev-header-contact" class="space-y-1.5 text-xs text-slate-700 font-medium hidden">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="text-right">
-                                        <h1 class="text-5xl font-black text-invoice-primary mb-6 tracking-wide" id="prev-title">INVOICE</h1>
-                                        <table class="ml-auto text-xs text-slate-800">
-                                            <tr>
-                                                <td class="pr-6 pb-2 text-slate-600 font-medium text-left">Invoice No:</td>
-                                                <td class="font-bold pb-2 text-right" id="prev-number-label">INV-2025-0001</td>
-                                            </tr>
-                                            <tr>
-                                                <td class="pr-6 pb-2 text-slate-600 font-medium text-left" id="lbl-date">Invoice Date:</td>
-                                                <td class="font-bold pb-2 text-right" id="prev-date">May 27, 2025</td>
-                                            </tr>
-                                            <tr>
-                                                <td class="pr-6 pb-0 text-slate-600 font-medium text-left" id="lbl-due">Due Date:</td>
-                                                <td class="font-bold pb-0 text-right" id="prev-due-date">June 10, 2025</td>
-                                            </tr>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                <div id="tpl-address-block" class="grid grid-cols-2 gap-8 mb-6 text-xs">
-                                    <div class="text-start">
-                                        <h3 class="text-[11px] font-bold uppercase tracking-wider text-invoice-primary mb-2" id="lbl-from">FROM:</h3>
-                                        <p id="prev-sender" class="whitespace-pre-line text-slate-800 font-semibold leading-relaxed">Skyline Solutions<br>123 Business Street, Suite 100<br>Lahore, Pakistan<br>info@skylinesolutions.com<br>+92 300 1234567</p>
-                                    </div>
-                                    <div class="text-start border-l border-slate-200 pl-8">
-                                        <h3 class="text-[11px] font-bold uppercase tracking-wider text-invoice-primary mb-2" id="lbl-to">BILL TO:</h3>
-                                        <p id="prev-client" class="whitespace-pre-line text-slate-800 font-semibold leading-relaxed">ABC Enterprises<br>456 Industrial Area<br>Karachi, Pakistan<br>contact@abcenterprises.com<br>+92 321 7654321</p>
-                                        <p id="prev-client-tax-id" class="text-[11px] font-bold text-slate-700 mt-2 hidden"></p>
-                                    </div>
-                                </div>
-
-                                <table class="w-full border-collapse mb-6 text-xs">
-                                    <thead>
-                                        <tr class="bg-invoice-primary text-white font-bold uppercase tracking-wider">
-                                            <th class="py-3 px-4 text-left w-12 rounded-tl-md">#</th>
-                                            <th class="py-3 px-4 text-left" id="lbl-desc">DESCRIPTION</th>
-                                            <th class="py-3 px-4 text-center w-20" id="lbl-qty">QTY</th>
-                                            <th class="py-3 px-4 text-right w-32" id="lbl-price">UNIT PRICE</th>
-                                            <th class="py-3 px-4 text-right w-32 rounded-tr-md" id="lbl-total">AMOUNT</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="prev-items-body" class="text-slate-800">
-                                        <tr class="border-b border-slate-200">
-                                            <td class="py-4 px-4 font-bold">1</td>
-                                            <td class="py-4 px-4">
-                                                <div class="font-bold">Website Development</div>
-                                                <div class="text-slate-500 font-normal mt-1">Custom business website with admin panel</div>
-                                            </td>
-                                            <td class="py-4 px-4 text-center font-medium">1</td>
-                                            <td class="py-4 px-4 text-right font-medium">PKR 45,000</td>
-                                            <td class="py-4 px-4 text-right font-bold text-slate-900">PKR 45,000</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-
-                                <div class="flex justify-between items-start mb-8">
-                                    
-                                    <div class="w-1/2 pe-8">
-                                        <div id="prev-payment-link-container" class="bg-invoice-light p-4 rounded-xl flex items-start gap-3 hidden">
-                                            <div class="bg-invoice-primary text-white p-2 rounded-full mt-1 shrink-0">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                                            </div>
-                                            <div class="overflow-hidden">
-                                                <h3 class="text-xs font-bold text-invoice-primary mb-1 uppercase tracking-wider">PAYMENT LINK</h3>
-                                                <p class="text-[11px] text-slate-600 mb-1">Pay securely using the link below:</p>
-                                                <a id="prev-payment-link" href="#" target="_blank" class="text-invoice-primary font-bold text-[11px] hover:underline break-all"></a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="w-72 text-xs space-y-3">
-                                        <div class="flex justify-between pb-3 border-b border-slate-200">
-                                            <span class="text-slate-600 font-bold" id="lbl-subtotal">SUBTOTAL</span>
-                                            <span id="prev-subtotal" class="font-bold text-slate-900">PKR 0</span>
-                                        </div>
-                                        <div class="flex justify-between pb-3 border-b border-slate-200" id="prev-discount-row">
-                                            <span class="text-slate-600 font-bold" id="lbl-discount">DISCOUNT</span>
-                                            <span id="prev-discount" class="font-bold text-slate-900">PKR 0</span>
-                                        </div>
-                                        <div class="flex justify-between pb-3 border-b border-slate-200">
-                                            <span id="prev-tax-label" class="text-slate-600 font-bold">TAX (0%)</span>
-                                            <span id="prev-tax" class="font-bold text-slate-900">PKR 0</span>
-                                        </div>
-                                        <div class="flex justify-between text-sm font-black text-invoice-primary pt-1 border-b-2 border-invoice-light pb-4">
-                                            <span id="lbl-grandtotal">TOTAL</span>
-                                            <span id="prev-total-amount" class="font-black">PKR 0</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="border-t-2 border-slate-100 pt-6 mt-auto">
-                                <div class="grid grid-cols-2 gap-8 mb-12">
-                                    
-                                    <div>
-                                        <div id="prev-notes-box" class="mb-8">
-                                            <div class="flex items-center gap-2 mb-2 text-invoice-primary">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                                <h4 class="text-xs font-bold uppercase tracking-wider">NOTES</h4>
-                                            </div>
-                                            <p id="prev-notes-content" class="text-[11px] text-slate-800 font-medium whitespace-pre-line leading-relaxed"></p>
-                                        </div>
-                                        
-                                        <div id="sig-container" class="mt-4 inline-block w-full max-w-[240px]">
-                                            <img id="prev-sig" class="max-h-24 max-w-full object-contain mb-1 hidden" alt="Signature Upload">
-                                            <div id="prev-sig-placeholder-line" class="h-20 w-full flex items-center justify-center text-slate-300 font-serif italic text-xs border border-dashed border-slate-200 rounded mb-1">Signature Area</div>
-                                            <div class="w-full border-t border-slate-300 border-dashed pt-2">
-                                                <div class="text-[10px] text-slate-600 font-bold uppercase tracking-wider text-center">Authorized Signature</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="border-l border-slate-200 pl-8">
-                                        <div id="prev-terms-box" class="mb-6">
-                                            <div class="flex items-center gap-2 mb-2 text-invoice-primary">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                                                <h4 class="text-xs font-bold uppercase tracking-wider">TERMS & CONDITIONS</h4>
-                                            </div>
-                                            <p id="prev-terms-content" class="text-[11px] text-slate-800 font-medium whitespace-pre-line leading-relaxed pl-2"></p>
-                                        </div>
-                                        
-                                        <div class="bg-invoice-light p-4 rounded-xl flex items-start gap-3 mt-4">
-                                            <div class="text-invoice-primary mt-0.5">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                                            </div>
-                                            <div>
-                                                <h3 class="text-xs font-bold text-invoice-primary mb-1 uppercase tracking-wider">THANK YOU!</h3>
-                                                <p class="text-[10px] text-slate-800 font-medium">We appreciate your business and trust.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
+                            <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700/60 bg-surface-50 dark:bg-surface-900/50 -mx-6 px-6 -mb-6 pb-6 rounded-b-xl flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6">
+                                
+                                <div class="w-full lg:w-1/2 space-y-2">
+                                    <label id="lbl-automated-payment" for="payment-link-input" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-slate-400" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                                        Automated Payment Link
+                                    </label>
+                                    <input type="url" id="payment-link-input" placeholder="e.g. https://buy.stripe.com/..." class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-surface-800 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm placeholder:text-slate-400 font-mono">
                                 </div>
                                 
-                                <div class="text-center text-[10px] text-slate-500 font-medium border-t border-slate-200 pt-3">
-                                    This is a computer generated invoice.
+                                <div class="flex flex-col items-end gap-3 w-full lg:w-auto bg-white dark:bg-surface-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm">
+                                    <div class="flex items-center gap-3 w-full justify-between lg:justify-end">
+                                        <label id="lbl-discount-form" for="discount-value" class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Discount:</label>
+                                        <div class="flex shadow-sm rounded-md border border-slate-300 dark:border-slate-700 focus-within:ring-2 focus-within:ring-brand-500/20 focus-within:border-brand-500 transition overflow-hidden">
+                                            <select id="discount-type" aria-label="Discount Type" class="px-2 py-1.5 text-sm bg-slate-50 dark:bg-surface-900 text-slate-600 dark:text-slate-300 border-r border-slate-300 dark:border-slate-700 outline-none cursor-pointer">
+                                                <option value="fixed" id="opt-fixed">Fixed</option>
+                                                <option value="percent">%</option>
+                                            </select>
+                                            <input type="number" id="discount-value" min="0" step="0.01" placeholder="0.00" class="w-20 px-2 py-1.5 text-sm text-right bg-white dark:bg-surface-800 outline-none font-mono">
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-3 w-full justify-between lg:justify-end" id="tax-input-container">
+                                        <div class="flex items-center">
+                                            <input type="text" id="tax-name-input" value="TAX" placeholder="Name" aria-label="Tax Name" class="w-14 px-1 py-1.5 text-xs font-bold border-b border-dashed border-slate-300 dark:border-slate-600 text-right text-slate-500 bg-transparent outline-none uppercase tracking-wider">
+                                            <label id="lbl-tax-rate-percent" for="tax-rate-manual" class="sr-only">Tax Rate Percentage</label>
+                                            <span class="text-xs font-semibold text-slate-500 ml-1" aria-hidden="true">(%):</span>
+                                        </div>
+                                        <input type="number" id="tax-rate-manual" min="0" step="0.01" placeholder="0.00" class="w-24 px-2 py-1.5 text-sm font-mono border border-slate-300 dark:border-slate-700 rounded-md text-right bg-white dark:bg-surface-800 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm">
+                                    </div>
                                 </div>
                             </div>
-                            
                         </div>
-                    </div>
-                </section>
-                
-            </main>
-        </div>
+
+                        <div class="bg-white dark:bg-surface-800 p-6 rounded-xl border border-slate-200 dark:border-slate-700/60 shadow-card focus-within:ring-1 focus-within:ring-brand-500 transition-all" role="group" aria-label="Terms and Notes">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label id="lbl-customer-notes" for="invoice-notes" class="block text-xs font-semibold mb-2 text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                        <svg class="w-4 h-4" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                        Customer Notes
+                                    </label>
+                                    <textarea id="invoice-notes" rows="4" placeholder="Thank you for your business!&#10;If you have any questions, feel free to contact us." class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-transparent outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm"></textarea>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-2">
+                                        <label id="lbl-terms-cond" for="invoice-terms" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                            <svg class="w-4 h-4" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            Terms & Conditions
+                                        </label>
+                                        <select id="saved-terms-dropdown" aria-label="Load Saved Terms" class="text-[10px] uppercase font-bold text-brand-600 bg-brand-50 dark:bg-brand-900/30 border border-transparent rounded px-1.5 py-1 outline-none hidden cursor-pointer hover:bg-brand-100 transition focus:ring-2 focus:ring-brand-500"><option value="">Load Default...</option></select>
+                                    </div>
+                                    <textarea id="invoice-terms" rows="4" placeholder="• Payment is due by the due date.&#10;• Late payments incur 1.5% monthly fee." class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 rounded-md bg-transparent outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition shadow-sm"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section aria-label="Document Live Preview" id="preview-container-pane" class="h-full overflow-y-auto p-4 md:p-8 bg-slate-200/50 dark:bg-[#0b1120] flex justify-center relative items-start custom-scrollbar">
+                        
+                        <div class="fixed top-20 right-8 z-20 flex gap-2 no-print hidden lg:flex opacity-50 hover:opacity-100 transition-opacity">
+                            <button type="button" class="bg-white/80 dark:bg-surface-800/80 backdrop-blur border border-slate-200 dark:border-slate-700 p-2 rounded-full shadow-sm text-slate-500 hover:text-brand-600 focus:ring-2 focus:ring-brand-500 outline-none" aria-label="Zoom In">
+                                <svg class="w-4 h-4" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                            </button>
+                        </div>
+
+                        <div id="capture-box" class="w-full max-w-[210mm] transition-all transform origin-top mx-auto">
+                            <div class="bg-white text-slate-900 p-[15mm] min-h-[297mm] shadow-floating rounded-sm relative flex flex-col font-sans border border-slate-100 print:shadow-none print:border-none" id="doc-preview" role="document">
+                                
+                                <div class="flex-1">
+                                    <div id="tpl-header-block" class="flex justify-between items-start mb-10 pb-8 border-b-2 border-slate-100">
+                                        <div class="flex items-start gap-5">
+                                            <div id="logo-wrapper" class="flex items-center justify-center">
+                                                <img id="prev-logo" class="max-h-24 max-w-[192px] object-contain hidden" alt="Business Logo">
+                                                <div id="placeholder-logo" aria-hidden="true" class="w-16 h-16 bg-slate-50 rounded flex items-center justify-center border border-slate-200 text-slate-300">
+                                                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div id="prev-company-name" class="text-3xl font-black text-invoice-primary tracking-tight leading-none mb-1">Skyline Solutions</div>
+                                                <div id="prev-company-tagline" class="text-sm text-slate-500 mb-2 font-medium tracking-wide">Innovate • Build • Deliver</div>
+                                                <div id="prev-company-tax-id" class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3 hidden"></div>
+                                                <div id="prev-header-contact" class="space-y-1.5 text-xs text-slate-700 font-medium hidden"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="text-right">
+                                            <h1 class="text-4xl font-black text-invoice-primary/90 mb-6 tracking-widest uppercase" id="prev-title">INVOICE</h1>
+                                            <table class="ml-auto text-xs text-slate-800 border-collapse" role="presentation">
+                                                <tr>
+                                                    <td id="lbl-preview-doc-num" class="pr-6 pb-2 text-slate-500 font-semibold text-left uppercase tracking-wider text-[10px]">Doc Number:</td>
+                                                    <td class="font-bold pb-2 text-right text-sm" id="prev-number-label">INV-2025-0001</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="pr-6 pb-2 text-slate-500 font-semibold text-left uppercase tracking-wider text-[10px]" id="lbl-date">Issue Date:</td>
+                                                    <td class="font-bold pb-2 text-right" id="prev-date">May 27, 2025</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="pr-6 pb-0 text-slate-500 font-semibold text-left uppercase tracking-wider text-[10px]" id="lbl-due">Due Date:</td>
+                                                    <td class="font-bold pb-0 text-right text-brand-700" id="prev-due-date">June 10, 2025</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div id="tpl-address-block" class="grid grid-cols-2 gap-12 mb-10 text-xs">
+                                        <div class="text-start">
+                                            <h2 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-100 pb-2" id="lbl-from">FROM</h2>
+                                            <p id="prev-sender" class="whitespace-pre-line text-slate-800 font-medium leading-relaxed">Skyline Solutions<br>123 Business Street, Suite 100<br>Lahore, Pakistan<br>info@skylinesolutions.com<br>+92 300 1234567</p>
+                                        </div>
+                                        <div class="text-start">
+                                            <h2 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-100 pb-2" id="lbl-to">BILL TO</h2>
+                                            <p id="prev-client" class="whitespace-pre-line text-slate-800 font-medium leading-relaxed">ABC Enterprises<br>456 Industrial Area<br>Karachi, Pakistan<br>contact@abcenterprises.com<br>+92 321 7654321</p>
+                                            <p id="prev-client-tax-id" class="text-[11px] font-bold text-slate-500 mt-2 hidden bg-slate-50 inline-block px-2 py-1 rounded"></p>
+                                        </div>
+                                    </div>
+
+                                    <table class="w-full border-collapse mb-8 text-xs">
+                                        <thead>
+                                            <tr class="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-widest border-y border-slate-200">
+                                                <th scope="col" class="py-3 px-4 text-left w-12">#</th>
+                                                <th scope="col" class="py-3 px-4 text-left" id="lbl-desc">DESCRIPTION</th>
+                                                <th scope="col" class="py-3 px-4 text-center w-24" id="lbl-qty">QTY</th>
+                                                <th scope="col" class="py-3 px-4 text-right w-32" id="lbl-price">UNIT PRICE</th>
+                                                <th scope="col" class="py-3 px-4 text-right w-32" id="lbl-total">AMOUNT</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="prev-items-body" class="text-slate-800 align-top">
+                                            <tr class="border-b border-slate-100">
+                                                <td class="py-5 px-4 font-bold text-slate-400">1</td>
+                                                <td class="py-5 px-4">
+                                                    <div class="font-bold text-sm text-slate-900">Website Development</div>
+                                                    <div class="text-slate-500 font-normal mt-1 leading-relaxed">Custom corporate website with integrated CRM portal.</div>
+                                                </td>
+                                                <td class="py-5 px-4 text-center font-medium">1</td>
+                                                <td class="py-5 px-4 text-right font-medium text-slate-600">PKR 45,000</td>
+                                                <td class="py-5 px-4 text-right font-bold text-slate-900">PKR 45,000</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="flex justify-between items-start mb-10">
+                                        
+                                        <div class="w-1/2 pe-12">
+                                            <div id="prev-payment-link-container" class="bg-brand-50 border border-brand-100 p-4 rounded-xl flex items-start gap-3 hidden">
+                                                <div class="bg-brand-600 text-white p-2 rounded-full shrink-0 shadow-sm mt-0.5" aria-hidden="true">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                                                </div>
+                                                <div class="overflow-hidden">
+                                                    <h3 id="lbl-secure-payment" class="text-[10px] font-black text-brand-800 mb-1 uppercase tracking-widest">SECURE PAYMENT LINK</h3>
+                                                    <p id="lbl-click-scan" class="text-[11px] text-brand-600/80 mb-1.5 font-medium">Click or scan to pay instantly:</p>
+                                                    <a id="prev-payment-link" href="#" target="_blank" rel="noopener noreferrer" class="text-brand-700 font-bold text-[11px] hover:underline break-all block truncate"></a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="w-72 text-xs space-y-3 bg-slate-50/50 p-5 rounded-xl border border-slate-100">
+                                            <div class="flex justify-between pb-3 border-b border-slate-200">
+                                                <span class="text-slate-500 font-bold text-[10px] uppercase tracking-wider" id="lbl-subtotal">SUBTOTAL</span>
+                                                <span id="prev-subtotal" class="font-bold text-slate-900">PKR 0</span>
+                                            </div>
+                                            <div class="flex justify-between pb-3 border-b border-slate-200" id="prev-discount-row">
+                                                <span class="text-emerald-600 font-bold text-[10px] uppercase tracking-wider" id="lbl-discount">DISCOUNT</span>
+                                                <span id="prev-discount" class="font-bold text-emerald-600">PKR 0</span>
+                                            </div>
+                                            <div class="flex justify-between pb-3 border-b border-slate-200">
+                                                <span id="prev-tax-label" class="text-slate-500 font-bold text-[10px] uppercase tracking-wider">TAX (0%)</span>
+                                                <span id="prev-tax" class="font-bold text-slate-900">PKR 0</span>
+                                            </div>
+                                            <div class="flex justify-between text-base pt-2">
+                                                <span id="lbl-grandtotal" class="font-black text-invoice-primary uppercase tracking-widest">TOTAL</span>
+                                                <span id="prev-total-amount" class="font-black text-invoice-primary">PKR 0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="border-t border-slate-200 pt-8 mt-auto">
+                                    <div class="grid grid-cols-12 gap-8 mb-8">
+                                        
+                                        <div class="col-span-8 grid grid-cols-2 gap-8 pr-8">
+                                            <div id="prev-notes-box">
+                                                <h3 id="lbl-preview-notes" class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 border-b border-slate-100 pb-2">NOTES</h3>
+                                                <p id="prev-notes-content" class="text-[11px] text-slate-700 font-medium whitespace-pre-line leading-relaxed"></p>
+                                            </div>
+                                            
+                                            <div id="prev-terms-box">
+                                                <h3 id="lbl-preview-terms" class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 border-b border-slate-100 pb-2">TERMS & CONDITIONS</h3>
+                                                <p id="prev-terms-content" class="text-[11px] text-slate-700 font-medium whitespace-pre-line leading-relaxed"></p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-span-4 flex flex-col items-end justify-end border-l border-slate-100 pl-8">
+                                            <div id="sig-container" class="inline-block w-full text-center">
+                                                <img id="prev-sig" class="max-h-20 max-w-full object-contain mx-auto mb-2 hidden" alt="Authorized Signature">
+                                                <div id="prev-sig-placeholder-line" aria-hidden="true" class="h-20 w-full flex items-center justify-center text-slate-300 font-serif italic text-xs border border-dashed border-slate-200 rounded mb-2 bg-slate-50">Signature</div>
+                                                <div class="w-full border-t border-slate-300 pt-2">
+                                                    <div id="lbl-authorized-sig" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Authorized Signature</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                    </div>
+                                    
+                                    <div class="flex justify-between items-center text-[10px] text-slate-400 font-semibold border-t border-slate-100 pt-4">
+                                        <span id="lbl-footer-secure">Generated securely via DocumentSuite Pro</span>
+                                        <span id="lbl-footer-page">Page 1 of 1</span>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </section>
+                    
+                </div>
+            </div>
+        </main>
     </div>
 
+    <!-- Live Corporate Adaptive Toast Notification Center -->
+    <div id="enterprise-toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 no-print pointer-events-none"></div>
+
     <script type="module" src="app.js"></script>
+    
+    <!-- Enterprise Initialization & Feature Integration Script Module -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Localization Map Matrix
+            const localizations = {
+                en: {
+                    dir: 'ltr',
+                    fontClass: 'font-sans',
+                    translations: {
+                        'nav-editor': 'Editor', 'nav-dashboard': 'Dashboard', 'nav-clients': 'Clients', 'nav-library': 'Library',
+                        'btn-text-new-doc': 'New Doc', 'dashboard-heading': 'Financial Overview', 'dashboard-subheading': 'Track your corporate invoicing performance across all clients.',
+                        'btn-export-report': 'Export Full Report', 'lbl-dash-revenue': 'Total Revenue', 'lbl-dash-count': 'Total Documents',
+                        'lbl-dash-paid': 'Paid Items', 'lbl-dash-unpaid': 'Pending / Overdue', 'lbl-state': 'State',
+                        'opt-draft': 'Draft', 'opt-pending': 'Pending', 'opt-paid': 'Paid', 'opt-unpaid': 'Unpaid', 'opt-overdue': 'Overdue', 'opt-cancelled': 'Cancelled',
+                        'btn-duplicate': 'Duplicate', 'btn-save-invoice': 'Save to Local', 'lbl-btn-copy': 'Copy', 'lbl-btn-print': 'Print', 'lbl-btn-export': 'Export PDF',
+                        'heading-company-profile': 'Company Profile', 'lbl-add-signature': 'Add Signature', 'lbl-upload-logo': 'Upload Logo',
+                        'lbl-prof-business-name': 'Business Name', 'lbl-prof-tagline': 'Tagline / Slogan', 'lbl-prof-tax-id': 'Tax ID / VAT No.',
+                        'lbl-base-currency': 'Base Currency', 'lbl-corporate-address': 'Corporate Address & Contact', 'heading-client-logistics': 'Client & Document Logistics',
+                        'lbl-doc-number-form': 'Document #', 'lbl-issue-date-form': 'Issue Date', 'lbl-due-date-form': 'Due Date',
+                        'lbl-client-details': 'Client Billing Details (To)', 'lbl-client-tax-id': 'Client Tax / Business ID', 'heading-itemized-billing': 'Itemized Billing',
+                        'btn-browse-library': 'Browse Library', 'lbl-add-line-item': 'Add New Line Item', 'lbl-automated-payment': 'Automated Payment Link',
+                        'lbl-discount-form': 'Discount:', 'opt-fixed': 'Fixed', 'lbl-customer-notes': 'Customer Notes', 'lbl-terms-cond': 'Terms & Conditions',
+                        'lbl-preview-doc-num': 'Doc Number:', 'lbl-date': 'Issue Date:', 'lbl-due': 'Due Date:', 'lbl-from': 'FROM', 'lbl-to': 'BILL TO',
+                        'lbl-desc': 'DESCRIPTION', 'lbl-qty': 'QTY', 'lbl-price': 'UNIT PRICE', 'lbl-total': 'AMOUNT', 'lbl-secure-payment': 'SECURE PAYMENT LINK',
+                        'lbl-click-scan': 'Click or scan to pay instantly:', 'lbl-subtotal': 'SUBTOTAL', 'lbl-discount': 'DISCOUNT', 'lbl-grandtotal': 'TOTAL',
+                        'lbl-preview-notes': 'NOTES', 'lbl-preview-terms': 'TERMS & CONDITIONS', 'lbl-authorized-sig': 'Authorized Signature',
+                        'lbl-footer-secure': 'Generated securely via DocumentSuite Pro', 'lbl-footer-page': 'Page 1 of 1',
+                        'toast-copy': 'Invoice copied successfully.', 'toast-print': 'Preparing document stream for printing...'
+                    }
+                },
+                ur: {
+                    dir: 'rtl',
+                    fontClass: 'font-urdu',
+                    translations: {
+                        'nav-editor': 'ایڈیٹر', 'nav-dashboard': 'ڈیش بورڈ', 'nav-clients': 'کلائنٹس', 'nav-library': 'لائبریری',
+                        'btn-text-new-doc': 'نیا دستاویز', 'dashboard-heading': 'مالیاتی جائزہ', 'dashboard-subheading': 'تمام کلائنٹس میں اپنے کارپوریٹ انوائسنگ کی کارکردگی کو ٹریک کریں۔',
+                        'btn-export-report': 'مکمل رپورٹ برآمد کریں', 'lbl-dash-revenue': 'کل آمدنی', 'lbl-dash-count': 'کل دستاویزات',
+                        'lbl-dash-paid': 'ادا شدہ اشیاء', 'lbl-dash-unpaid': 'زیر التواء / واجب الادا', 'lbl-state': 'حالت',
+                        'opt-draft': 'ڈرافٹ', 'opt-pending': 'زیر التواء', 'opt-paid': 'ادا شدہ', 'opt-unpaid': 'غیر ادا شدہ', 'opt-overdue': 'واجب الادا', 'opt-cancelled': 'منسوخ',
+                        'btn-duplicate': 'نقل بنائیں', 'btn-save-invoice': 'لوکل میں محفوظ کریں', 'lbl-btn-copy': 'کاپی کریں', 'lbl-btn-print': 'پرنٹ کریں', 'lbl-btn-export': 'پی ڈی ایف برآمد',
+                        'heading-company-profile': 'کمپنی کا پروفائل', 'lbl-add-signature': 'دستخط شامل کریں', 'lbl-upload-logo': 'لوگو اپ لوڈ کریں',
+                        'lbl-prof-business-name': 'کاروبار کا نام', 'lbl-prof-tagline': 'ٹیگ لائن / نعرہ', 'lbl-prof-tax-id': 'ٹیکس آئی ڈی / ویٹ نمبر',
+                        'lbl-base-currency': 'بنیادی کرنسی', 'lbl-corporate-address': 'کارپوریٹ پتہ اور رابطہ', 'heading-client-logistics': 'کلائنٹ اور دستاویزات کی لاجسٹکس',
+                        'lbl-doc-number-form': 'دستاویز نمبر #', 'lbl-issue-date-form': 'تاریخ جاری', 'lbl-due-date-form': 'آخری تاریخ',
+                        'lbl-client-details': 'کلائنٹ بلنگ کی تفصیلات (کو)', 'lbl-client-tax-id': 'کلائنٹ ٹیکس / بزنس آئی ڈی', 'heading-itemized-billing': 'آئٹمائزڈ بلنگ',
+                        'btn-browse-library': 'لائبریری براؤز کریں', 'lbl-add-line-item': 'نئی لائن آئٹم شامل کریں', 'lbl-automated-payment': 'خودکار ادائیگی کا لنک',
+                        'lbl-discount-form': 'رعایت:', 'opt-fixed': 'طے شدہ', 'lbl-customer-notes': 'گاہک کے نوٹس', 'lbl-terms-cond': 'شرائط و ضوابط',
+                        'lbl-preview-doc-num': 'دستاویز نمبر:', 'lbl-date': 'تاریخ جاری:', 'lbl-due': 'آخری تاریخ:', 'lbl-from': 'منجانب', 'lbl-to': 'بنام بل',
+                        'lbl-desc': 'تفصیل', 'lbl-qty': 'مقدار', 'lbl-price': 'یونٹ کی قیمت', 'lbl-total': 'رقم', 'lbl-secure-payment': 'محفوظ ادائیگی کا لنک',
+                        'lbl-click-scan': 'فوری ادائیگی کے لیے کلک یا اسکین کریں:', 'lbl-subtotal': 'ذیلی کل', 'lbl-discount': 'رعایت', 'lbl-grandtotal': 'کل رقم',
+                        'lbl-preview-notes': 'نوٹس', 'lbl-preview-terms': 'شرائط و ضوابط', 'lbl-authorized-sig': 'مجاز دستخط',
+                        'lbl-footer-secure': 'ڈاکیومنٹ سوٹ پرو کے ذریعے محفوظ طریقے سے تیار کیا گیا', 'lbl-footer-page': 'صفحہ 1 of 1',
+                        'toast-copy': 'انوائس کامیابی کے ساتھ کاپی ہو گئی۔', 'toast-print': 'پرنٹنگ کے لیے دستاویز تیار کی جا رہی ہے...'
+                    }
+                }
+            };
+
+            let currentLang = localStorage.getItem('enterprise_lang') || 'en';
+
+            // Toast Management System
+            function showToast(message) {
+                const container = document.getElementById('enterprise-toast-container');
+                const toast = document.createElement('div');
+                toast.className = "bg-slate-900/95 dark:bg-white/95 backdrop-blur text-white dark:text-slate-900 px-4 py-2.5 rounded-lg shadow-floating text-xs font-semibold tracking-wide transition-all transform translate-y-2 opacity-0 pointer-events-auto flex items-center gap-2 max-w-sm";
+                toast.innerHTML = `<svg class="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg><span>${message}</span>`;
+                container.appendChild(toast);
+                requestAnimationFrame(() => {
+                    toast.classList.remove('translate-y-2', 'opacity-0');
+                });
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-1');
+                    toast.addEventListener('transitionend', () => toast.remove());
+                }, 3500);
+            }
+
+            // Document Parsing Engine for Plain Text Output Formats
+            function generatePlainTextInvoice() {
+                const compName = document.getElementById('prev-company-name')?.innerText || '';
+                const compTag = document.getElementById('prev-company-tagline')?.innerText || '';
+                const docNum = document.getElementById('prev-number-label')?.innerText || '';
+                const issueDate = document.getElementById('prev-date')?.innerText || '';
+                const dueDate = document.getElementById('prev-due-date')?.innerText || '';
+                const sender = document.getElementById('prev-sender')?.innerText || '';
+                const client = document.getElementById('prev-client')?.innerText || '';
+                
+                let itemLines = '';
+                const rows = document.querySelectorAll('#prev-items-body tr');
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    if(cells.length >= 5) {
+                        const desc = cells[1].querySelector('div')?.innerText || cells[1].innerText;
+                        const qty = cells[2].innerText;
+                        const price = cells[3].innerText;
+                        const amt = cells[4].innerText;
+                        itemLines += `${desc.padEnd(30)} ${qty.padStart(5)} ${price.padStart(15)} ${amt.padStart(15)}\n`;
+                    }
+                });
+
+                const subtotal = document.getElementById('prev-subtotal')?.innerText || '0';
+                const discount = document.getElementById('prev-discount')?.innerText || '0';
+                const taxLabel = document.getElementById('prev-tax-label')?.innerText || 'TAX';
+                const taxAmt = document.getElementById('prev-tax')?.innerText || '0';
+                const total = document.getElementById('prev-total-amount')?.innerText || '0';
+                const notes = document.getElementById('prev-notes-content')?.innerText || '';
+                const terms = document.getElementById('prev-terms-content')?.innerText || '';
+
+                return `--------------------------------\nINVOICE\nCompany: ${compName} (${compTag})\nClient: ${client.replace(/\n/g, ', ')}\nInvoice No: ${docNum}\nDate: ${issueDate}\nDue Date: ${dueDate}\n\nItems\n--------------------------------\n${itemLines}\nSubtotal: ${subtotal}\nDiscount: ${discount}\n${taxLabel}: ${taxAmt}\nGrand Total: ${total}\n\nNotes:\n${notes}\n\nTerms:\n${terms}\n--------------------------------`;
+            }
+
+            // Execution Module: Copy Workflow
+            function handleCopyAction() {
+                const previewElement = document.getElementById('doc-preview');
+                const htmlContent = previewElement.outerHTML;
+                const plainText = generatePlainTextInvoice();
+
+                if (navigator.clipboard && window.ClipboardItem) {
+                    const htmlBlob = new Blob([htmlContent], { type: 'text/html' });
+                    const textBlob = new Blob([plainText], { type: 'text/plain' });
+                    const clipboardItem = new ClipboardItem({
+                        'text/html': htmlBlob,
+                        'text/plain': textBlob
+                    });
+                    navigator.clipboard.write([clipboardItem]).then(() => {
+                        showToast(localizations[currentLang].translations['toast-copy']);
+                    }).catch(() => {
+                        fallbackTextCopy(plainText);
+                    });
+                } else {
+                    fallbackTextCopy(plainText);
+                }
+            }
+
+            function fallbackTextCopy(text) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast(localizations[currentLang].translations['toast-copy']);
+                } catch (err) {}
+                textarea.remove();
+            }
+
+            // Execution Module: Print System Execution Switch
+            function handlePrintAction() {
+                showToast(localizations[currentLang].translations['toast-print']);
+                setTimeout(() => { window.print(); }, 300);
+            }
+
+            // Localization Processor Lifecycle Management
+            function applyLocalization(lang) {
+                currentLang = lang;
+                localStorage.setItem('enterprise_lang', lang);
+                
+                const config = localizations[lang];
+                const docPreview = document.getElementById('doc-preview');
+                const btnLang = document.getElementById('btn-lang-toggle');
+                
+                // Toggle orientation paradigms and typography rules mapping directly over document targets
+                if(docPreview) {
+                    docPreview.setAttribute('dir', config.dir);
+                    docPreview.className = docPreview.className.replace(/font-(sans|urdu)/g, '').trim() + ' ' + config.fontClass;
+                }
+                
+                if(btnLang) {
+                    btnLang.innerText = lang === 'en' ? 'UR' : 'EN';
+                }
+
+                // Match layout tokens and execute replacement safely
+                Object.keys(config.translations).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        if (el.tagName === 'OPTION') {
+                            el.text = config.translations[id];
+                        } else {
+                            // Target text node directly to leave integrated internal svg code pristine
+                            const textNode = Array.from(el.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+                            if (textNode) {
+                                textNode.nodeValue = config.translations[id];
+                            } else if (el.children.length === 0) {
+                                el.innerText = config.translations[id];
+                            } else {
+                                // Search internal structural spans to maintain styling layouts safely
+                                const labelSpan = el.querySelector('span:not([aria-hidden])');
+                                if (labelSpan) labelSpan.innerText = config.translations[id];
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Attach Event Listeners safely without duplication risks
+            document.getElementById('btn-enterprise-copy').addEventListener('click', handleCopyAction);
+            document.getElementById('btn-enterprise-print').addEventListener('click', handlePrintAction);
+            
+            document.getElementById('btn-lang-toggle').addEventListener('click', () => {
+                const nextLang = currentLang === 'en' ? 'ur' : 'en';
+                applyLocalization(nextLang);
+            });
+
+            // Keyboard Accessibility & Hotkey Combinations
+            window.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c' && !window.getSelection().toString()) {
+                    e.preventDefault();
+                    handleCopyAction();
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+                    e.preventDefault();
+                    handlePrintAction();
+                }
+            });
+
+            // Lazy Initialization for Selected Preference State System
+            applyLocalization(currentLang);
+        });
+    </script>
 </body>
 </html>
