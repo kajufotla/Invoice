@@ -4,23 +4,22 @@ import { renderPreview, setupPreviewAndExportListeners, checkPublicInvoice } fro
 import { setupUIListeners } from "./ui-manager.js"; 
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. चेक करें कि क्या यह कोई पब्लिक शेयर्ड लिंक (Invoice URL) है?
+    // 1. چیک کریں کہ کیا یہ کوئی پبلک شیئرڈ لنک (Invoice URL) ہے؟
     const isPublic = await checkPublicInvoice();
     
     if (!isPublic) {
-        // 2. अगर यह पब्लिक लिंक नहीं है, तो नॉर्मल एडिटर इंटरफेस लोड करें
-        setupUIListeners();
-        setupPreviewAndExportListeners();
+        // 2. اگر یہ پبلک لنک نہیں ہے، تو نارمل ایڈیٹر انٹرفیس لوڈ کریں
+        if (typeof setupUIListeners === 'function') setupUIListeners();
+        if (typeof setupPreviewAndExportListeners === 'function') setupPreviewAndExportListeners();
         
-        // 3. रियल-टाइम डायनामिक सिंक (Event Delegation - इंटरनेशनल स्टैंडर्ड)
+        // 3. ریئل ٹائم ڈائنامک سنک (Event Delegation)
         document.body.addEventListener('input', (e) => {
-            // केवल इनपुट, टेक्स्टएरिया और सिलेक्ट एलिमेंट्स को टारगेट करें
+            // صرف ان پٹ، ٹیکسٹ ایریا اور سلیکٹ ایلیمنٹس کو ٹارگٹ کریں
             if (e.target.matches('input, textarea, select')) {
-                // या तो dataset.stateKey देखें, या फिर id/name से मैप करें
                 const key = e.target.dataset.stateKey || e.target.id || e.target.name;
                 
                 if (key) {
-                    // अगर एलिमेंट किसी डायनामिक लाइन आइटम (Array) का हिस्सा है
+                    // اگر ایلیمنٹ کسی ڈائنامک لائن آئٹم (Array) کا حصہ ہے
                     if (e.target.dataset.itemIndex !== undefined) {
                         const index = parseInt(e.target.dataset.itemIndex, 10);
                         const field = e.target.dataset.itemField;
@@ -29,44 +28,53 @@ document.addEventListener('DOMContentLoaded', async () => {
                             store.state.items[index][field] = e.target.value;
                         }
                     } else {
-                        // नॉर्मल ग्लोबल स्टेट फील्ड्स के लिए (जैसे docNumber, companyName आदि)
-                        // 'syncFieldsMap' की मैपिंग को भी सपोर्ट करने के लिए बैकअप चेक
-                        let stateKey = key;
-                        
-                        // अगर HTML ID 'doc-number' जैसी है, तो उसे 'docNumber' में बदलें (CamelCase)
-                        if (key.includes('-')) {
-                            stateKey = key.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-                        }
-                        
-                        // कुछ विशेष फील्ड्स जो आईडी मैपिंग से अलग हो सकती हैं
+                        // یہ وہ حصہ ہے جسے میں نے آپ کی HTML فائل کے مطابق اپڈیٹ کیا ہے
+                        // تاکہ HTML کی ہر ID بالکل درست طریقے سے State میں جائے
                         const specialMaps = {
-                            'doc-type': 'docType',
                             'doc-status': 'status',
+                            'doc-type': 'type',
+                            'currency': 'currency',
+                            'region': 'region',
+                            'doc-template': 'template',
                             'prof-company-name': 'companyName',
                             'prof-company-address': 'companyAddress',
+                            'doc-number': 'docNumber',
+                            'doc-date': 'date',
+                            'doc-due-date': 'dueDate',
+                            'sender-details': 'sender',
+                            'client-details': 'client',
+                            'payment-details': 'paymentDetails',
+                            'discount-type': 'discountType',
+                            'discount-value': 'discountValue',
+                            'tax-rate-manual': 'taxRate',
                             'invoice-notes': 'notes',
                             'invoice-terms': 'terms',
                             'prof-company-tax-id': 'companyTaxId',
-                            'client-tax-id': 'clientTaxId',
-                            'payment-link-input': 'paymentLink',
-                            'tax-name-input': 'taxName'
+                            'client-tax-id': 'clientTaxId'
                         };
                         
+                        // پہلے میپنگ چیک کریں
                         if (specialMaps[key]) {
-                            stateKey = specialMaps[key];
+                            store.state[specialMaps[key]] = e.target.value;
+                        } else {
+                            // اگر میپ میں نہیں ہے تو کیمل کیس (CamelCase) کریں
+                            let stateKey = key;
+                            if (key.includes('-')) {
+                                stateKey = key.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+                            }
+                            store.state[stateKey] = e.target.value;
                         }
-
-                        store.state[stateKey] = e.target.value;
                     }
                     
-                    // बिना पेज रिफ्रेश किए प्रीव्यू को तुरंत रेंडर और री-कैलकुलेट करें
-                    renderPreview();
+                    // کی پریس ہوتے ہی پریویو کو فوراً رینڈر (Update) کریں
+                    if (typeof renderPreview === 'function') {
+                        renderPreview();
+                    }
                 }
             }
         });
 
-        // 4. फाइल अपलोड्स (Logo और Signature) के लिए डायनामिक चेंज लिसनर्स
-        // नोट: स्टेट के वेरिएबल्स को 'preview-manager.js' के साथ मैच कर दिया गया है
+        // 4. فائل اپلوڈز (Logo اور Signature) کے لیے ڈائنامک لسنرز
         const logoUpload = document.getElementById('logo-upload');
         if (logoUpload) {
             logoUpload.addEventListener('change', (e) => {
@@ -79,8 +87,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     const reader = new FileReader();
                     reader.onload = (event) => {
-                        store.state.logoDataUrl = event.target.result; // 'logoDataUrl' से मैच किया
-                        renderPreview();
+                        store.state.logoDataUrl = event.target.result;
+                        if (typeof renderPreview === 'function') renderPreview();
                     };
                     reader.readAsDataURL(file);
                 }
@@ -99,15 +107,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     const reader = new FileReader();
                     reader.onload = (event) => {
-                        store.state.sigDataUrl = event.target.result; // 'sigDataUrl' से मैच किया
-                        renderPreview();
+                        store.state.sigDataUrl = event.target.result;
+                        if (typeof renderPreview === 'function') renderPreview();
                     };
                     reader.readAsDataURL(file);
                 }
             });
         }
 
-        // पेज लोड होने पर पहली बार डिफ़ॉल्ट प्रीव्यू रेंडर करें
-        renderPreview(); 
+        // پیج لوڈ ہونے پر پہلی بار ڈیفالٹ پریویو رینڈر کریں
+        if (typeof renderPreview === 'function') {
+            renderPreview(); 
+        }
     }
 });
