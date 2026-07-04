@@ -1,3 +1,4 @@
+// preview-manager.js
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import { dict, defaultState } from "./config-data.js";
 import { store, calculate, formatMoney, getTaxRate, validateInvoice, saveState } from "./invoice-manager.js";
@@ -383,44 +384,7 @@ export function renderPreview() {
 }
 
 export function setupPreviewAndExportListeners() {
-    
-    // --- COMPREHENSIVE LIVE SYNC FOR ALL INPUTS ---
-    const syncFieldsMap = {
-        'docType': 'doc-type',
-        'status': 'doc-status',
-        'docNumber': 'doc-number',
-        'date': 'doc-date',
-        'dueDate': 'doc-due-date',
-        'companyName': 'prof-company-name',
-        'companyAddress': 'prof-company-address',
-        'senderDetails': 'sender-details',
-        'clientDetails': 'client-details',
-        'paymentDetails': 'payment-details',
-        'notes': 'invoice-notes',
-        'terms': 'invoice-terms',
-        'companyTaxId': 'prof-company-tax-id', 
-        'clientTaxId': 'client-tax-id', 
-        'paymentLink': 'payment-link-input', 
-        'taxName': 'tax-name-input' 
-    };
-
-    Object.keys(syncFieldsMap).forEach(stateKey => {
-        const inputId = syncFieldsMap[stateKey];
-        const el = document.getElementById(inputId);
-        if(el) {
-            el.addEventListener('input', (e) => {
-                store.state[stateKey] = e.target.value;
-                renderPreview(); // Instantly update preview on typing
-            });
-            // Also listen to 'change' for dropdowns
-            el.addEventListener('change', (e) => {
-                store.state[stateKey] = e.target.value;
-                renderPreview(); 
-            });
-        }
-    });
-
-    // Special listener for calculation triggers
+    // विशेष कैलकुलेशन ट्रिगर्स के लिए लिसनर्स
     ['discount-type', 'discount-value', 'tax-rate-manual'].forEach(id => {
         const el = document.getElementById(id);
         if(el) {
@@ -452,7 +416,7 @@ export function setupPreviewAndExportListeners() {
         dropdown.addEventListener('change', (e) => {
             if(e.target.value) {
                 input.value = e.target.value;
-                input.dispatchEvent(new Event('input')); // Trigger sync
+                input.dispatchEvent(new Event('input', { bubbles: true })); // Trigger sync with bubble
                 e.target.value = ''; 
             }
         });
@@ -538,44 +502,6 @@ export function setupPreviewAndExportListeners() {
             window.print();  
         });  
     }  
-
-    // Logo Upload
-    document.getElementById('logo-upload')?.addEventListener('change', function(e) {  
-        const file = e.target.files[0];  
-        if (file) {  
-            if (file.size > 500 * 1024) { 
-                showToast("Image is too large. Please upload under 500KB.");
-                e.target.value = '';
-                return;
-            }
-            const reader = new FileReader();  
-            reader.onload = function(event) {  
-                store.state.logoDataUrl = event.target.result;  
-                if(typeof saveState === 'function') saveState();  
-                renderPreview();  
-            }  
-            reader.readAsDataURL(file);  
-        }  
-    });  
-
-    // Signature Upload
-    document.getElementById('sig-upload')?.addEventListener('change', function(e) {  
-        const file = e.target.files[0];  
-        if (file) {  
-            if (file.size > 500 * 1024) { 
-                showToast("Signature image is too large. Please upload under 500KB.");
-                e.target.value = '';
-                return;
-            }
-            const reader = new FileReader();  
-            reader.onload = function(event) {  
-                store.state.sigDataUrl = event.target.result;  
-                if(typeof saveState === 'function') saveState();  
-                renderPreview();  
-            }  
-            reader.readAsDataURL(file);  
-        }  
-    });  
 
     // PDF Generation Fix (Export) 
     const btnPdf = document.getElementById('btn-pdf');  
