@@ -164,42 +164,37 @@ export function renderPreview() {
     const langDict = dict[store.state.lang] || dict['en'];  
     previewEl.setAttribute('dir', langDict.dir || 'ltr');  
       
-    // 1. HEADER & LOGO SECTION (DYNAMIC PLACEHOLDER ADDED)
+    // 1. HEADER & LOGO SECTION
     try {
         const logoImg = document.getElementById('prev-logo');  
         if(logoImg) {  
-            // Create interactive placeholder if it doesn't exist
-            let logoPlaceholder = document.getElementById('logo-placeholder');
-            if(!logoPlaceholder) {
-                logoPlaceholder = document.createElement('div');
-                logoPlaceholder.id = 'logo-placeholder';
-                // Tailwind styling for a clean, dashed "Add Logo" box that hides on print
-                logoPlaceholder.className = 'print:hidden no-print flex items-center justify-center w-32 h-16 bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg text-slate-400 text-xs font-semibold hover:bg-slate-100 transition-colors cursor-pointer avoid-break';
-                logoPlaceholder.innerText = '+ Add Logo';
-                logoPlaceholder.onclick = () => document.getElementById('logo-upload')?.click();
-                logoImg.parentNode.insertBefore(logoPlaceholder, logoImg.nextSibling);
-                
-                // Make the image itself clickable
-                logoImg.classList.add('cursor-pointer');
-                logoImg.onclick = () => document.getElementById('logo-upload')?.click();
-            }
+            let logoPlaceholder = document.getElementById('placeholder-logo');
 
             if (store.state.logoDataUrl) {  
                 logoImg.src = store.state.logoDataUrl;  
                 logoImg.classList.remove('hidden');  
-                logoPlaceholder.classList.add('hidden');
-                logoPlaceholder.classList.remove('flex');
+                if(logoPlaceholder) logoPlaceholder.classList.add('hidden');
             } else {  
                 logoImg.src = '';  
                 logoImg.classList.add('hidden');  
-                logoPlaceholder.classList.remove('hidden');
-                logoPlaceholder.classList.add('flex');
+                if(logoPlaceholder) logoPlaceholder.classList.remove('hidden');
             }  
         }  
 
         if(document.getElementById('prev-company-name')) {  
             document.getElementById('prev-company-name').textContent = store.state.companyName || '';  
         }  
+        
+        // NEW: Render Company Tax ID dynamically
+        const prevCompTaxId = document.getElementById('prev-company-tax-id');
+        if(prevCompTaxId) {
+            if(store.state.companyTaxId && store.state.companyTaxId.trim() !== '') {
+                prevCompTaxId.textContent = store.state.companyTaxId;
+                prevCompTaxId.classList.remove('hidden');
+            } else {
+                prevCompTaxId.classList.add('hidden');
+            }
+        }
 
         const typeKey = store.state.docType ? store.state.docType.toLowerCase() : 'invoice';  
         if(document.getElementById('prev-title')) {
@@ -245,33 +240,33 @@ export function renderPreview() {
         if(document.getElementById('prev-client')) {
             document.getElementById('prev-client').textContent = store.state.clientDetails || '';  
         }
+        
+        // NEW: Render Client Tax ID dynamically
+        const prevClientTaxId = document.getElementById('prev-client-tax-id');
+        if(prevClientTaxId) {
+            if(store.state.clientTaxId && store.state.clientTaxId.trim() !== '') {
+                prevClientTaxId.textContent = store.state.clientTaxId;
+                prevClientTaxId.classList.remove('hidden');
+            } else {
+                prevClientTaxId.classList.add('hidden');
+            }
+        }
     } catch(e) { console.warn("Client details preview error:", e); }
 
     // 3. LABELS & BADGES
     try {
         const setLbl = (id, text) => { const el = document.getElementById(id); if(el) el.textContent = text; };  
-        setLbl('lbl-from', langDict.from || 'From');  
-        setLbl('lbl-to', langDict.to || 'To');  
-        setLbl('lbl-date', langDict.date || 'Date');  
-        setLbl('lbl-due', langDict.due || 'Due Date');  
-        setLbl('lbl-desc', langDict.desc || 'Description');  
-        setLbl('lbl-qty', langDict.qty || 'Qty');  
-        setLbl('lbl-price', langDict.price || 'Price');  
-        setLbl('lbl-total', langDict.total || 'Total');  
-        setLbl('lbl-subtotal', langDict.subtotal || 'Subtotal');  
-        setLbl('lbl-discount', langDict.discount || 'Discount');  
-        setLbl('lbl-payment', langDict.payment || 'Payment Details');  
-        setLbl('lbl-grandtotal', langDict.gtotal || 'Grand Total');  
-
-        const badge = document.getElementById('prev-status-badge');  
-        if(badge && store.state.status) {  
-            badge.textContent = store.state.status;  
-            badge.className = `inline-flex items-center px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-md border ${  
-                store.state.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' :   
-                store.state.status === 'Unpaid' ? 'bg-rose-50 text-rose-700 border-rose-200/60' :   
-                'bg-amber-50 text-amber-700 border-amber-200/60'  
-            }`;  
-        } 
+        setLbl('lbl-from', langDict.from || 'FROM:');  
+        setLbl('lbl-to', langDict.to || 'BILL TO:');  
+        setLbl('lbl-date', langDict.date || 'Invoice Date:');  
+        setLbl('lbl-due', langDict.due || 'Due Date:');  
+        setLbl('lbl-desc', langDict.desc || 'DESCRIPTION');  
+        setLbl('lbl-qty', langDict.qty || 'QTY');  
+        setLbl('lbl-price', langDict.price || 'UNIT PRICE');  
+        setLbl('lbl-total', langDict.total || 'AMOUNT');  
+        setLbl('lbl-subtotal', langDict.subtotal || 'SUBTOTAL');  
+        setLbl('lbl-discount', langDict.discount || 'DISCOUNT');  
+        setLbl('lbl-grandtotal', langDict.gtotal || 'TOTAL');  
     } catch(e) { console.warn("Labels preview error:", e); }
 
     // 4. ITEMS & AMOUNTS CALCULATIONS
@@ -283,11 +278,11 @@ export function renderPreview() {
                 const total = qty * price;
                 
                 return `  
-                <tr class="avoid-break hover:bg-slate-50/50 transition-colors">  
-                    <td class="py-4 px-5 text-slate-800 break-words whitespace-pre-wrap">${item.desc || ''}</td>  
-                    <td class="py-4 px-5 text-center text-slate-500">${qty}</td>  
-                    <td class="py-4 px-5 text-right text-slate-500 whitespace-nowrap">${formatMoney(price)}</td>  
-                    <td class="py-4 px-5 text-right font-medium text-slate-900 whitespace-nowrap">${formatMoney(total)}</td>  
+                <tr class="avoid-break hover:bg-slate-50/50 transition-colors border-b border-slate-200">  
+                    <td class="py-4 px-4 font-bold text-slate-800 break-words whitespace-pre-wrap">${item.desc || ''}</td>  
+                    <td class="py-4 px-4 text-center font-medium">${qty}</td>  
+                    <td class="py-4 px-4 text-right font-medium whitespace-nowrap">${formatMoney(price)}</td>  
+                    <td class="py-4 px-4 text-right font-bold text-slate-900 whitespace-nowrap">${formatMoney(total)}</td>  
                 </tr>  
                 `;
             }).join('');  
@@ -306,101 +301,48 @@ export function renderPreview() {
             document.getElementById('prev-discount-row').style.display = ((store.calcTotals.discount || 0) > 0) ? 'flex' : 'none';  
         }
           
-        let taxLabel = store.state.region === 'USA' ? `${langDict.tax || 'Tax'} (${getTaxRate()}%)` : store.state.region === 'UK' ? 'VAT (20%)' : store.state.region === 'CAN' ? 'GST (5%)' : 'GST (10%)';  
-        if(document.getElementById('prev-tax-label')) document.getElementById('prev-tax-label').textContent = taxLabel;  
+        // NEW: Flexible Tax Label rendering
+        let taxLabelName = store.state.taxName || 'TAX';
+        let taxLabelText = `${taxLabelName} (${getTaxRate()}%)`; 
+        if(document.getElementById('prev-tax-label')) document.getElementById('prev-tax-label').textContent = taxLabelText;  
         if(document.getElementById('prev-tax')) document.getElementById('prev-tax').textContent = formatMoney(store.calcTotals.tax || 0);  
-        if(document.getElementById('prev-total')) document.getElementById('prev-total').textContent = formatMoney(store.calcTotals.total || 0);  
+        if(document.getElementById('prev-total-amount')) document.getElementById('prev-total-amount').textContent = formatMoney(store.calcTotals.total || 0);  
+        if(document.getElementById('prev-total')) document.getElementById('prev-total').textContent = formatMoney(store.calcTotals.total || 0); // For public view fallback
     } catch(e) { console.warn("Items and amounts calculation error:", e); }
 
-    // 5. FOOTER, NOTES, QR & SIGNATURE (DYNAMIC PLACEHOLDER ADDED)
+    // 5. FOOTER, NOTES, PAYMENT LINK & SIGNATURE
     try {
-        let finalPaymentDetails = store.state.paymentDetails || '';  
-        if(store.state.paymentLinks) {  
-            const pl = store.state.paymentLinks;  
-            const linkArr = [];  
-            if(pl.stripe) linkArr.push(`Stripe: ${pl.stripe}`);  
-            if(pl.paypal) linkArr.push(`PayPal: ${pl.paypal}`);  
-            if(pl.wise) linkArr.push(`Wise: ${pl.wise}`);  
-            if(pl.bank) linkArr.push(`Bank Transfer:\n${pl.bank}`);  
-              
-            if(linkArr.length > 0) {  
-                finalPaymentDetails += (finalPaymentDetails ? '\n\n' : '') + linkArr.join('\n');  
-            }  
-        }  
-        if(document.getElementById('prev-payment-details')) {
-            document.getElementById('prev-payment-details').textContent = finalPaymentDetails;  
+        // NEW: Payment Link Toggle Logic
+        const linkContainer = document.getElementById('prev-payment-link-container');
+        const prevPaymentLink = document.getElementById('prev-payment-link');
+        
+        if (store.state.paymentLink && store.state.paymentLink.trim() !== '') {
+            if(linkContainer) linkContainer.classList.remove('hidden');
+            if(prevPaymentLink) {
+                prevPaymentLink.href = store.state.paymentLink;
+                prevPaymentLink.textContent = store.state.paymentLink;
+            }
+        } else {
+            if(linkContainer) linkContainer.classList.add('hidden');
         }
-        const lblPayment = document.getElementById('lbl-payment');  
-        if(lblPayment && lblPayment.parentElement) lblPayment.parentElement.style.display = finalPaymentDetails ? 'block' : 'none';  
 
-        const notesContainer = document.getElementById('prev-notes-terms-container');  
-        const notesBox = document.getElementById('prev-notes-box');  
         const notesContent = document.getElementById('prev-notes-content');  
-        const termsBox = document.getElementById('prev-terms-box');  
         const termsContent = document.getElementById('prev-terms-content');  
 
-        if(notesContainer) {  
-            if ((store.state.notes && store.state.notes.trim()) || (store.state.terms && store.state.terms.trim())) {  
-                notesContainer.classList.remove('hidden');  
-                if (store.state.notes && store.state.notes.trim()) {  
-                    if(notesBox) notesBox.classList.remove('hidden');  
-                    if(notesContent) notesContent.textContent = store.state.notes;  
-                } else {  
-                    if(notesBox) notesBox.classList.add('hidden');  
-                }  
-                if (store.state.terms && store.state.terms.trim()) {  
-                    if(termsBox) termsBox.classList.remove('hidden');  
-                    if(termsContent) termsContent.textContent = store.state.terms;  
-                } else {  
-                    if(termsBox) termsBox.classList.add('hidden');  
-                }  
-            } else {  
-                notesContainer.classList.add('hidden');  
-            }  
-        }  
+        if(notesContent) notesContent.textContent = store.state.notes || '';
+        if(termsContent) termsContent.textContent = store.state.terms || '';
 
-        const qrContainer = document.getElementById('qr-code-container');  
-        if(qrContainer) {  
-            if (store.state.showQR && store.state.uploadedQrDataUrl) {  
-                qrContainer.classList.remove('hidden');  
-                qrContainer.innerHTML = `<img src="${store.state.uploadedQrDataUrl}" class="rounded-lg border border-slate-200 p-1.5 shadow-sm" style="max-width: 100px; max-height: 100px; object-fit: contain; margin-top: 12px;" />`;  
-            } else {  
-                qrContainer.classList.add('hidden');  
-            }  
-        }
-
-        const sigContainer = document.getElementById('sig-container');  
         const sigImg = document.getElementById('prev-sig');  
-        if(sigContainer && sigImg) {  
-            
-            // Create interactive placeholder for signature if it doesn't exist
-            let sigPlaceholder = document.getElementById('sig-placeholder');
-            if(!sigPlaceholder) {
-                sigPlaceholder = document.createElement('div');
-                sigPlaceholder.id = 'sig-placeholder';
-                sigPlaceholder.className = 'print:hidden no-print flex items-center justify-center w-full h-16 bg-slate-50 border-2 border-dashed border-slate-200 rounded-lg text-slate-400 text-xs font-semibold hover:bg-slate-100 transition-colors cursor-pointer avoid-break mb-3';
-                sigPlaceholder.innerText = '+ Add Signature';
-                sigPlaceholder.onclick = () => document.getElementById('sig-upload')?.click();
-                sigImg.parentNode.insertBefore(sigPlaceholder, sigImg);
-                
-                // Make the signature image clickable
-                sigImg.classList.add('cursor-pointer');
-                sigImg.onclick = () => document.getElementById('sig-upload')?.click();
-            }
-
-            // Always show the signature container to hold the placeholder
-            sigContainer.classList.remove('hidden');
-
+        const sigPlaceholder = document.getElementById('prev-sig-placeholder-line');
+        if(sigImg) {  
             if(store.state.sigDataUrl) {  
                 sigImg.src = store.state.sigDataUrl;  
                 sigImg.classList.remove('hidden');  
-                sigPlaceholder.classList.add('hidden');
-                sigPlaceholder.classList.remove('flex');
+                if(sigPlaceholder) sigPlaceholder.classList.add('hidden');
             } else {  
                 sigImg.src = '';  
                 sigImg.classList.add('hidden');  
-                sigPlaceholder.classList.remove('hidden');
-                sigPlaceholder.classList.add('flex');
+                if(sigPlaceholder) sigPlaceholder.classList.remove('hidden');
             }  
         }
     } catch(e) { console.warn("Footer preview error:", e); }
@@ -408,21 +350,92 @@ export function renderPreview() {
 
 export function setupPreviewAndExportListeners() {
     
-    // --- LIVE SYNC FIX FOR INPUTS (NOTES, TERMS, ETC) ---
-    // یہ فنکشن آپ کے اوپر والے فارم کو نیچے والے پریویو کے ساتھ فوراً جوڑ دے گا
-    const syncFields = ['notes', 'terms', 'clientDetails', 'senderDetails', 'companyName', 'docNumber'];
-    syncFields.forEach(id => {
-        // Find input elements by looking for id="notes", id="input-notes", etc.
-        const el = document.getElementById(id) || document.getElementById(`input-${id}`) || document.getElementById(`${id}-input`);
+    // --- COMPREHENSIVE LIVE SYNC FOR ALL INPUTS ---
+    const syncFieldsMap = {
+        'notes': 'invoice-notes',
+        'terms': 'invoice-terms',
+        'clientDetails': 'client-details',
+        'senderDetails': 'sender-details',
+        'companyName': 'prof-company-name',
+        'docNumber': 'doc-number',
+        'companyTaxId': 'prof-company-tax-id', // New
+        'clientTaxId': 'client-tax-id', // New
+        'paymentLink': 'payment-link-input', // New
+        'taxName': 'tax-name-input' // New
+    };
+
+    Object.keys(syncFieldsMap).forEach(stateKey => {
+        const inputId = syncFieldsMap[stateKey];
+        const el = document.getElementById(inputId);
         if(el) {
             el.addEventListener('input', (e) => {
-                store.state[id] = e.target.value;
-                renderPreview(); // Update preview instantly
+                store.state[stateKey] = e.target.value;
+                renderPreview(); // Instantly update preview on typing
             });
         }
     });
 
-    // Share feature
+    // --- SMART LOCAL STORAGE LOGIC FOR DROPDOWNS (100% Client-Side) ---
+    const initDropdown = (dropdownId, storageKey, inputId) => {
+        const dropdown = document.getElementById(dropdownId);
+        const input = document.getElementById(inputId);
+        if(!dropdown || !input) return null;
+
+        const loadOptions = () => {
+            const items = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            if(items.length > 0) {
+                dropdown.innerHTML = `<option value="">Load Saved...</option>` + items.map(i => `<option value="${i}">${i.substring(0, 25)}...</option>`).join('');
+                dropdown.classList.remove('hidden');
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        };
+
+        loadOptions();
+
+        dropdown.addEventListener('change', (e) => {
+            if(e.target.value) {
+                input.value = e.target.value;
+                input.dispatchEvent(new Event('input')); // Trigger sync
+                e.target.value = ''; 
+            }
+        });
+
+        return { loadOptions };
+    };
+
+    // Initialize Dropdowns
+    const senderDrop = initDropdown('saved-senders-dropdown', 'inv_saved_senders', 'sender-details');
+    const clientDrop = initDropdown('saved-clients-dropdown', 'inv_saved_clients', 'client-details');
+    const termsDrop = initDropdown('saved-terms-dropdown', 'inv_saved_terms', 'invoice-terms');
+
+    // Hook into the Save to Local Button to save preferences offline
+    document.getElementById('btn-save-invoice')?.addEventListener('click', () => {
+        if(typeof saveState === 'function') saveState(); // Main state save
+
+        const saveToDropdown = (key, val) => {
+            if(!val || !val.trim()) return;
+            let items = JSON.parse(localStorage.getItem(key) || '[]');
+            if(!items.includes(val)) {
+                items.unshift(val); 
+                if(items.length > 10) items.pop(); // Keep only last 10 entries to avoid bloat
+                localStorage.setItem(key, JSON.stringify(items));
+            }
+        };
+
+        saveToDropdown('inv_saved_senders', document.getElementById('sender-details')?.value);
+        saveToDropdown('inv_saved_clients', document.getElementById('client-details')?.value);
+        saveToDropdown('inv_saved_terms', document.getElementById('invoice-terms')?.value);
+
+        // Refresh dropdowns dynamically
+        if(senderDrop) senderDrop.loadOptions();
+        if(clientDrop) clientDrop.loadOptions();
+        if(termsDrop) termsDrop.loadOptions();
+
+        showToast("Invoice and Data Saved Locally!");
+    });
+
+    // Share feature (Kept unchanged)
     const shareModal = document.getElementById('share-modal');
     document.getElementById('btn-share')?.addEventListener('click', async () => {
         const validation = validateInvoice();
@@ -462,122 +475,53 @@ export function setupPreviewAndExportListeners() {
         }  
     });  
 
-    document.getElementById('btn-email')?.addEventListener('click', () => {  
-        const validation = validateInvoice();  
-        if (validation !== true) return showToast(validation);  
-
-        if (!store.state.id) store.state.id = crypto.randomUUID();  
-
-        const shareLink = `${window.location.origin}${window.location.pathname}?invoice=${store.state.id}`;  
-        const subject = encodeURIComponent(`Invoice ${store.state.docNumber || ''} from ${store.state.companyName || (store.state.senderDetails ? store.state.senderDetails.split('\n')[0] : '')}`);  
-        const body = encodeURIComponent(`Hello,\n\nPlease find the details for invoice ${store.state.docNumber || ''} below.\n\nTotal: ${store.calcTotals ? formatMoney(store.calcTotals.total) : ''}\nDue Date: ${store.state.dueDate || 'N/A'}\n\nView or download your invoice here:\n${shareLink}\n\nThank you for your business!`);  
-        window.location.href = `mailto:?subject=${subject}&body=${body}`;  
-        showToast("Opening Email client...");  
-    });  
-
     // Print functionality  
     const btnPrintMode = document.getElementById('btn-print-mode');  
-    const btnExitPrint = document.getElementById('btn-exit-print-preview');  
     if (btnPrintMode) {  
         btnPrintMode.addEventListener('click', () => {  
-            document.body.classList.add('print-preview-active');  
-            if (btnExitPrint) btnExitPrint.classList.remove('hidden');  
             window.print();  
         });  
     }  
-    if (btnExitPrint) {  
-        btnExitPrint.addEventListener('click', () => {  
-            document.body.classList.remove('print-preview-active');  
-            btnExitPrint.classList.add('hidden');  
-        });  
-    }  
 
-    // Logo Upload
+    // Logo Upload Fix (Ensuring correct rendering)
     document.getElementById('logo-upload')?.addEventListener('change', function(e) {  
         const file = e.target.files[0];  
         if (file) {  
             if (file.size > 500 * 1024) { 
-                showToast("Image is too large. Please upload an image under 500KB.");
+                showToast("Image is too large. Please upload under 500KB.");
                 e.target.value = '';
                 return;
             }
             const reader = new FileReader();  
             reader.onload = function(event) {  
                 store.state.logoDataUrl = event.target.result;  
-                saveState();  
+                if(typeof saveState === 'function') saveState();  
                 renderPreview();  
             }  
             reader.readAsDataURL(file);  
         }  
     });  
 
-    // Signature Upload
+    // Signature Upload Fix (Ensuring correct rendering)
     document.getElementById('sig-upload')?.addEventListener('change', function(e) {  
         const file = e.target.files[0];  
         if (file) {  
             if (file.size > 500 * 1024) { 
-                showToast("Signature image is too large. Please upload an image under 500KB.");
+                showToast("Signature image is too large. Please upload under 500KB.");
                 e.target.value = '';
                 return;
             }
             const reader = new FileReader();  
             reader.onload = function(event) {  
                 store.state.sigDataUrl = event.target.result;  
-                saveState();  
+                if(typeof saveState === 'function') saveState();  
                 renderPreview();  
             }  
             reader.readAsDataURL(file);  
         }  
     });  
 
-    // QR Code  
-    let qrUploadInput = document.getElementById('qr-upload-input-dynamic');  
-    if (!qrUploadInput) {  
-        qrUploadInput = document.createElement('input');  
-        qrUploadInput.type = 'file';  
-        qrUploadInput.accept = 'image/*';  
-        qrUploadInput.id = 'qr-upload-input-dynamic';  
-        qrUploadInput.style.display = 'none';  
-        document.body.appendChild(qrUploadInput);  
-    }  
-      
-    qrUploadInput.addEventListener('change', function(e) {  
-        const file = e.target.files[0];  
-        if (file) {  
-            const reader = new FileReader();  
-            reader.onload = function(event) {  
-                store.state.uploadedQrDataUrl = event.target.result;  
-                store.state.showQR = true;   
-                const toggle = document.getElementById('toggle-qr');  
-                if (toggle && toggle.type === 'checkbox') toggle.checked = true;  
-                saveState();  
-                renderPreview();  
-            }  
-            reader.readAsDataURL(file);  
-        }  
-        e.target.value = '';  
-    });  
-
-    const toggleQrElement = document.getElementById('toggle-qr');  
-    if (toggleQrElement) {  
-        toggleQrElement.addEventListener('click', e => {  
-            if (toggleQrElement.type === 'checkbox') {  
-                e.preventDefault();   
-                if (store.state.uploadedQrDataUrl && store.state.showQR) {  
-                    store.state.showQR = false;  
-                    toggleQrElement.checked = false;  
-                    saveState();  
-                    renderPreview();  
-                } else {  
-                    qrUploadInput.click();  
-                }  
-            } else {  
-                qrUploadInput.click();  
-            }  
-        });  
-    }  
-
-    // PDF Generation  
+    // PDF Generation Fix (Export) 
     const btnPdf = document.getElementById('btn-pdf');  
     if(btnPdf) {  
         btnPdf.addEventListener('click', async () => {  
