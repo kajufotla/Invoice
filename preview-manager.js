@@ -44,20 +44,18 @@ export async function checkPublicInvoice() {
                 // Construct premium UI structure (SaaS standard layout)  
                 previewEl.innerHTML = `  
                     <div class="px-10 py-12 sm:px-14 sm:py-16">  
-                        <!-- Header Section -->  
                         <div class="flex flex-col md:flex-row justify-between items-start gap-8 mb-12 avoid-break">  
                             <div class="flex flex-col gap-5 max-w-[50%]">  
                                 <img id="prev-logo" class="${store.state.logoDataUrl ? '' : 'hidden'} object-contain" src="${store.state.logoDataUrl || ''}" style="max-height: 72px;">  
                                 <div id="prev-company-name" class="text-xl font-bold text-slate-900 tracking-tight break-words">${store.state.companyName || ''}</div>  
                             </div>  
                             <div class="text-right flex flex-col gap-2 md:items-end">  
-                                <h2 id="prev-title" class="text-3xl font-normal tracking-tight text-slate-400 uppercase mb-1">${store.state.docType.toUpperCase()}</h2>  
-                                <p class="text-base font-semibold text-slate-800"><span id="prev-number-label"># ${store.state.docNumber}</span></p>  
+                                <h2 id="prev-title" class="text-3xl font-normal tracking-tight text-slate-400 uppercase mb-1">${store.state.docType ? store.state.docType.toUpperCase() : ''}</h2>  
+                                <p class="text-base font-semibold text-slate-800"><span id="prev-number-label"># ${store.state.docNumber || ''}</span></p>  
                                 <div id="prev-status-badge" class="mt-1"></div>  
                             </div>  
                         </div>  
 
-                        <!-- Info Grid -->  
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12 avoid-break border-t border-slate-100 pt-10">  
                             <div>  
                                 <p id="lbl-from" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3"></p>  
@@ -65,22 +63,21 @@ export async function checkPublicInvoice() {
                             </div>  
                             <div class="md:text-right">  
                                 <p id="lbl-to" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3"></p>  
-                                <div id="prev-client" class="text-sm text-slate-700 leading-relaxed whitespace-pre-line break-words">${store.state.clientDetails}</div>  
+                                <div id="prev-client" class="text-sm text-slate-700 leading-relaxed whitespace-pre-line break-words">${store.state.clientDetails || ''}</div>  
                                   
                                 <div class="inline-flex flex-col gap-2 text-sm mt-6">  
                                     <div class="flex justify-between md:justify-end items-center gap-6">  
                                         <span id="lbl-date" class="text-slate-500 font-medium text-[12px]"></span>  
-                                        <span id="prev-date" class="font-semibold text-slate-800 text-right w-24">${store.state.date}</span>  
+                                        <span id="prev-date" class="font-semibold text-slate-800 text-right w-24">${store.state.date || ''}</span>  
                                     </div>  
                                     <div class="flex justify-between md:justify-end items-center gap-6">  
                                         <span id="lbl-due" class="text-slate-500 font-medium text-[12px]"></span>  
-                                        <span id="prev-due-date" class="font-semibold text-slate-800 text-right w-24">${store.state.dueDate}</span>  
+                                        <span id="prev-due-date" class="font-semibold text-slate-800 text-right w-24">${store.state.dueDate || ''}</span>  
                                     </div>  
                                 </div>  
                             </div>  
                         </div>  
 
-                        <!-- Line Items Table -->  
                         <div class="mb-12 border border-slate-200 rounded-lg overflow-hidden">  
                             <table class="w-full text-sm text-left">  
                                 <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 avoid-break">  
@@ -95,7 +92,6 @@ export async function checkPublicInvoice() {
                             </table>  
                         </div>  
 
-                        <!-- Footer Details -->  
                         <div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-12 avoid-break">  
                             <div class="w-full md:w-[55%] space-y-8">  
                                 <div id="prev-notes-terms-container" class="hidden space-y-6">  
@@ -116,7 +112,6 @@ export async function checkPublicInvoice() {
                                 </div>  
                             </div>  
 
-                            <!-- Totals Panel -->  
                             <div class="w-full md:w-[40%] bg-slate-50 rounded-lg p-6 border border-slate-100">  
                                 <div class="flex justify-between items-center mb-3 text-sm">  
                                     <span id="lbl-subtotal" class="text-slate-500"></span>  
@@ -134,10 +129,9 @@ export async function checkPublicInvoice() {
                                     <span id="lbl-grandtotal" class="text-sm font-semibold text-slate-900"></span>  
                                     <span id="prev-total" class="font-bold text-xl text-slate-900 tracking-tight"></span>  
                                 </div>  
+                                </div>  
                             </div>  
-                        </div>  
 
-                        <!-- Signature Block -->  
                         <div id="sig-container" class="mt-16 flex flex-col items-end hidden avoid-break">  
                             <div class="w-48 text-center">  
                                 <img id="prev-sig" class="max-h-16 object-contain mx-auto mb-3">  
@@ -169,7 +163,7 @@ export function renderPreview() {
     if(!previewEl) return;
 
     const langDict = dict[store.state.lang] || dict['en'];  
-    previewEl.setAttribute('dir', langDict.dir);  
+    previewEl.setAttribute('dir', langDict.dir || 'ltr');  
       
     const logoImg = document.getElementById('prev-logo');  
     if(logoImg) {  
@@ -186,10 +180,16 @@ export function renderPreview() {
         document.getElementById('prev-company-name').textContent = store.state.companyName || '';  
     }  
 
-    const typeKey = store.state.docType.toLowerCase();  
-    if(document.getElementById('prev-title')) document.getElementById('prev-title').textContent = langDict[typeKey] || store.state.docType.toUpperCase();  
-    if(document.getElementById('prev-number-label')) document.getElementById('prev-number-label').textContent = `# ${store.state.docNumber}`;  
-    if(document.getElementById('prev-date')) document.getElementById('prev-date').textContent = store.state.date;  
+    const typeKey = store.state.docType ? store.state.docType.toLowerCase() : 'invoice';  
+    if(document.getElementById('prev-title')) {
+        document.getElementById('prev-title').textContent = langDict[typeKey] || (store.state.docType ? store.state.docType.toUpperCase() : 'INVOICE');  
+    }
+    if(document.getElementById('prev-number-label')) {
+        document.getElementById('prev-number-label').textContent = `# ${store.state.docNumber || ''}`;  
+    }
+    if(document.getElementById('prev-date')) {
+        document.getElementById('prev-date').textContent = store.state.date || '';  
+    }
       
     const prevDueDate = document.getElementById('prev-due-date');  
     const dueDateLblContainer = document.getElementById('lbl-due')?.parentElement;  
@@ -220,7 +220,9 @@ export function renderPreview() {
             : addressRemainder;  
     }  
       
-    if(document.getElementById('prev-client')) document.getElementById('prev-client').textContent = store.state.clientDetails;  
+    if(document.getElementById('prev-client')) {
+        document.getElementById('prev-client').textContent = store.state.clientDetails || '';  
+    }
       
     let finalPaymentDetails = store.state.paymentDetails || '';  
     if(store.state.paymentLinks) {  
@@ -235,21 +237,23 @@ export function renderPreview() {
             finalPaymentDetails += (finalPaymentDetails ? '\n\n' : '') + linkArr.join('\n');  
         }  
     }  
-    if(document.getElementById('prev-payment-details')) document.getElementById('prev-payment-details').textContent = finalPaymentDetails;  
+    if(document.getElementById('prev-payment-details')) {
+        document.getElementById('prev-payment-details').textContent = finalPaymentDetails;  
+    }
       
     const setLbl = (id, text) => { if(document.getElementById(id)) document.getElementById(id).textContent = text; };  
-    setLbl('lbl-from', langDict.from);  
-    setLbl('lbl-to', langDict.to);  
-    setLbl('lbl-date', langDict.date);  
-    setLbl('lbl-due', langDict.due);  
-    setLbl('lbl-desc', langDict.desc);  
-    setLbl('lbl-qty', langDict.qty);  
-    setLbl('lbl-price', langDict.price);  
-    setLbl('lbl-total', langDict.total);  
-    setLbl('lbl-subtotal', langDict.subtotal);  
-    setLbl('lbl-discount', langDict.discount);  
-    setLbl('lbl-payment', langDict.payment);  
-    setLbl('lbl-grandtotal', langDict.gtotal);  
+    setLbl('lbl-from', langDict.from || 'From');  
+    setLbl('lbl-to', langDict.to || 'To');  
+    setLbl('lbl-date', langDict.date || 'Date');  
+    setLbl('lbl-due', langDict.due || 'Due Date');  
+    setLbl('lbl-desc', langDict.desc || 'Description');  
+    setLbl('lbl-qty', langDict.qty || 'Qty');  
+    setLbl('lbl-price', langDict.price || 'Price');  
+    setLbl('lbl-total', langDict.total || 'Total');  
+    setLbl('lbl-subtotal', langDict.subtotal || 'Subtotal');  
+    setLbl('lbl-discount', langDict.discount || 'Discount');  
+    setLbl('lbl-payment', langDict.payment || 'Payment Details');  
+    setLbl('lbl-grandtotal', langDict.gtotal || 'Grand Total');  
       
     const lblPayment = document.getElementById('lbl-payment');  
     if(lblPayment && lblPayment.parentElement) lblPayment.parentElement.style.display = finalPaymentDetails ? 'block' : 'none';  
@@ -266,7 +270,7 @@ export function renderPreview() {
     }  
 
     const badge = document.getElementById('prev-status-badge');  
-    if(badge) {  
+    if(badge && store.state.status) {  
         badge.textContent = store.state.status;  
         badge.className = `inline-flex items-center px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest rounded-md border ${  
             store.state.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' :   
@@ -275,26 +279,32 @@ export function renderPreview() {
         }`;  
     }  
 
-    if(document.getElementById('prev-items-body')) {  
+    if(document.getElementById('prev-items-body') && store.state.items) {  
         document.getElementById('prev-items-body').innerHTML = store.state.items.filter(i => i.desc || i.price > 0).map(item => `  
             <tr class="avoid-break hover:bg-slate-50/50 transition-colors">  
-                <td class="py-4 px-5 text-slate-800 break-words whitespace-pre-wrap">${item.desc}</td>  
-                <td class="py-4 px-5 text-center text-slate-500">${item.qty}</td>  
-                <td class="py-4 px-5 text-right text-slate-500 whitespace-nowrap">${formatMoney(item.price)}</td>  
-                <td class="py-4 px-5 text-right font-medium text-slate-900 whitespace-nowrap">${formatMoney(item.qty * item.price)}</td>  
+                <td class="py-4 px-5 text-slate-800 break-words whitespace-pre-wrap">${item.desc || ''}</td>  
+                <td class="py-4 px-5 text-center text-slate-500">${item.qty || 0}</td>  
+                <td class="py-4 px-5 text-right text-slate-500 whitespace-nowrap">${formatMoney(item.price || 0)}</td>  
+                <td class="py-4 px-5 text-right font-medium text-slate-900 whitespace-nowrap">${formatMoney((item.qty || 0) * (item.price || 0))}</td>  
             </tr>  
         `).join('');  
     }  
 
     calculate();  
-    if(document.getElementById('prev-subtotal')) document.getElementById('prev-subtotal').textContent = formatMoney(store.calcTotals.subtotal);  
-    if(document.getElementById('prev-discount')) document.getElementById('prev-discount').textContent = `-${formatMoney(store.calcTotals.discount)}`;  
-    if(document.getElementById('prev-discount-row')) document.getElementById('prev-discount-row').style.display = store.calcTotals.discount > 0 ? 'flex' : 'none';  
+    if(document.getElementById('prev-subtotal') && store.calcTotals) {
+        document.getElementById('prev-subtotal').textContent = formatMoney(store.calcTotals.subtotal || 0);  
+    }
+    if(document.getElementById('prev-discount') && store.calcTotals) {
+        document.getElementById('prev-discount').textContent = `-${formatMoney(store.calcTotals.discount || 0)}`;  
+    }
+    if(document.getElementById('prev-discount-row') && store.calcTotals) {
+        document.getElementById('prev-discount-row').style.display = (store.calcTotals.discount > 0) ? 'flex' : 'none';  
+    }
       
-    let taxLabel = store.state.region === 'USA' ? `${langDict.tax} (${getTaxRate()}%)` : store.state.region === 'UK' ? 'VAT (20%)' : store.state.region === 'CAN' ? 'GST (5%)' : 'GST (10%)';  
+    let taxLabel = store.state.region === 'USA' ? `${langDict.tax || 'Tax'} (${getTaxRate()}%)` : store.state.region === 'UK' ? 'VAT (20%)' : store.state.region === 'CAN' ? 'GST (5%)' : 'GST (10%)';  
     if(document.getElementById('prev-tax-label')) document.getElementById('prev-tax-label').textContent = taxLabel;  
-    if(document.getElementById('prev-tax')) document.getElementById('prev-tax').textContent = formatMoney(store.calcTotals.tax);  
-    if(document.getElementById('prev-total')) document.getElementById('prev-total').textContent = formatMoney(store.calcTotals.total);  
+    if(document.getElementById('prev-tax') && store.calcTotals) document.getElementById('prev-tax').textContent = formatMoney(store.calcTotals.tax || 0);  
+    if(document.getElementById('prev-total') && store.calcTotals) document.getElementById('prev-total').textContent = formatMoney(store.calcTotals.total || 0);  
 
     const notesContainer = document.getElementById('prev-notes-terms-container');  
     const notesBox = document.getElementById('prev-notes-box');  
@@ -306,16 +316,16 @@ export function renderPreview() {
         if ((store.state.notes && store.state.notes.trim()) || (store.state.terms && store.state.terms.trim())) {  
             notesContainer.classList.remove('hidden');  
             if (store.state.notes && store.state.notes.trim()) {  
-                notesBox.classList.remove('hidden');  
-                notesContent.textContent = store.state.notes;  
+                if(notesBox) notesBox.classList.remove('hidden');  
+                if(notesContent) notesContent.textContent = store.state.notes;  
             } else {  
-                notesBox.classList.add('hidden');  
+                if(notesBox) notesBox.classList.add('hidden');  
             }  
             if (store.state.terms && store.state.terms.trim()) {  
-                termsBox.classList.remove('hidden');  
-                termsContent.textContent = store.state.terms;  
+                if(termsBox) termsBox.classList.remove('hidden');  
+                if(termsContent) termsContent.textContent = store.state.terms;  
             } else {  
-                termsBox.classList.add('hidden');  
+                if(termsBox) termsBox.classList.add('hidden');  
             }  
         } else {  
             notesContainer.classList.add('hidden');  
@@ -343,25 +353,29 @@ export function setupPreviewAndExportListeners() {
         if (!store.state.id) store.state.id = crypto.randomUUID();  
               
         const shareLink = `${window.location.origin}${window.location.pathname}?invoice=${store.state.id}`;  
-        document.getElementById('share-link-input').value = shareLink;  
+        const shareLinkInput = document.getElementById('share-link-input');
+        if (shareLinkInput) shareLinkInput.value = shareLink;  
 
         if (navigator.share) {  
             try {  
                 await navigator.share({  
-                    title: `Invoice ${store.state.docNumber}`,  
-                    text: `Please find the details for invoice ${store.state.docNumber} from ${store.state.companyName || store.state.senderDetails.split('\n')[0]}.\nTotal: ${formatMoney(store.calcTotals.total)}`,  
+                    title: `Invoice ${store.state.docNumber || ''}`,  
+                    text: `Please find the details for invoice ${store.state.docNumber || ''} from ${store.state.companyName || (store.state.senderDetails ? store.state.senderDetails.split('\n')[0] : '')}.\nTotal: ${store.calcTotals ? formatMoney(store.calcTotals.total) : ''}`,  
                     url: shareLink  
                 });  
                 showToast("Shared successfully.");  
             } catch (err) {  
-                shareModal.classList.remove('hidden');  
+                if(shareModal) shareModal.classList.remove('hidden');  
             }  
         } else {  
-            shareModal.classList.remove('hidden');  
+            if(shareModal) shareModal.classList.remove('hidden');  
         }  
     });  
 
-    document.getElementById('btn-close-share')?.addEventListener('click', () => shareModal.classList.add('hidden'));  
+    document.getElementById('btn-close-share')?.addEventListener('click', () => {
+        if(shareModal) shareModal.classList.add('hidden');
+    });  
+    
     document.getElementById('btn-copy-link')?.addEventListener('click', () => {  
         const linkInput = document.getElementById('share-link-input');  
         if(linkInput) {  
@@ -377,8 +391,8 @@ export function setupPreviewAndExportListeners() {
         if (!store.state.id) store.state.id = crypto.randomUUID();  
 
         const shareLink = `${window.location.origin}${window.location.pathname}?invoice=${store.state.id}`;  
-        const subject = encodeURIComponent(`Invoice ${store.state.docNumber} from ${store.state.companyName || store.state.senderDetails.split('\n')[0]}`);  
-        const body = encodeURIComponent(`Hello,\n\nPlease find the details for invoice ${store.state.docNumber} below.\n\nTotal: ${formatMoney(store.calcTotals.total)}\nDue Date: ${store.state.dueDate || 'N/A'}\n\nView or download your invoice here:\n${shareLink}\n\nThank you for your business!`);  
+        const subject = encodeURIComponent(`Invoice ${store.state.docNumber || ''} from ${store.state.companyName || (store.state.senderDetails ? store.state.senderDetails.split('\n')[0] : '')}`);  
+        const body = encodeURIComponent(`Hello,\n\nPlease find the details for invoice ${store.state.docNumber || ''} below.\n\nTotal: ${store.calcTotals ? formatMoney(store.calcTotals.total) : ''}\nDue Date: ${store.state.dueDate || 'N/A'}\n\nView or download your invoice here:\n${shareLink}\n\nThank you for your business!`);  
         window.location.href = `mailto:?subject=${subject}&body=${body}`;  
         showToast("Opening Email client...");  
     });  
@@ -482,6 +496,8 @@ export function setupPreviewAndExportListeners() {
             if (validation !== true) return showToast(validation);  
               
             const element = document.getElementById('doc-preview');  
+            if(!element) return;
+            
             btnPdf.classList.add('is-loading');  
             showToast("Compiling PDF asynchronously...");  
 
