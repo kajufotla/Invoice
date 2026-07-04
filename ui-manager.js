@@ -84,6 +84,10 @@ export function syncDOMWithState() {
     setVal('sender-details', store.state.senderDetails);
     setVal('client-details', store.state.clientDetails);
     setVal('payment-details', store.state.paymentDetails);
+    
+    // FIX: Added synchronization for the payment link input field
+    setVal('payment-link-input', store.state.paymentLink || '');
+    
     setVal('discount-type', store.state.discountType);
     setVal('discount-value', store.state.discountValue);
     setVal('tax-rate-manual', store.state.taxRateManual);
@@ -121,6 +125,10 @@ export function loadCompanyProfile() {
     if (profileStr) {
         try {
             const profile = JSON.parse(profileStr);
+            
+            // FIX: Ensure company name populates the actual state for rendering preview
+            if (profile.name) store.state.companyName = profile.name;
+            
             if(document.getElementById('prof-company-name')) document.getElementById('prof-company-name').value = profile.name || '';
             if(document.getElementById('prof-company-address')) document.getElementById('prof-company-address').value = profile.address || '';
             
@@ -244,7 +252,7 @@ export function updateDashboard() {
 export function renderItemsEditor() {
     const itemsContainer = document.getElementById('items-container');
     if(!itemsContainer) return;
-    // تبدیلی 1 اور 2: موبائل زوم کا مسئلہ حل کیا (text-base) اور واٹر مارک کا فکس کیا
+    
     itemsContainer.innerHTML = store.state.items.map(item => {
         const qtyValue = item.qty === 0 ? '' : item.qty;
         const priceValue = item.price === 0 ? '' : item.price;
@@ -290,6 +298,7 @@ export function setupUIListeners() {
                     docNumber: prefix + nextNum.toString().padStart(4, '0'),
                     senderDetails: store.state.senderDetails, 
                     paymentLinks: store.state.paymentLinks,
+                    companyName: store.state.companyName, // Keep Company name preserved
                     logoDataUrl: store.state.logoDataUrl,
                     sigDataUrl: store.state.sigDataUrl,
                     lang: store.state.lang,
@@ -344,6 +353,9 @@ export function setupUIListeners() {
         
         store.state.senderDetails = `${name}\n${address}`;
         store.state.paymentLinks = paymentLinks;
+        
+        // FIX: Ensure the company name actually updates the state for the preview
+        store.state.companyName = name; 
 
         if(document.getElementById('sender-details')) document.getElementById('sender-details').value = store.state.senderDetails;
         
@@ -609,7 +621,8 @@ export function setupUIListeners() {
         });
     });
 
-    ['doc-number', 'doc-date', 'doc-due-date', 'sender-details', 'client-details', 'payment-details', 'discount-value', 'tax-rate-manual', 'invoice-notes', 'invoice-terms'].forEach(id => {
+    // FIX: Re-wrote this listener block so Date, Due Date, and Payment Link correctly map to state parameters
+    ['doc-number', 'doc-date', 'doc-due-date', 'sender-details', 'client-details', 'payment-details', 'payment-link-input', 'discount-value', 'tax-rate-manual', 'invoice-notes', 'invoice-terms'].forEach(id => {
         const el = document.getElementById(id);
         if(!el) return;
         el.addEventListener('input', e => {
@@ -617,9 +630,15 @@ export function setupUIListeners() {
                 store.state.notes = e.target.value;
             } else if (id === 'invoice-terms') {
                 store.state.terms = e.target.value;
+            } else if (id === 'doc-date') {
+                store.state.date = e.target.value;
+            } else if (id === 'doc-due-date') {
+                store.state.dueDate = e.target.value; 
+            } else if (id === 'payment-link-input') {
+                store.state.paymentLink = e.target.value;
             } else {
                 const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-                store.state[key === 'docDate' ? 'date' : key] = e.target.value;
+                store.state[key] = e.target.value;
             }
             saveState();
             renderPreview();
