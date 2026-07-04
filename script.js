@@ -1,146 +1,8 @@
-// Firebase SDK Modules
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+// app.js
 
-// Your provided Firebase Config
-const firebaseConfig = {
-    apiKey: "AIzaSyBURDkNr9TMqzrf0BRx0J4VJVJe_rEJZus",
-    authDomain: "invoice-57140.firebaseapp.com",
-    projectId: "invoice-57140",
-    storageBucket: "invoice-57140.firebasestorage.app",
-    messagingSenderId: "138676617410",
-    appId: "1:138676617410:web:c9a794133716a3f1e7bb5b",
-    measurementId: "G-C4TSL5SZBK"
-};
-
-const app = initializeApp(firebaseConfig); 
-const auth = getAuth(app); 
-const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
-
-// UI Elements
-const authContainer = document.getElementById('auth-container');
-const appLayout = document.getElementById('app-layout');
-const btnGoogleLogin = document.getElementById('btn-google-login');
-const btnAuthAction = document.getElementById('btn-auth-action');
-const btnToggleAuth = document.getElementById('btn-toggle-auth');
-const btnForgotPass = document.getElementById('btn-forgot-password');
-const btnLogout = document.getElementById('btn-logout');
-
-const emailInput = document.getElementById('auth-email');
-const passInput = document.getElementById('auth-password');
-const repassInput = document.getElementById('auth-re-password');
-const repassContainer = document.getElementById('re-password-container');
-const toastEl = document.getElementById('toast');
-
-window.firebaseDb = db;
-window.firebaseAuth = auth;
-
-let isSignUp = false;
-
-function showAuthToast(msg) {
-    if(!toastEl) return;
-    toastEl.textContent = msg;
-    toastEl.classList.remove('translate-y-24', 'opacity-0');
-    setTimeout(() => toastEl.classList.add('translate-y-24', 'opacity-0'), 3000);
-}
-
-// Toggle Login/Signup
-if(btnToggleAuth) {
-    btnToggleAuth.addEventListener('click', () => {
-        isSignUp = !isSignUp;
-        if(isSignUp) {
-            repassContainer.classList.remove('hidden');
-            btnAuthAction.textContent = 'Sign Up';
-            btnToggleAuth.textContent = 'Already have an account? Login';
-        } else {
-            repassContainer.classList.add('hidden');
-            btnAuthAction.textContent = 'Login';
-            btnToggleAuth.textContent = 'Create an account';
-        }
-    });
-}
-
-// Email Auth (Login & Register)
-if(btnAuthAction) {
-    btnAuthAction.addEventListener('click', () => {
-        const email = emailInput.value;
-        const password = passInput.value;
-        
-        if(!email || !password) return showAuthToast("Please enter email and password.");
-
-        if(isSignUp) {
-            const repass = repassInput.value;
-            if(password !== repass) return showAuthToast("Passwords do not match!");
-            
-            btnAuthAction.textContent = 'Loading...';
-            createUserWithEmailAndPassword(auth, email, password)
-                .then(() => showAuthToast("Account created successfully!"))
-                .catch(err => {
-                    showAuthToast(err.message);
-                    btnAuthAction.textContent = 'Sign Up';
-                });
-        } else {
-            btnAuthAction.textContent = 'Loading...';
-            signInWithEmailAndPassword(auth, email, password)
-                .then(() => showAuthToast("Logged in successfully!"))
-                .catch(err => {
-                    showAuthToast("Login failed: " + err.message);
-                    btnAuthAction.textContent = 'Login';
-                });
-        }
-    });
-}
-
-// Google Auth
-if(btnGoogleLogin) {
-    btnGoogleLogin.addEventListener('click', () => {
-        signInWithPopup(auth, provider)
-            .then(() => showAuthToast("Logged in with Google!"))
-            .catch(err => showAuthToast("Google Login failed: " + err.message));
-    });
-}
-
-// Forgot Password
-if(btnForgotPass) {
-    btnForgotPass.addEventListener('click', () => {
-        const email = emailInput.value;
-        if(!email) return showAuthToast("Please enter your email first to reset password.");
-        sendPasswordResetEmail(auth, email)
-            .then(() => showAuthToast("Password reset email sent!"))
-            .catch(err => showAuthToast(err.message));
-    });
-}
-
-// Logout Confirmation Fix
-if(btnLogout) {
-    btnLogout.addEventListener('click', () => {
-        if(confirm("Are you sure you want to logout? All unsaved data will be kept in cloud if synced.")) {
-            signOut(auth).then(() => {
-                showAuthToast("Logged out successfully.");
-            }).catch((error) => {
-                showAuthToast("Error logging out.");
-            });
-        }
-    });
-}
-
-// Auth State Listener (Hides App/Shows Form based on login state)
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        if(authContainer) authContainer.classList.add('hidden');
-        if(appLayout) appLayout.classList.remove('hidden');
-        if(btnAuthAction) btnAuthAction.textContent = isSignUp ? 'Sign Up' : 'Login';
-        window.dispatchEvent(new Event('auth-ready'));
-    } else {
-        if(authContainer) authContainer.classList.remove('hidden');
-        if(appLayout) appLayout.classList.add('hidden');
-        if(emailInput) emailInput.value = '';
-        if(passInput) passInput.value = '';
-        if(repassInput) repassInput.value = '';
-    }
-});
+import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { dict, defaultState } from "./config-data.js"; 
+import "./firebase-auth.js"; // اس سے آپ کا لاگ ان/سائن اپ سسٹم خود بخود ایکٹو ہو جائے گا
 
 // Application Business Logic
 document.addEventListener('DOMContentLoaded', async () => {
@@ -157,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const publicInvoiceId = urlParams.get('invoice');
     if (publicInvoiceId) {
         try {
-            const docRef = doc(db, "public_invoices", publicInvoiceId);
+            const docRef = doc(window.firebaseDb, "public_invoices", publicInvoiceId);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
                 const publicData = docSnap.data();
@@ -168,12 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 previewEl.id = 'doc-preview';
                 previewEl.className = 'a4-document bg-white text-slate-900 shadow-xl';
                 document.body.appendChild(previewEl);
-
-                // Reconstruct dictionary for public view
-                const dict = {
-                    en: { dir: 'ltr', invoice: "INVOICE", receipt: "RECEIPT", quote: "QUOTE", from: "From", to: "To", desc: "Description", qty: "Qty", price: "Unit Price", total: "Total", subtotal: "Subtotal", tax: "Tax", discount: "Discount", payment: "Payment Details", due: "Due:", date: "Date:", gtotal: "Total" },
-                    ur: { dir: 'rtl', invoice: "رسید", receipt: "وصولی", quote: "تخمینہ", from: "کی طرف سے", to: "کے نام", desc: "تفصیل", qty: "تعداد", price: "قیمت", total: "کل", subtotal: "میزان", tax: "ٹیکس", discount: "رعایت", payment: "ادائیگی کی تفصیلات", due: "آخری تاریخ:", date: "تاریخ:", gtotal: "کل رقم" }
-                };
 
                 // Temporary assignment for rendering
                 state = { ...defaultState, ...JSON.parse(publicData.stateSnapshot) };
@@ -272,24 +128,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error("Error loading public invoice", error);
         }
     }
-
-    const dict = {
-        en: { dir: 'ltr', invoice: "INVOICE", receipt: "RECEIPT", quote: "QUOTE", from: "From", to: "To", desc: "Description", qty: "Qty", price: "Unit Price", total: "Total", subtotal: "Subtotal", tax: "Tax", discount: "Discount", payment: "Payment Details", due: "Due Date:", date: "Date:", gtotal: "Total" },
-        ur: { dir: 'rtl', invoice: "رسید", receipt: "وصولی", quote: "تخمینہ", from: "کی طرف سے", to: "کے نام", desc: "تفصیل", qty: "تعداد", price: "قیمت", total: "کل", subtotal: "میزان", tax: "ٹیکس", discount: "رعایت", payment: "ادائیگی کی تفصیلات", due: "آخری تاریخ:", date: "تاریخ:", gtotal: "کل رقم" }
-    };
-
-    let defaultState = {
-        id: null,
-        docType: 'Invoice', currency: 'USD', region: 'USA',
-        docNumber: 'INV-1001', date: new Date().toISOString().split('T')[0], dueDate: '',
-        senderDetails: 'My Company LLC\nNew York, NY 10001',
-        clientDetails: 'Acme Corp\nSan Francisco, CA 94105',
-        paymentDetails: '',
-        items: [{ id: crypto.randomUUID(), desc: 'Web Development Services', qty: 1, price: 1500.00 }],
-        discountType: 'fixed', discountValue: 0, taxRateManual: 0, status: 'Pending', template_id: 'classic',
-        logoDataUrl: null, sigDataUrl: null, uploadedQrDataUrl: null, showQR: false, lang: 'en',
-        notes: '', terms: '', paymentLinks: { stripe: '', paypal: '', wise: '', bank: '' }
-    };
 
     let state = { ...defaultState };
     let library = { clients: [], products: [], history: [] };
@@ -496,10 +334,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         calcTotals = { subtotal: sub, discount: disc, tax: tax, total: afterDisc + tax };
     }
 
-    // New Invoice logic applied to btn-reset OR newly created btn-new-invoice
     const btnReset = document.getElementById('btn-reset');
     if (btnReset) {
-        btnReset.outerHTML = btnReset.outerHTML; // strip old listeners
+        btnReset.outerHTML = btnReset.outerHTML; 
         document.getElementById('btn-reset').textContent = "New Invoice";
         document.getElementById('btn-reset').className = "px-4 py-2 bg-brand-50 text-brand-600 hover:bg-brand-100 rounded font-semibold text-sm transition";
         document.getElementById('btn-reset').addEventListener('click', () => {
@@ -522,7 +359,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ...defaultState, 
                     id: crypto.randomUUID(),
                     docNumber: prefix + nextNum.toString().padStart(4, '0'),
-                    senderDetails: state.senderDetails, // Keep company profile
+                    senderDetails: state.senderDetails, 
                     paymentLinks: state.paymentLinks,
                     logoDataUrl: state.logoDataUrl,
                     sigDataUrl: state.sigDataUrl,
@@ -607,7 +444,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('btn-duplicate')?.addEventListener('click', () => {
         if (!state.docNumber) return showToast("No active template instance to duplicate.");
-        state.id = crypto.randomUUID(); // ensure unique id for duplication
+        state.id = crypto.randomUUID(); 
         state.docNumber = state.docNumber + "-DUP";
         if(document.getElementById('doc-number')) document.getElementById('doc-number').value = state.docNumber;
         saveState();
@@ -615,7 +452,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         showToast("Invoice duplicated. ID refreshed.");
     });
 
-    // Print Friendly View Framework Toggles
     const btnPrintMode = document.getElementById('btn-print-mode');
     const btnExitPrint = document.getElementById('btn-exit-print-preview');
     if (btnPrintMode) {
@@ -737,7 +573,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         saveLibrary();
         
-        // Generate Public Invoice Link via Firestore Cloud save
         if(window.firebaseDb) {
             try {
                 await setDoc(doc(window.firebaseDb, "public_invoices", state.id), record, {merge:true});
@@ -914,7 +749,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.target.value = '';
     });
 
-    // Items Editor Listeners (Live Preview updates automatically via input)
+    // Items Editor Listeners 
     if(itemsContainer) {
         itemsContainer.addEventListener('input', (e) => {
             if (e.target.tagName === 'INPUT') {
@@ -1014,7 +849,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(dueDateLblContainer) dueDateLblContainer.style.display = 'none';
         }
 
-        // Bug Fix: Proper Company Name Split and Formatting
         if(document.getElementById('prev-sender')) {
             const lines = (state.senderDetails || '').split('\n');
             const companyName = lines.shift() || '';
@@ -1024,7 +858,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if(document.getElementById('prev-client')) document.getElementById('prev-client').textContent = state.clientDetails;
         
-        // Dynamic Payment Links rendering in preview
         let finalPaymentDetails = state.paymentDetails || '';
         if(state.paymentLinks) {
             const pl = state.paymentLinks;
@@ -1265,7 +1098,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Input Listeners for Live Preview
     ['doc-type', 'currency', 'region', 'doc-template', 'discount-type', 'doc-status'].forEach(id => {
         const el = document.getElementById(id);
         if(!el) return;
@@ -1288,7 +1120,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     ['doc-number', 'doc-date', 'doc-due-date', 'sender-details', 'client-details', 'payment-details', 'discount-value', 'tax-rate-manual', 'invoice-notes', 'invoice-terms'].forEach(id => {
         const el = document.getElementById(id);
         if(!el) return;
-        // Bind input event for instant live preview updates
         el.addEventListener('input', e => {
             if (id === 'invoice-notes') {
                 state.notes = e.target.value;
@@ -1310,7 +1141,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderPreview();
     });
 
-    // Fix PDF Export logic (Full Page A4, High Quality, No cropped content)
     const btnPdf = document.getElementById('btn-pdf');
     if(btnPdf) {
         btnPdf.addEventListener('click', async () => {
@@ -1323,11 +1153,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 50)));
 
             const options = {
-                margin: [10, 10, 10, 10], // Proper margins
+                margin: [10, 10, 10, 10], 
                 filename: `${state.docNumber || 'Invoice'}.pdf`,
-                image: { type: 'jpeg', quality: 1.0 }, // High quality
+                image: { type: 'jpeg', quality: 1.0 }, 
                 html2canvas: { 
-                    scale: 2, // Correct scaling
+                    scale: 2, 
                     useCORS: true, 
                     letterRendering: true,
                     windowWidth: element.scrollWidth,
