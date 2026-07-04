@@ -161,9 +161,10 @@
                             <div class="flex justify-between items-center mb-2">
                                 <label class="block text-xs font-bold uppercase tracking-wider text-slate-400">Company Profile</label>
                             </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <input type="text" id="prof-company-name" placeholder="Company Name" class="w-full px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition">
                                 <input type="text" id="prof-company-address" placeholder="Tagline (e.g., Innovate • Build)" class="w-full px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition">
+                                <input type="text" id="prof-company-tax-id" placeholder="Reg/Tax/VAT No. (Optional)" class="w-full px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition">
                             </div>
                         </div>
                     </div>
@@ -187,12 +188,19 @@
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1.5">From</label>
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <label class="block text-xs font-medium text-slate-500">From</label>
+                                    <select id="saved-senders-dropdown" class="text-[10px] border border-slate-300 dark:border-slate-600 dark:bg-slate-900 rounded px-1.5 py-0.5 outline-none hidden text-slate-500"><option value="">Load Saved...</option></select>
+                                </div>
                                 <textarea id="sender-details" rows="4" placeholder="123 Business Street, Suite 100&#10;Lahore, Pakistan&#10;info@skylinesolutions.com&#10;+92 300 1234567" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 font-mono text-xs outline-none focus:border-brand-500 shadow-sm transition hover:border-slate-400"></textarea>
                             </div>
                             <div class="relative">
-                                <label class="block text-xs font-medium text-slate-500 mb-1.5">To (Client)</label>
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <label class="block text-xs font-medium text-slate-500">To (Client)</label>
+                                    <select id="saved-clients-dropdown" class="text-[10px] border border-slate-300 dark:border-slate-600 dark:bg-slate-900 rounded px-1.5 py-0.5 outline-none hidden text-slate-500"><option value="">Load Client...</option></select>
+                                </div>
                                 <textarea id="client-details" rows="4" placeholder="ABC Enterprises&#10;456 Industrial Area&#10;Karachi, Pakistan&#10;contact@abcenterprises.com" class="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 font-mono text-xs outline-none focus:border-brand-500 shadow-sm transition hover:border-slate-400"></textarea>
+                                <input type="text" id="client-tax-id" placeholder="Client VAT / Tax No. (Optional)" class="w-full mt-2 px-3 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition">
                             </div>
                         </div>
                     </div>
@@ -204,7 +212,7 @@
                         
                         <div id="items-container" class="space-y-2"></div>
 
-                        <button id="btn-add-item" class="w-full py-2.5 mt-2 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-xs font-semibold transition text-slate-500 hover:text-brand-600 outline-none bg-slate-50 hover:bg-brand-50">
+                        <button id="btn-add-item" class="w-full py-2.5 mt-2 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 rounded-lg text-xs font-semibold transition text-slate-500 hover:text-brand-600 outline-none bg-slate-50 hover:bg-brand-50 dark:bg-slate-900 dark:hover:bg-brand-900/20">
                             + Add Item
                         </button>
 
@@ -217,15 +225,16 @@
                             <div class="flex flex-col items-end gap-3 w-full md:w-auto">
                                 <div class="flex items-center gap-3 text-xs">
                                     <span class="text-slate-500 font-medium">Discount:</span>
-                                    <select id="discount-type" class="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-slate-50 outline-none">
+                                    <select id="discount-type" class="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded bg-slate-50 dark:bg-slate-900 outline-none">
                                         <option value="fixed">Fixed</option>
                                         <option value="percent">%</option>
                                     </select>
-                                    <input type="number" id="discount-value" min="0" step="0.01" class="w-24 px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-right outline-none">
+                                    <input type="number" id="discount-value" min="0" step="0.01" class="w-24 px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-right dark:bg-slate-900 outline-none">
                                 </div>
-                                <div class="flex items-center gap-3 text-xs" id="tax-input-container">
-                                    <span class="text-slate-500 font-medium">Tax Rate (%):</span>
-                                    <input type="number" id="tax-rate-manual" min="0" step="0.01" class="w-24 px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-right outline-none">
+                                <div class="flex items-center gap-2 text-xs" id="tax-input-container">
+                                    <input type="text" id="tax-name-input" value="TAX" placeholder="e.g. VAT" class="w-16 px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-center text-slate-500 font-medium bg-slate-50 dark:bg-slate-900 outline-none">
+                                    <span class="text-slate-500 font-medium">(%):</span>
+                                    <input type="number" id="tax-rate-manual" min="0" step="0.01" class="w-24 px-2 py-1.5 border border-slate-300 dark:border-slate-600 rounded text-right dark:bg-slate-900 outline-none">
                                 </div>
                             </div>
                         </div>
@@ -233,11 +242,14 @@
                         <div class="pt-5 border-t border-slate-200 dark:border-slate-700 grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">
                             <div>
                                 <label class="block text-xs font-medium text-slate-500 mb-1.5">Notes</label>
-                                <textarea id="invoice-notes" rows="3" placeholder="Thank you for your business!&#10;If you have any questions, feel free to contact us." class="w-full px-3 py-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg outline-none focus:border-brand-500 shadow-sm transition"></textarea>
+                                <textarea id="invoice-notes" rows="3" placeholder="Thank you for your business!&#10;If you have any questions, feel free to contact us." class="w-full px-3 py-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition"></textarea>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-500 mb-1.5">Terms & Conditions</label>
-                                <textarea id="invoice-terms" rows="3" placeholder="• Payment is due by the due date mentioned above.&#10;• Late payments may incur additional charges." class="w-full px-3 py-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg outline-none focus:border-brand-500 shadow-sm transition"></textarea>
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <label class="block text-xs font-medium text-slate-500">Terms & Conditions</label>
+                                    <select id="saved-terms-dropdown" class="text-[10px] border border-slate-300 dark:border-slate-600 dark:bg-slate-900 rounded px-1.5 py-0.5 outline-none hidden text-slate-500"><option value="">Load Terms...</option></select>
+                                </div>
+                                <textarea id="invoice-terms" rows="3" placeholder="• Payment is due by the due date mentioned above.&#10;• Late payments may incur additional charges." class="w-full px-3 py-2 text-xs border border-slate-300 dark:border-slate-600 rounded-lg dark:bg-slate-900 outline-none focus:border-brand-500 shadow-sm transition"></textarea>
                             </div>
                         </div>
                     </div>
@@ -252,16 +264,19 @@
                             <div class="flex-1">
                                 <div id="tpl-header-block" class="flex justify-between items-start mb-8 pb-6 border-b border-slate-200">
                                     <div class="flex items-start gap-4">
-                                        <img id="prev-logo" class="max-h-16 w-16 object-contain hidden" alt="Business Logo">
-                                        <svg class="w-16 h-16 text-invoice-primary" viewBox="0 0 24 24" fill="currentColor" id="placeholder-logo">
-                                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                                        </svg>
+                                        <div id="logo-wrapper" class="flex items-center justify-center">
+                                            <img id="prev-logo" class="max-h-24 max-w-[192px] object-contain hidden" alt="Business Logo">
+                                            <svg class="w-16 h-16 text-invoice-primary" viewBox="0 0 24 24" fill="currentColor" id="placeholder-logo">
+                                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                            </svg>
+                                        </div>
                                         <div>
                                             <div id="prev-company-name" class="text-2xl font-bold text-slate-900 tracking-tight leading-none mb-1">Skyline Solutions</div>
-                                            <div id="prev-company-tagline" class="text-xs text-slate-500 mb-4 font-medium">Innovate • Build • Deliver</div>
+                                            <div id="prev-company-tagline" class="text-xs text-slate-500 mb-2 font-medium">Innovate • Build • Deliver</div>
+                                            <div id="prev-company-tax-id" class="text-[11px] font-bold text-slate-700 tracking-wide mb-3 hidden"></div>
                                             
                                             <div id="prev-header-contact" class="space-y-1.5 text-xs text-slate-700 font-medium hidden">
-                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     
@@ -292,6 +307,7 @@
                                     <div class="text-start border-l border-slate-200 pl-8">
                                         <h3 class="text-[11px] font-bold uppercase tracking-wider text-invoice-primary mb-2" id="lbl-to">BILL TO:</h3>
                                         <p id="prev-client" class="whitespace-pre-line text-slate-800 font-semibold leading-relaxed">ABC Enterprises<br>456 Industrial Area<br>Karachi, Pakistan<br>contact@abcenterprises.com<br>+92 321 7654321</p>
+                                        <p id="prev-client-tax-id" class="text-[11px] font-bold text-slate-700 mt-2 hidden"></p>
                                     </div>
                                 </div>
 
@@ -322,14 +338,14 @@
                                 <div class="flex justify-between items-start mb-8">
                                     
                                     <div class="w-1/2 pe-8">
-                                        <div id="prev-payment-link-container" class="bg-invoice-light p-4 rounded-xl flex items-start gap-3">
-                                            <div class="bg-invoice-primary text-white p-2 rounded-full mt-1">
+                                        <div id="prev-payment-link-container" class="bg-invoice-light p-4 rounded-xl flex items-start gap-3 hidden">
+                                            <div class="bg-invoice-primary text-white p-2 rounded-full mt-1 shrink-0">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
                                             </div>
-                                            <div>
+                                            <div class="overflow-hidden">
                                                 <h3 class="text-xs font-bold text-invoice-primary mb-1 uppercase tracking-wider">PAYMENT LINK</h3>
-                                                <p class="text-xs text-slate-600 mb-1">Pay securely using the link below:</p>
-                                                <a id="prev-payment-link" href="#" target="_blank" class="text-invoice-primary font-bold text-xs hover:underline break-all">https://pay.skylinesolutions.com/INV-2025-0001</a>
+                                                <p class="text-[11px] text-slate-600 mb-1">Pay securely using the link below:</p>
+                                                <a id="prev-payment-link" href="#" target="_blank" class="text-invoice-primary font-bold text-[11px] hover:underline break-all"></a>
                                             </div>
                                         </div>
                                     </div>
@@ -337,7 +353,7 @@
                                     <div class="w-72 text-xs space-y-3">
                                         <div class="flex justify-between pb-3 border-b border-slate-200">
                                             <span class="text-slate-600 font-bold" id="lbl-subtotal">SUBTOTAL</span>
-                                            <span id="prev-subtotal" class="font-bold text-slate-900">PKR 55,500</span>
+                                            <span id="prev-subtotal" class="font-bold text-slate-900">PKR 0</span>
                                         </div>
                                         <div class="flex justify-between pb-3 border-b border-slate-200" id="prev-discount-row">
                                             <span class="text-slate-600 font-bold" id="lbl-discount">DISCOUNT</span>
@@ -349,7 +365,7 @@
                                         </div>
                                         <div class="flex justify-between text-sm font-black text-invoice-primary pt-1 border-b-2 border-invoice-light pb-4">
                                             <span id="lbl-grandtotal">TOTAL</span>
-                                            <span id="prev-total-amount" class="font-black">PKR 55,500</span>
+                                            <span id="prev-total-amount" class="font-black">PKR 0</span>
                                         </div>
                                     </div>
                                 </div>
@@ -364,13 +380,13 @@
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                                 <h4 class="text-xs font-bold uppercase tracking-wider">NOTES</h4>
                                             </div>
-                                            <p id="prev-notes-content" class="text-xs text-slate-800 font-medium whitespace-pre-line leading-relaxed">Thank you for your business!<br>If you have any questions, feel free to contact us.</p>
+                                            <p id="prev-notes-content" class="text-[11px] text-slate-800 font-medium whitespace-pre-line leading-relaxed"></p>
                                         </div>
                                         
-                                        <div id="sig-container" class="mt-4 inline-block">
-                                            <img id="prev-sig" class="h-16 object-contain mb-1 hidden" alt="Signature Upload">
-                                            <div id="prev-sig-placeholder-line" class="h-16 w-48 flex items-center justify-center text-slate-300 font-serif italic text-xs border border-dashed border-slate-200 rounded mb-1">Signature Area</div>
-                                            <div class="w-48 border-t border-slate-300 border-dashed pt-2">
+                                        <div id="sig-container" class="mt-4 inline-block w-full max-w-[240px]">
+                                            <img id="prev-sig" class="max-h-24 max-w-full object-contain mb-1 hidden" alt="Signature Upload">
+                                            <div id="prev-sig-placeholder-line" class="h-20 w-full flex items-center justify-center text-slate-300 font-serif italic text-xs border border-dashed border-slate-200 rounded mb-1">Signature Area</div>
+                                            <div class="w-full border-t border-slate-300 border-dashed pt-2">
                                                 <div class="text-[10px] text-slate-600 font-bold uppercase tracking-wider text-center">Authorized Signature</div>
                                             </div>
                                         </div>
@@ -382,12 +398,7 @@
                                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                                                 <h4 class="text-xs font-bold uppercase tracking-wider">TERMS & CONDITIONS</h4>
                                             </div>
-                                            <p id="prev-terms-content" class="text-[11px] text-slate-800 font-medium whitespace-pre-line leading-relaxed pl-4 list-disc">
-                                                • Payment is due by the due date mentioned above.<br>
-                                                • Late payments may incur additional charges.<br>
-                                                • This invoice is valid for 15 days from the invoice date.<br>
-                                                • No refund once the payment is made.
-                                            </p>
+                                            <p id="prev-terms-content" class="text-[11px] text-slate-800 font-medium whitespace-pre-line leading-relaxed pl-2"></p>
                                         </div>
                                         
                                         <div class="bg-invoice-light p-4 rounded-xl flex items-start gap-3 mt-4">
@@ -396,7 +407,7 @@
                                             </div>
                                             <div>
                                                 <h3 class="text-xs font-bold text-invoice-primary mb-1 uppercase tracking-wider">THANK YOU!</h3>
-                                                <p class="text-xs text-slate-800 font-medium">We appreciate your business and trust.</p>
+                                                <p class="text-[10px] text-slate-800 font-medium">We appreciate your business and trust.</p>
                                             </div>
                                         </div>
                                     </div>
