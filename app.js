@@ -1,57 +1,35 @@
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-import { defaultState } from "./config-data.js";
-import "./firebase-auth.js"; 
-import { store, loadAppData } from "./invoice-manager.js";
-import { checkPublicInvoice, renderPreview, setupPreviewAndExportListeners, initPreviewManager } from "./preview-manager.js";
-import { showToast, syncDOMWithState, updateClientDropdown, updateProductDatalist, updateDashboard, loadCompanyProfile, renderItemsEditor, injectDynamicUIElements, setupUIListeners } from "./ui-manager.js";
+import { store } from "./invoice-manager.js";
+import { renderPreview, setupPreviewAndExportListeners, checkPublicInvoice } from "./preview-manager.js";
+import { setupUIListeners } from "./ui-manager.js"; 
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Inject cross-module dependencies
-    initPreviewManager(showToast);
-
-    // 1. Public Invoice Link Check
-    const isPublicView = await checkPublicInvoice();
-    if (isPublicView) return; // Halt further app execution if viewing public link
-
-    // 2. Inject Dynamic DOM Elements (Taxes, Backup, Profile)
-    injectDynamicUIElements();
-
-    // 3. Load Data & Initialize State
-    loadAppData();
-
-    // 4. Sync UI with Loaded State
-    syncDOMWithState();
-    updateClientDropdown();
-    updateProductDatalist();
-    updateDashboard();
-    loadCompanyProfile();
-
-    // 5. Render App
-    renderItemsEditor();
-    renderPreview();
-
-    // 6. Bind Event Listeners
-    setupUIListeners();
-    setupPreviewAndExportListeners();
-
-    // 7. Cloud Sync on Auth Ready
-    window.addEventListener('auth-ready', async () => {
-        const uid = window.firebaseAuth.currentUser.uid;
-        try {
-            const docSnap = await getDoc(doc(window.firebaseDb, "users", uid));
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                if(data.state) store.state = { ...defaultState, ...JSON.parse(data.state) };
-                if(data.library) store.library = { clients: [], products: [], history: [], ...JSON.parse(data.library) };
-                syncDOMWithState();
-                updateClientDropdown();
-                updateProductDatalist();
-                renderItemsEditor();
+    // 1. चेक करें कि क्या यह कोई पब्लिक शेयर्ड लिंक (Invoice URL) है?
+    const isPublic = await checkPublicInvoice();
+    
+    if (!isPublic) {
+        // 2. अगर यह पब्लिक लिंक नहीं है, तो नॉर्मल एडिटर इंटरफेस लोड करें
+        setupUIListeners();
+        setupPreviewAndExportListeners();
+        
+        // 3. रियल-टाइम डायनामिक सिंक (बिना किसी फ्रेमवर्क के)
+        // यह कोड आपके फॉर्म के हर इनपुट को डिटेक्ट करेगा और टाइप करते ही प्रीव्यू अपडेट करेगा
+        const formInputs = document.querySelectorAll('input, textarea, select');
+        
+        formInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                const key = e.target.dataset.stateKey || e.target.name || e.target.id;
+                
+                // स्टेट (Store) को अपडेट करें
+                if (key && key in store.state) {
+                    store.state[key] = e.target.value;
+                }
+                
+                // बिना पेज रिफ्रेश किए प्रीव्यू को तुरंत रेंडर करें
                 renderPreview();
-                updateDashboard();
-                loadCompanyProfile();
-                showToast("Cloud data synced successfully.");
-            }
-        } catch(e) { console.error("Cloud load error", e); }
-    });
+            });
+        });
+
+        // पेज लोड होने पर पहली बार डिफ़ॉल्ट प्रीव्यू रेंडर करें
+        renderPreview();
+    }
 });
