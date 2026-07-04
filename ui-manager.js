@@ -12,7 +12,6 @@ export function showToast(msg) {
 }
 
 export function injectDynamicUIElements() {
-    // Replace manual tax input with a dropdown dynamically
     const taxManualEl = document.getElementById('tax-rate-manual');
     if (taxManualEl && taxManualEl.tagName.toLowerCase() === 'input') {
         const select = document.createElement('select');
@@ -23,7 +22,6 @@ export function injectDynamicUIElements() {
         taxManualEl.parentNode.replaceChild(select, taxManualEl);
     }
 
-    // Add Advanced Backup & Payment config UI to DOM if missing
     const dashContainer = document.getElementById('view-dashboard');
     if (dashContainer && !document.getElementById('btn-export-backup')) {
         dashContainer.insertAdjacentHTML('beforeend', `
@@ -40,7 +38,6 @@ export function injectDynamicUIElements() {
         `);
     }
 
-    // Inject payment configuration into Company Profile Modal if missing
     const companyProfileBody = document.getElementById('prof-company-address');
     if (companyProfileBody && !document.getElementById('prof-stripe')) {
         companyProfileBody.parentNode.insertAdjacentHTML('beforeend', `
@@ -54,7 +51,6 @@ export function injectDynamicUIElements() {
         `);
     }
 
-    // Advanced Search Injection in History
     const historyListContainer = document.getElementById('history-list');
     if (historyListContainer && !document.getElementById('history-search')) {
         historyListContainer.insertAdjacentHTML('beforebegin', `
@@ -84,9 +80,10 @@ export function syncDOMWithState() {
     setVal('sender-details', store.state.senderDetails);
     setVal('client-details', store.state.clientDetails);
     setVal('payment-details', store.state.paymentDetails);
-    
-    // FIX: Added synchronization for the payment link input field
     setVal('payment-link-input', store.state.paymentLink || '');
+    
+    // Sync company profile fields if state has them
+    if (store.state.companyName) setVal('prof-company-name', store.state.companyName);
     
     setVal('discount-type', store.state.discountType);
     setVal('discount-value', store.state.discountValue);
@@ -126,8 +123,9 @@ export function loadCompanyProfile() {
         try {
             const profile = JSON.parse(profileStr);
             
-            // FIX: Ensure company name populates the actual state for rendering preview
+            // Auto-load company name and address on startup
             if (profile.name) store.state.companyName = profile.name;
+            if (profile.address && !store.state.senderDetails) store.state.senderDetails = profile.address; 
             
             if(document.getElementById('prof-company-name')) document.getElementById('prof-company-name').value = profile.name || '';
             if(document.getElementById('prof-company-address')) document.getElementById('prof-company-address').value = profile.address || '';
@@ -270,7 +268,20 @@ export function renderItemsEditor() {
 }
 
 export function setupUIListeners() {
-    // New Invoice
+    // Live Typing Updates (No Save Button Needed for Preview)
+    document.getElementById('prof-company-name')?.addEventListener('input', (e) => {
+        store.state.companyName = e.target.value;
+        saveState();
+        renderPreview();
+    });
+
+    document.getElementById('prof-company-address')?.addEventListener('input', (e) => {
+        store.state.senderDetails = e.target.value; // Updates the 'From' Sender details block
+        if(document.getElementById('sender-details')) document.getElementById('sender-details').value = store.state.senderDetails;
+        saveState();
+        renderPreview();
+    });
+
     const btnReset = document.getElementById('btn-reset');
     if (btnReset) {
         btnReset.outerHTML = btnReset.outerHTML; 
@@ -298,7 +309,7 @@ export function setupUIListeners() {
                     docNumber: prefix + nextNum.toString().padStart(4, '0'),
                     senderDetails: store.state.senderDetails, 
                     paymentLinks: store.state.paymentLinks,
-                    companyName: store.state.companyName, // Keep Company name preserved
+                    companyName: store.state.companyName, 
                     logoDataUrl: store.state.logoDataUrl,
                     sigDataUrl: store.state.sigDataUrl,
                     lang: store.state.lang,
@@ -334,7 +345,7 @@ export function setupUIListeners() {
         showToast(`Generated: ${store.state.docNumber}`);
     });
 
-    // Profile Saves
+    // Profile Save (Persists data for Future Invoices)
     document.getElementById('btn-save-profile')?.addEventListener('click', () => {
         const name = document.getElementById('prof-company-name')?.value.trim();
         const address = document.getElementById('prof-company-address')?.value.trim();
@@ -351,17 +362,15 @@ export function setupUIListeners() {
         const profile = { name, address, paymentLinks };
         localStorage.setItem('invoiceCompanyProfile', JSON.stringify(profile));
         
-        store.state.senderDetails = `${name}\n${address}`;
-        store.state.paymentLinks = paymentLinks;
-        
-        // FIX: Ensure the company name actually updates the state for the preview
         store.state.companyName = name; 
+        store.state.senderDetails = address; 
+        store.state.paymentLinks = paymentLinks;
 
         if(document.getElementById('sender-details')) document.getElementById('sender-details').value = store.state.senderDetails;
         
         saveState();
         renderPreview();
-        showToast("Company profile saved.");
+        showToast("Profile saved! Name and Sender details will auto-load on new invoices.");
     });
 
     document.getElementById('btn-duplicate')?.addEventListener('click', () => {
@@ -621,7 +630,6 @@ export function setupUIListeners() {
         });
     });
 
-    // FIX: Re-wrote this listener block so Date, Due Date, and Payment Link correctly map to state parameters
     ['doc-number', 'doc-date', 'doc-due-date', 'sender-details', 'client-details', 'payment-details', 'payment-link-input', 'discount-value', 'tax-rate-manual', 'invoice-notes', 'invoice-terms'].forEach(id => {
         const el = document.getElementById(id);
         if(!el) return;
