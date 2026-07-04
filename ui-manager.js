@@ -170,17 +170,17 @@ export function syncDOMWithState() {
         DOMUtils.setVal('currency', state.currency);
         DOMUtils.setVal('region', state.region);
         DOMUtils.setVal('doc-number', state.docNumber);
-        DOMUtils.setVal('doc-date', state.date);
-        DOMUtils.setVal('doc-due-date', state.dueDate);
-        DOMUtils.setVal('sender-details', state.senderDetails);
-        DOMUtils.setVal('client-details', state.clientDetails);
-        DOMUtils.setVal('payment-details', state.paymentDetails);
+        DOMUtils.setVal('doc-date', state.date || '');
+        DOMUtils.setVal('doc-due-date', state.dueDate || '');
+        DOMUtils.setVal('sender-details', state.senderDetails || '');
+        DOMUtils.setVal('client-details', state.clientDetails || '');
+        DOMUtils.setVal('payment-details', state.paymentDetails || '');
         DOMUtils.setVal('payment-link-input', state.paymentLink || '');
 
-        if (state.companyName) DOMUtils.setVal('prof-company-name', state.companyName); 
+        DOMUtils.setVal('prof-company-name', state.companyName || ''); 
         DOMUtils.setVal('discount-type', state.discountType); 
-        DOMUtils.setVal('discount-value', state.discountValue); 
-        DOMUtils.setVal('tax-rate-manual', state.taxRateManual); 
+        DOMUtils.setVal('discount-value', state.discountValue || 0); 
+        DOMUtils.setVal('tax-rate-manual', state.taxRateManual || 0); 
         DOMUtils.setVal('doc-status', state.status); 
         DOMUtils.setVal('doc-template', state.template_id); 
         DOMUtils.setVal('invoice-notes', state.notes || ''); 
@@ -440,20 +440,29 @@ function initDocumentControls() {
                 ...defaultState, 
                 id: crypto.randomUUID(), 
                 docNumber: prefix + nextNum.toString().padStart(4, '0'), 
-                senderDetails: store.state.senderDetails, 
-                paymentLinks: store.state.paymentLinks, 
-                companyName: store.state.companyName, 
-                logoDataUrl: store.state.logoDataUrl, 
-                sigDataUrl: store.state.sigDataUrl, 
+                // Making all fields blank for full reset so placeholders appear
+                clientDetails: '',
+                paymentLink: '',
+                notes: '',
+                terms: '',
+                date: '',
+                dueDate: '',
+                discountValue: 0,
+                taxRateManual: 0,
+                companyName: '',
+                senderDetails: '',
+                paymentLinks: { stripe: '', paypal: '', wise: '', bank: '' },
+                logoDataUrl: '',
+                sigDataUrl: '',
                 lang: store.state.lang, 
-                items: [{ id: crypto.randomUUID(), desc: '', qty: 1, price: 0 }] 
+                items: [{ id: crypto.randomUUID(), desc: '', qty: 0, price: 0 }] 
             }; 
             
             saveState(); 
             syncDOMWithState(); 
             renderItemsEditor(); 
             renderPreview(); 
-            showToast("Workspace cleared. Fresh invoice started."); 
+            showToast("Workspace cleared. All fields reset."); 
         } catch (e) { 
             console.error("Reset Error:", e); 
         } 
