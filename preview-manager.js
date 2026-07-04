@@ -172,6 +172,7 @@ export function renderPreview() {
             let logoPlaceholder = document.getElementById('placeholder-logo');
 
             if (store.state.logoDataUrl) {  
+                // LOGO DISPLAY LOGIC 
                 logoImg.src = store.state.logoDataUrl;  
                 logoImg.classList.remove('hidden');  
                 if(logoPlaceholder) logoPlaceholder.classList.add('hidden');
@@ -365,14 +366,21 @@ export function renderPreview() {
         const sigPlaceholder = document.getElementById('prev-sig-placeholder-line');
         
         if(store.state.sigDataUrl) {  
-            if(sigContainer) sigContainer.classList.remove('hidden');
+            // SIGNATURE DISPLAY LOGIC (Fixing classes dynamically to ensure it shows)
+            if(sigContainer) {
+                sigContainer.classList.remove('hidden');
+                sigContainer.style.display = 'flex'; // Force flex display so it aligns properly
+            }
             if(sigImg) {
                 sigImg.src = store.state.sigDataUrl;  
                 sigImg.classList.remove('hidden');
             }
             if(sigPlaceholder) sigPlaceholder.classList.add('hidden');
         } else {  
-            if(sigContainer) sigContainer.classList.add('hidden');
+            if(sigContainer) {
+                sigContainer.classList.add('hidden');
+                sigContainer.style.display = 'none';
+            }
             if(sigImg) {
                 sigImg.src = '';  
                 sigImg.classList.add('hidden');  
