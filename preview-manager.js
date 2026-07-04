@@ -166,10 +166,23 @@ export function renderPreview() {
 
     if(document.getElementById('prev-sender')) {
         const lines = (store.state.senderDetails || '').split('\n');
-        const firstLine = lines.shift() || '';
-        const companyName = store.state.companyName || firstLine;
-        const remainder = lines.join('<br>');
-        document.getElementById('prev-sender').innerHTML = `<strong style="font-size: 1.1em; display: block; margin-bottom: 4px;">${companyName}</strong>${remainder}`;
+        let companyName = store.state.companyName;
+
+        // Prevent duplicate company name if it's already the first line of senderDetails
+        if (companyName) {
+            if (lines.length > 0 && lines[0].trim() === companyName.trim()) {
+                lines.shift();
+            }
+        } else {
+            companyName = lines.shift() || '';
+        }
+
+        const addressRemainder = lines.join('<br>');
+        
+        // Render bold and larger font for company name
+        document.getElementById('prev-sender').innerHTML = companyName 
+            ? `<strong style="font-size: 1.25em; display: block; margin-bottom: 4px;">${companyName}</strong>${addressRemainder}` 
+            : addressRemainder;
     }
     
     if(document.getElementById('prev-client')) document.getElementById('prev-client').textContent = store.state.clientDetails;
@@ -435,7 +448,7 @@ export function setupPreviewAndExportListeners() {
 
             await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 50)));
 
-            // تبدیلی 3: پی ڈی ایف کے کٹنے کے مسئلے کا حل
+            // تبدیلی 3: پی ڈی ایف کے کٹنے کے مسئلے का حل
             const originalWidth = element.style.width;
             element.style.width = '800px';
 
@@ -447,7 +460,7 @@ export function setupPreviewAndExportListeners() {
                     scale: 2, 
                     useCORS: true, 
                     letterRendering: true,
-                    width: 800, // سائیڈوں سے کٹنے سے بچانے کے لیے
+                    width: 800, // सائیڈوں से کٹنے से बचानے के लिऐ
                     windowWidth: 800,
                     scrollY: 0
                 },
@@ -461,7 +474,7 @@ export function setupPreviewAndExportListeners() {
                 showToast("Error generating PDF.");
                 console.error(error);
             } finally {
-                element.style.width = originalWidth; // پی ڈی ایف بننے کے بعد اسکرین واپس نارمل
+                element.style.width = originalWidth; // پی डी ایف بننے के बाद इसक्रीन् वापस् नॉरम्ल
                 btnPdf.classList.remove('is-loading');
             }
         });
