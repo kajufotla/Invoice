@@ -207,7 +207,6 @@ export function updateClientDropdown() {
     const select = DOMUtils.get('lib-clients');
     if (!select) return;
     try {
-        // Escaped output to prevent XSS
         select.innerHTML = 'Load...' + store.library.clients.map((c, i) => {
             const shortName = escapeHTML(c.split('\n')[0].substring(0, 20));
             return `<option value="${i}">${shortName}</option>`;
@@ -219,14 +218,13 @@ export function updateClientDropdown() {
 
 export function updateProductDatalist() {
     const dp = DOMUtils.get('library-products');
-    // Escaped output to prevent XSS
     if (dp) dp.innerHTML = store.library.products.map(p => `<option value="${escapeHTML(p.desc)}">`).join('');
 }
 
 export async function loadCompanyProfile() {
     try {
         let profileStr = await idbStorage.get('invoiceCompanyProfile');
-        if (!profileStr) profileStr = localStorage.getItem('invoiceCompanyProfile'); // Redundant check for safety
+        if (!profileStr) profileStr = localStorage.getItem('invoiceCompanyProfile'); 
 
         if (profileStr) { 
             let profile;
@@ -269,7 +267,6 @@ export function renderClientsDbList() {
         return; 
     } 
     
-    // Escaped output to prevent XSS
     container.innerHTML = store.library.clients.map((c, i) => ` 
     <li class="flex items-center justify-between p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm"> 
         <p class="text-xs font-mono font-medium truncate max-w-[300px] text-slate-700 dark:text-slate-300">${escapeHTML(c.split('\n')[0])}</p> 
@@ -299,7 +296,6 @@ export function renderHistoryList() {
             return; 
         } 
         
-        // Output with XSS escaping for safe rendering of records
         list.innerHTML = filtered.map(h => ` 
         <li class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm transition hover:shadow"> 
             <div> 
@@ -399,15 +395,15 @@ export function renderItemsEditor() {
     if (!itemsContainer) return;
 
     try { 
-        itemsContainer.innerHTML = store.state.items.map(item => { 
+        // Modified to perfectly match event delegation logic in app.js
+        itemsContainer.innerHTML = store.state.items.map((item, index) => { 
             const qtyValue = item.qty === 0 ? '' : item.qty; 
             const priceValue = item.price === 0 ? '' : item.price; 
-            // Escaped description for security
             return ` 
             <div class="grid grid-cols-[2fr_1fr_1fr_1fr_40px] gap-2 items-center"> 
-                <input type="text" list="library-products" placeholder="Description" value="${escapeHTML(item.desc)}" data-id="${item.id}" data-field="desc" class="w-full px-2 py-1.5 text-base border border-slate-300 dark:border-slate-600 rounded dark:bg-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500"> 
-                <input type="number" min="1" step="1" value="${qtyValue}" placeholder="1" data-id="${item.id}" data-field="qty" class="w-full px-2 py-1.5 text-base border border-slate-300 dark:border-slate-600 rounded text-center dark:bg-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500"> 
-                <input type="number" min="0" step="0.01" value="${priceValue}" placeholder="0.00" data-id="${item.id}" data-field="price" class="w-full px-2 py-1.5 text-base border border-slate-300 dark:border-slate-600 rounded text-right dark:bg-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500"> 
+                <input type="text" list="library-products" placeholder="Description" value="${escapeHTML(item.desc)}" data-id="${item.id}" data-item-index="${index}" data-item-field="desc" data-field="desc" class="w-full px-2 py-1.5 text-base border border-slate-300 dark:border-slate-600 rounded dark:bg-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500"> 
+                <input type="number" min="1" step="1" value="${qtyValue}" placeholder="1" data-id="${item.id}" data-item-index="${index}" data-item-field="qty" data-field="qty" class="w-full px-2 py-1.5 text-base border border-slate-300 dark:border-slate-600 rounded text-center dark:bg-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500"> 
+                <input type="number" min="0" step="0.01" value="${priceValue}" placeholder="0.00" data-id="${item.id}" data-item-index="${index}" data-item-field="price" data-field="price" class="w-full px-2 py-1.5 text-base border border-slate-300 dark:border-slate-600 rounded text-right dark:bg-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500"> 
                 <div class="text-right text-xs font-semibold px-2 item-total text-slate-800 dark:text-slate-100">${formatMoney(item.qty * item.price)}</div> 
                 <button class="p-1.5 border border-slate-200 dark:border-slate-700 rounded hover:bg-rose-50 hover:border-rose-200 text-rose-500 dark:hover:bg-rose-950/30 del-item outline-none shadow-sm transition focus:ring-2 focus:ring-rose-500/20" data-id="${item.id}"> 
                     <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> 
@@ -440,7 +436,6 @@ function initDocumentControls() {
                 ...defaultState, 
                 id: crypto.randomUUID(), 
                 docNumber: prefix + nextNum.toString().padStart(4, '0'), 
-                // Making all fields blank for full reset so placeholders appear
                 clientDetails: '',
                 paymentLink: '',
                 notes: '',
@@ -525,7 +520,6 @@ function initProfileListeners() {
             }; 
             
             const profile = { name, address, paymentLinks }; 
-            // Persist via IDB with LS fallback inside idbStorage 
             await idbStorage.set('invoiceCompanyProfile', JSON.stringify(profile)); 
             
             store.state.companyName = name; 
@@ -613,7 +607,6 @@ function initCloudSyncListeners() {
             
             saveLibrary(); 
             
-            // Sync with Firebase using secure retry wrapper
             if (window.firebaseDb) { 
                 try { 
                     await withRetry(() => setDoc(doc(window.firebaseDb, "public_invoices", store.state.id), record, { merge: true }));
@@ -704,7 +697,6 @@ function initHistoryAndBackupListeners() {
         reader.onload = function(evt) { 
             try { 
                 const data = JSON.parse(evt.target.result); 
-                // Enhanced validation for security
                 if (!data || typeof data !== 'object' || Array.isArray(data)) {
                     throw new Error("Invalid JSON structure");
                 }
@@ -794,6 +786,7 @@ function initFormInputBindings() {
         DOMUtils.on(id, 'change', (e) => {
             const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
             if (id === 'doc-template') store.state.template_id = e.target.value;
+            else if (id === 'doc-status') store.state.status = e.target.value; // Synced Key
             else store.state[key] = e.target.value;
 
             if (id === 'region') { 
@@ -810,12 +803,19 @@ function initFormInputBindings() {
     
     const bindInput = (id) => { 
         DOMUtils.on(id, 'input', (e) => { 
+            // Exact mappings aligned with app.js and invoice-manager.js
             const mapping = { 
                 'invoice-notes': 'notes', 
                 'invoice-terms': 'terms', 
                 'doc-date': 'date', 
                 'doc-due-date': 'dueDate', 
-                'payment-link-input': 'paymentLink' 
+                'payment-link-input': 'paymentLink',
+                'doc-number': 'docNumber',
+                'sender-details': 'senderDetails',
+                'client-details': 'clientDetails',
+                'payment-details': 'paymentDetails',
+                'discount-value': 'discountValue',
+                'tax-rate-manual': 'taxRateManual'
             }; 
             const key = mapping[id] || id.replace(/-([a-z])/g, (g) => g[1].toUpperCase()); 
             store.state[key] = e.target.value; 
