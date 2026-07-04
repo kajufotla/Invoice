@@ -30,6 +30,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         // पेज लोड होने पर पहली बार डिफ़ॉल्ट प्रीव्यू रेंडर करें
-        renderPreview();
+        renderPreview(); 
     }
 });
