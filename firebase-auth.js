@@ -1,4 +1,4 @@
-// firebase-auth.js
+// firebase-auth.js - Full Source Code
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
@@ -36,7 +36,7 @@ function showAuthToast(msg) {
     if(!toastEl) return;
     toastEl.textContent = msg;
     toastEl.classList.remove('translate-y-24', 'opacity-0');
-    setTimeout(() => toastEl.classList.add('translate-y-24', 'opacity-0'), 4000); // 3 سے 4 سیکنڈ کر دیا گیا ہے
+    setTimeout(() => toastEl.classList.add('translate-y-24', 'opacity-0'), 4000);
 }
 
 // --- یوزر فرینڈلی ایرر میسجز (Human Readable Errors) ---
@@ -81,12 +81,10 @@ if(btnAuthAction) {
         const email = emailInput.value.trim();
         const password = passInput.value.trim();
 
-        // 1. Basic Validation
         if (!email || !password) return showAuthToast("Please enter email and password.");
         if (!isValidEmail(email)) return showAuthToast("Please enter a valid email address.");
         if (password.length < 6) return showAuthToast("Password must be at least 6 characters long.");
 
-        // 2. Loading State (بہت ضروری فیچر)
         btnAuthAction.disabled = true;
         const originalText = btnAuthAction.textContent;
         btnAuthAction.textContent = 'Processing...';
@@ -108,7 +106,6 @@ if(btnAuthAction) {
             const errorMsg = err.custom ? err.message : getFriendlyErrorMessage(err.code);
             showAuthToast(errorMsg);
         } finally {
-            // 3. Reset Button State
             btnAuthAction.disabled = false;
             btnAuthAction.textContent = originalText;
             btnAuthAction.classList.remove('opacity-50', 'cursor-not-allowed');
@@ -125,7 +122,7 @@ if(btnGoogleLogin) {
             await signInWithPopup(auth, provider);
             showAuthToast("Logged in with Google!");
         } catch (err) {
-            if (err.code !== 'auth/popup-closed-by-user') { // اگر یوزر خود پاپ اپ بند کر دے تو ایرر نہ دیں
+            if (err.code !== 'auth/popup-closed-by-user') {
                 showAuthToast(getFriendlyErrorMessage(err.code));
             }
         } finally {
@@ -161,6 +158,10 @@ if(btnLogout) {
     btnLogout.addEventListener('click', async () => {
         if(confirm("Are you sure you want to logout?")) {
             try {
+                // صرف یہ ایک تبدیلی کی گئی ہے: لاگ آؤٹ پر کلک کرتے ہی پچھلا ڈیٹا میموری سے صاف ہوگا
+                if (typeof window.resetWorkspace === 'function') {
+                    window.resetWorkspace();
+                }
                 await signOut(auth);
                 showAuthToast("Logged out successfully.");
             } catch (err) {
