@@ -113,6 +113,38 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 
+
+/* --- CUSTOM ADDITIONS FOR LOGO & SIGNATURE --- */
+
+/* Company Logo Styling (Centered & Proper Size) */
+#prev-logo {
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    max-width: 250px !important;
+    max-height: 100px !important;
+    object-fit: contain !important; /* یہ لوگو کو اسٹریچ ہونے سے روکے گا */
+}
+
+/* Signature Styling (Landscape Mode Enforcement) */
+#prev-sig {
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: 200px !important;       /* زیادہ چوڑائی (Landscape) کے لیے */
+    height: 70px !important;       /* کم اونچائی کے لیے */
+    object-fit: contain !important; /* یہ سگنیچر کی اصل شکل برقرار رکھے گا */
+}
+
+/* Ensure the signature box items are centered */
+#sig-container {
+    align-items: center !important;
+    text-align: center !important;
+}
+
+/* --------------------------------------------- */
+
+
 /* Global Print Optimization Ruleset */
 @media print {
     @page {
