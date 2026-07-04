@@ -21,14 +21,14 @@ export function formatMoney(amount, currencyCode) {
 }
 
 export function getTaxRate() {
-    // Syncing with the new state keys used in the updated UI
     switch(store.state.region) {
         case 'UK': return 20; 
         case 'CAN': return 5; 
         case 'AUS': return 10;
         case 'USA': 
         default: 
-            return parseFloat(store.state['tax-rate-manual']) || parseFloat(store.state.taxRateManual) || 0;
+            // Synced with standardized camelCase key
+            return parseFloat(store.state.taxRateManual) || parseFloat(store.state['tax-rate-manual']) || 0;
     }
 }
 
@@ -37,8 +37,12 @@ export function calculate() {
     if (!store.state.items) store.state.items = [];
     
     let sub = store.state.items.reduce((acc, item) => acc + ((item.qty || 0) * (item.price || 0)), 0); 
-    let dVal = parseFloat(store.state.discountValue) || 0;
-    let disc = store.state.discountType === 'percent' ? sub * (dVal / 100) : dVal;
+    
+    // Fallback checks for dynamic UI syncing
+    let dVal = parseFloat(store.state.discountValue || store.state['discount-value']) || 0;
+    let dType = store.state.discountType || store.state['discount-type'] || 'fixed';
+    
+    let disc = dType === 'percent' ? sub * (dVal / 100) : dVal;
     
     let afterDisc = Math.max(0, sub - disc);
     let tax = afterDisc * (getTaxRate() / 100);
@@ -52,20 +56,20 @@ export function calculate() {
 }
 
 export function validateInvoice() {
-    // Updated to match the new state keys used in preview-manager.js and HTML
-    const companyName = store.state['prof-company-name'] || store.state.companyName;
-    const senderDetails = store.state['sender-details'] || store.state.senderDetails;
+    // Updated strictly to new state keys for flawless validation
+    const companyName = store.state.companyName || store.state['prof-company-name'];
+    const senderDetails = store.state.senderDetails || store.state['sender-details'];
     
     if (!companyName && (!senderDetails || !senderDetails.trim())) {
         return "Validation Error: Company Name or Sender Details are required.";
     }
     
-    const clientDetails = store.state['client-details'] || store.state.clientDetails;
+    const clientDetails = store.state.clientDetails || store.state['client-details'];
     if (!clientDetails || !clientDetails.trim()) {
         return "Validation Error: Client Information is required.";
     }
     
-    const docNumber = store.state['doc-number'] || store.state.docNumber;
+    const docNumber = store.state.docNumber || store.state['doc-number'];
     if (!docNumber || !docNumber.trim()) {
         return "Validation Error: Invoice Number is required.";
     }
