@@ -441,8 +441,8 @@ export function setupPreviewAndExportListeners() {
     document.getElementById('logo-upload')?.addEventListener('change', function(e) {  
         const file = e.target.files[0];  
         if (file) {  
-            if (file.size > 2.5 * 1024 * 1024) { // 2.5MB limit
-                showToast("Image is too large. Please upload an image under 2.5MB.");
+            if (file.size > 500 * 1024) { // 500KB limit for Firestore safety
+                showToast("Image is too large. Please upload an image under 500KB.");
                 e.target.value = '';
                 return;
             }
@@ -459,8 +459,8 @@ export function setupPreviewAndExportListeners() {
     document.getElementById('sig-upload')?.addEventListener('change', function(e) {  
         const file = e.target.files[0];  
         if (file) {  
-            if (file.size > 2.5 * 1024 * 1024) {
-                showToast("Signature image is too large. Please upload an image under 2.5MB.");
+            if (file.size > 500 * 1024) { // 500KB limit for Firestore safety
+                showToast("Signature image is too large. Please upload an image under 500KB.");
                 e.target.value = '';
                 return;
             }
