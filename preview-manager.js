@@ -33,6 +33,7 @@ export async function checkPublicInvoice() {
                     <div class="flex justify-between items-start mb-8">
                         <div>
                             <img id="prev-logo" class="${store.state.logoDataUrl ? '' : 'hidden'}" src="${store.state.logoDataUrl || ''}" style="max-height: 80px; margin-bottom: 15px;">
+                            <div id="prev-company-name" class="text-xl font-bold text-slate-800 tracking-tight mb-2">${store.state.companyName || ''}</div>
                             <h2 id="prev-title" class="text-3xl font-light tracking-wide text-brand-600 mb-1">${store.state.docType.toUpperCase()}</h2>
                             <p id="prev-number-label" class="text-sm font-bold text-slate-700"># ${store.state.docNumber}</p>
                             <span id="prev-status-badge"></span>
@@ -144,6 +145,10 @@ export function renderPreview() {
         }
     }
 
+    if(document.getElementById('prev-company-name')) {
+        document.getElementById('prev-company-name').textContent = store.state.companyName || '';
+    }
+
     const typeKey = store.state.docType.toLowerCase();
     if(document.getElementById('prev-title')) document.getElementById('prev-title').textContent = langDict[typeKey] || store.state.docType.toUpperCase();
     if(document.getElementById('prev-number-label')) document.getElementById('prev-number-label').textContent = `# ${store.state.docNumber}`;
@@ -161,7 +166,8 @@ export function renderPreview() {
 
     if(document.getElementById('prev-sender')) {
         const lines = (store.state.senderDetails || '').split('\n');
-        const companyName = lines.shift() || '';
+        const firstLine = lines.shift() || '';
+        const companyName = store.state.companyName || firstLine;
         const remainder = lines.join('<br>');
         document.getElementById('prev-sender').innerHTML = `<strong style="font-size: 1.1em; display: block; margin-bottom: 4px;">${companyName}</strong>${remainder}`;
     }
@@ -291,7 +297,7 @@ export function setupPreviewAndExportListeners() {
             try {
                 await navigator.share({
                     title: `Invoice ${store.state.docNumber}`,
-                    text: `Please find the details for invoice ${store.state.docNumber} from ${store.state.senderDetails.split('\n')[0]}.\nTotal: ${formatMoney(store.calcTotals.total)}`,
+                    text: `Please find the details for invoice ${store.state.docNumber} from ${store.state.companyName || store.state.senderDetails.split('\n')[0]}.\nTotal: ${formatMoney(store.calcTotals.total)}`,
                     url: shareLink
                 });
                 showToast("Shared successfully.");
@@ -319,7 +325,7 @@ export function setupPreviewAndExportListeners() {
         if (!store.state.id) store.state.id = crypto.randomUUID();
 
         const shareLink = `${window.location.origin}${window.location.pathname}?invoice=${store.state.id}`;
-        const subject = encodeURIComponent(`Invoice ${store.state.docNumber} from ${store.state.senderDetails.split('\n')[0]}`);
+        const subject = encodeURIComponent(`Invoice ${store.state.docNumber} from ${store.state.companyName || store.state.senderDetails.split('\n')[0]}`);
         const body = encodeURIComponent(`Hello,\n\nPlease find the details for invoice ${store.state.docNumber} below.\n\nTotal: ${formatMoney(store.calcTotals.total)}\nDue Date: ${store.state.dueDate || 'N/A'}\n\nView or download your invoice here:\n${shareLink}\n\nThank you for your business!`);
         window.location.href = `mailto:?subject=${subject}&body=${body}`;
         showToast("Opening Email client...");
