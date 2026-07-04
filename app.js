@@ -8,7 +8,7 @@ import "./firebase-auth.js"; // اس سے آپ کا لاگ ان/سائن اپ س
 document.addEventListener('DOMContentLoaded', async () => {
     const toastElApp = document.getElementById('toast');
     function showToast(msg) {
-        if(!toastElApp) return alert(msg);
+        if(!toastElApp) return alert(msg); 
         toastElApp.textContent = msg;
         toastElApp.classList.remove('translate-y-24', 'opacity-0');
         setTimeout(() => toastElApp.classList.add('translate-y-24', 'opacity-0'), 3000);
