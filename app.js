@@ -802,23 +802,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderItemsEditor() {
         if(!itemsContainer) return;
-        itemsContainer.innerHTML = state.items.map(item => `
+        // تبدیلی 1 اور 2: موبائل زوم کا مسئلہ حل کیا (text-base) اور واٹر مارک کا فکس کیا
+        itemsContainer.innerHTML = state.items.map(item => {
+            const qtyValue = item.qty === 0 ? '' : item.qty;
+            const priceValue = item.price === 0 ? '' : item.price;
+            return \`
             <div class="grid grid-cols-[2fr_1fr_1fr_1fr_40px] gap-2 items-center">
-                <input type="text" list="library-products" placeholder="Description" value="${item.desc}" data-id="${item.id}" data-field="desc" class="w-full px-2 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded dark:bg-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500">
-                <input type="number" min="1" step="1" value="${item.qty}" data-id="${item.id}" data-field="qty" class="w-full px-2 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded text-center dark:bg-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500">
-                <input type="number" min="0" step="0.01" value="${item.price}" data-id="${item.id}" data-field="price" class="w-full px-2 py-1.5 text-xs border border-slate-300 dark:border-slate-600 rounded text-right dark:bg-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500">
-                <div class="text-right text-xs font-semibold px-2 item-total text-slate-800 dark:text-slate-100">${formatMoney(item.qty * item.price)}</div>
-                <button class="p-1.5 border border-slate-200 dark:border-slate-700 rounded hover:bg-rose-50 hover:border-rose-200 text-rose-500 dark:hover:bg-rose-950/30 del-item outline-none shadow-sm transition focus:ring-2 focus:ring-rose-500/20" data-id="${item.id}">
+                <input type="text" list="library-products" placeholder="Description" value="\${item.desc}" data-id="\${item.id}" data-field="desc" class="w-full px-2 py-1.5 text-base border border-slate-300 dark:border-slate-600 rounded dark:bg-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500">
+                <input type="number" min="1" step="1" value="\${qtyValue}" placeholder="1" data-id="\${item.id}" data-field="qty" class="w-full px-2 py-1.5 text-base border border-slate-300 dark:border-slate-600 rounded text-center dark:bg-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500">
+                <input type="number" min="0" step="0.01" value="\${priceValue}" placeholder="0.00" data-id="\${item.id}" data-field="price" class="w-full px-2 py-1.5 text-base border border-slate-300 dark:border-slate-600 rounded text-right dark:bg-slate-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 shadow-sm transition hover:border-slate-400 dark:hover:border-slate-500">
+                <div class="text-right text-xs font-semibold px-2 item-total text-slate-800 dark:text-slate-100">\${formatMoney(item.qty * item.price)}</div>
+                <button class="p-1.5 border border-slate-200 dark:border-slate-700 rounded hover:bg-rose-50 hover:border-rose-200 text-rose-500 dark:hover:bg-rose-950/30 del-item outline-none shadow-sm transition focus:ring-2 focus:ring-rose-500/20" data-id="\${item.id}">
                     <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
             </div>
-        `).join('');
+        \`}).join('');
     }
 
     function renderPreview() {
         const previewEl = document.getElementById('doc-preview');
         if(!previewEl) return;
-        previewEl.className = `a4-document bg-white text-slate-900 p-[20mm] min-h-[297mm] transition-all template-${state.template_id}`;
+        previewEl.className = \`a4-document bg-white text-slate-900 p-[20mm] min-h-[297mm] transition-all template-\${state.template_id}\`;
         
         const langDict = dict[state.lang] || dict['en'];
         previewEl.setAttribute('dir', langDict.dir);
@@ -836,7 +840,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const typeKey = state.docType.toLowerCase();
         if(document.getElementById('prev-title')) document.getElementById('prev-title').textContent = langDict[typeKey] || state.docType.toUpperCase();
-        if(document.getElementById('prev-number-label')) document.getElementById('prev-number-label').textContent = `# ${state.docNumber}`;
+        if(document.getElementById('prev-number-label')) document.getElementById('prev-number-label').textContent = \`# \${state.docNumber}\`;
         if(document.getElementById('prev-date')) document.getElementById('prev-date').textContent = state.date;
         
         const prevDueDate = document.getElementById('prev-due-date');
@@ -850,10 +854,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if(document.getElementById('prev-sender')) {
-            const lines = (state.senderDetails || '').split('\n');
+            const lines = (state.senderDetails || '').split('\\n');
             const companyName = lines.shift() || '';
             const remainder = lines.join('<br>');
-            document.getElementById('prev-sender').innerHTML = `<strong style="font-size: 1.1em; display: block; margin-bottom: 4px;">${companyName}</strong>${remainder}`;
+            document.getElementById('prev-sender').innerHTML = \`<strong style="font-size: 1.1em; display: block; margin-bottom: 4px;">\${companyName}</strong>\${remainder}\`;
         }
         
         if(document.getElementById('prev-client')) document.getElementById('prev-client').textContent = state.clientDetails;
@@ -862,13 +866,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(state.paymentLinks) {
             const pl = state.paymentLinks;
             const linkArr = [];
-            if(pl.stripe) linkArr.push(`Stripe: ${pl.stripe}`);
-            if(pl.paypal) linkArr.push(`PayPal: ${pl.paypal}`);
-            if(pl.wise) linkArr.push(`Wise: ${pl.wise}`);
-            if(pl.bank) linkArr.push(`Bank Transfer:\n${pl.bank}`);
+            if(pl.stripe) linkArr.push(\`Stripe: \${pl.stripe}\`);
+            if(pl.paypal) linkArr.push(\`PayPal: \${pl.paypal}\`);
+            if(pl.wise) linkArr.push(\`Wise: \${pl.wise}\`);
+            if(pl.bank) linkArr.push(\`Bank Transfer:\\n\${pl.bank}\`);
             
             if(linkArr.length > 0) {
-                finalPaymentDetails += (finalPaymentDetails ? '\n\n' : '') + linkArr.join('\n');
+                finalPaymentDetails += (finalPaymentDetails ? '\\n\\n' : '') + linkArr.join('\\n');
             }
         }
         if(document.getElementById('prev-payment-details')) document.getElementById('prev-payment-details').textContent = finalPaymentDetails;
@@ -904,26 +908,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         const badge = document.getElementById('prev-status-badge');
         if(badge) {
             badge.textContent = state.status;
-            badge.className = `inline-block mt-2 px-2 py-0.5 text-xs font-bold uppercase rounded ${state.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : state.status === 'Unpaid' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`;
+            badge.className = \`inline-block mt-2 px-2 py-0.5 text-xs font-bold uppercase rounded \${state.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : state.status === 'Unpaid' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}\`;
         }
 
         if(document.getElementById('prev-items-body')) {
-            document.getElementById('prev-items-body').innerHTML = state.items.filter(i => i.desc || i.price > 0).map(item => `
+            document.getElementById('prev-items-body').innerHTML = state.items.filter(i => i.desc || i.price > 0).map(item => \`
                 <tr class="border-b border-slate-100">
-                    <td class="py-2.5 font-medium text-slate-700">${item.desc}</td>
-                    <td class="py-2.5 text-center text-slate-500">${item.qty}</td>
-                    <td class="py-2.5 text-end text-slate-500">${formatMoney(item.price)}</td>
-                    <td class="py-2.5 text-end font-semibold text-slate-800">${formatMoney(item.qty * item.price)}</td>
+                    <td class="py-2.5 font-medium text-slate-700">\${item.desc}</td>
+                    <td class="py-2.5 text-center text-slate-500">\${item.qty}</td>
+                    <td class="py-2.5 text-end text-slate-500">\${formatMoney(item.price)}</td>
+                    <td class="py-2.5 text-end font-semibold text-slate-800">\${formatMoney(item.qty * item.price)}</td>
                 </tr>
-            `).join('');
+            \`).join('');
         }
 
         calculate();
         if(document.getElementById('prev-subtotal')) document.getElementById('prev-subtotal').textContent = formatMoney(calcTotals.subtotal);
-        if(document.getElementById('prev-discount')) document.getElementById('prev-discount').textContent = `-${formatMoney(calcTotals.discount)}`;
+        if(document.getElementById('prev-discount')) document.getElementById('prev-discount').textContent = \`-\${formatMoney(calcTotals.discount)}\`;
         if(document.getElementById('prev-discount-row')) document.getElementById('prev-discount-row').style.display = calcTotals.discount > 0 ? 'flex' : 'none';
         
-        let taxLabel = state.region === 'USA' ? `${langDict.tax} (${getTaxRate()}%)` : state.region === 'UK' ? 'VAT (20%)' : state.region === 'CAN' ? 'GST (5%)' : 'GST (10%)';
+        let taxLabel = state.region === 'USA' ? \`\${langDict.tax} (\${getTaxRate()}%)\` : state.region === 'UK' ? 'VAT (20%)' : state.region === 'CAN' ? 'GST (5%)' : 'GST (10%)';
         if(document.getElementById('prev-tax-label')) document.getElementById('prev-tax-label').textContent = taxLabel;
         if(document.getElementById('prev-tax')) document.getElementById('prev-tax').textContent = formatMoney(calcTotals.tax);
         if(document.getElementById('prev-total')) document.getElementById('prev-total').textContent = formatMoney(calcTotals.total);
@@ -958,7 +962,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if(qrContainer) {
             if (state.showQR && state.uploadedQrDataUrl) {
                 qrContainer.classList.remove('hidden');
-                qrContainer.innerHTML = `<img src="${state.uploadedQrDataUrl}" style="max-width: 100px; max-height: 100px; object-fit: contain; margin-top: 10px;" />`;
+                qrContainer.innerHTML = \`<img src="\${state.uploadedQrDataUrl}" style="max-width: 100px; max-height: 100px; object-fit: contain; margin-top: 10px;" />\`;
             } else {
                 qrContainer.classList.add('hidden');
             }
@@ -1152,15 +1156,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 50)));
 
+            // تبدیلی 3: پی ڈی ایف کے کٹنے کے مسئلے کا حل
+            const originalWidth = element.style.width;
+            element.style.width = '800px';
+
             const options = {
                 margin: [10, 10, 10, 10], 
-                filename: `${state.docNumber || 'Invoice'}.pdf`,
+                filename: \`\${state.docNumber || 'Invoice'}.pdf\`,
                 image: { type: 'jpeg', quality: 1.0 }, 
                 html2canvas: { 
                     scale: 2, 
                     useCORS: true, 
                     letterRendering: true,
-                    windowWidth: element.scrollWidth,
+                    width: 800, // سائیڈوں سے کٹنے سے بچانے کے لیے
+                    windowWidth: 800,
                     scrollY: 0
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
@@ -1173,6 +1182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showToast("Error generating PDF.");
                 console.error(error);
             } finally {
+                element.style.width = originalWidth; // پی ڈی ایف بننے کے بعد اسکرین واپس نارمل
                 btnPdf.classList.remove('is-loading');
             }
         });
