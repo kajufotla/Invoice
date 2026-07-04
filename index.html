@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic SaaS Invoice Template</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --primary-color: #3b3599; /* Deep indigo/blue from image */
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #e5e7eb;
+            --bg-light: #f9fafb;
+            --bg-purple-light: #f5f3ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e5e7eb;
+            color: var(--text-main);
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .invoice-container {
+            background-color: #ffffff;
+            width: 100%;
+            max-width: 900px;
+            padding: 60px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+        }
+
+        /* Editable fields hover effect for SaaS feel */
+        [contenteditable="true"] {
+            outline: none;
+            border-bottom: 1px dashed transparent;
+            transition: border-bottom 0.2s ease;
+        }
+        [contenteditable="true"]:hover, [contenteditable="true"]:focus {
+            border-bottom: 1px dashed var(--primary-color);
+        }
+
+        /* Header Section */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .company-info {
+            display: flex;
+            gap: 20px;
+        }
+
+        .logo-box {
+            width: 80px;
+            height: 80px;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
+        }
+        .logo-box:hover {
+            border-color: var(--primary-color);
+            background-color: var(--bg-light);
+        }
+        .logo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: none;
+        }
+
+        .company-details h1 {
+            font-size: 24px;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+        .company-details p.slogan {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+        }
+        .contact-list {
+            list-style: none;
+            font-size: 13px;
+            color: var(--text-main);
+            line-height: 1.8;
+        }
+        .contact-list li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .contact-list svg {
+            width: 14px;
+            height: 14px;
+            color: var(--primary-color);
+        }
+
+        .invoice-title {
+            text-align: right;
+        }
+        .invoice-title h2 {
+            font-size: 42px;
+            color: var(--primary-color);
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+        }
+        .invoice-meta {
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 10px 30px;
+            font-size: 14px;
+            text-align: left;
+        }
+        .invoice-meta-label {
+            color: var(--text-muted);
+        }
+        .invoice-meta-value {
+            font-weight: 500;
+            text-align: right;
+        }
+
+        /* Billing Section */
+        .billing-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .billing-box {
+            width: 45%;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .billing-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .billing-name {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        /* Table Section */
+        .table-container {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: left;
+            padding: 12px 15px;
+            font-weight: 500;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+        th:first-child, td:first-child { width: 5%; text-align: center; }
+        th:nth-child(2), td:nth-child(2) { width: 45%; }
+        th:nth-child(3), td:nth-child(3) { width: 10%; text-align: center; }
+        th:nth-child(4), td:nth-child(4) { width: 20%; text-align: right; }
+        th:nth-child(5), td:nth-child(5) { width: 20%; text-align: right; }
+
+        .item-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Footer Totals & Payment */
+        .summary-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 30px;
+        }
+        
+        .payment-link {
+            background-color: var(--bg-purple-light);
+            padding: 20px;
+            border-radius: 8px;
+            width: 45%;
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        .payment-icon {
+            background-color: var(--primary-color);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .payment-info h4 {
+            color: var(--primary-color);
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .payment-info p {
+            font-size: 12px;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+        .payment-info a {
+            font-size: 13px;
+            color: var(--primary-color);
+            word-break: break-all;
+        }
+
+        .totals-box {
+            width: 40%;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+        .total-row.final {
+            border-top: 2px solid var(--border-color);
+            border-bottom: 2px solid var(--border-color);
+            margin-top: 10px;
+            padding: 12px 0;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 16px;
+        }
+
+        /* Bottom Details (Notes, Terms, Signature) */
+        .bottom-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
+        .notes-box, .terms-box {
+            width: 45%;
+            font-size: 13px;
+            color: var(--text-main);
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        .terms-list {
+            padding-left: 15px;
+            color: var(--text-muted);
+        }
+        .terms-list li {
+            margin-bottom: 5px;
+        }
+
+        /* Signature & Thank you */
+        .footer-action {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        
+        .signature-section {
+            width: 250px;
+            text-align: center;
+        }
+        .signature-box {
+            width: 100%;
+            height: 80px;
+            border: 2px dashed var(--border-color);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            cursor: pointer;
+            position: relative;
+        }
+        .signature-box img {
+            max-width: 100%;
+            max-height: 100%;
+            display: none;
+        }
+        .signature-line {
+            border-top: 1px solid var(--border-color);
+            margin-bottom: 8px;
+        }
+        .signature-name {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .signature-title {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .thank-you-box {
+            background-color: var(--bg-purple-light);
+            padding: 20px;
+            border-radius: 8px;
+            width: 40%;
+            display: flex;
+            gap: 15px;
+        }
+        .thank-you-box h4 {
+            color: var(--primary-color);
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .thank-you-box p {
+            font-size: 12px;
+            color: var(--text-main);
+        }
+
+        .computer-generated {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 30px;
+        }
+
+        /* Hide file inputs */
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="invoice-container">
+        
+        <!-- Header -->
+        <div class="header">
+            <div class="company-info">
+                <!-- Logo Upload -->
+                <label class="logo-box" id="logo-container">
+                    <span id="logo-text">Upload<br>Logo</span>
+                    <img id="logo-image" src="" alt="Company Logo">
+                    <input type="file" id="logo-input" accept="image/*">
+                </label>
+                
+                <div class="company-details">
+                    <h1 contenteditable="true" id="dyn-company-name">Company Name</h1>
+                    <p class="slogan" contenteditable="true">Innovate • Build • Deliver</p>
+                    <ul class="contact-list">
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <span contenteditable="true">123 Business Street, Suite 100<br>Lahore, Pakistan</span>
+                        </li>
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            <span contenteditable="true">info@company.com</span>
+                        </li>
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                            <span contenteditable="true">+92 300 1234567</span>
+                        </li>
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"></path></svg>
+                            <span contenteditable="true">www.company.com</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="invoice-title">
+                <h2>INVOICE</h2>
+                <div class="invoice-meta">
+                    <div class="invoice-meta-label">Invoice No:</div>
+                    <div class="invoice-meta-value" contenteditable="true">INV-2025-0001</div>
+                    <div class="invoice-meta-label">Invoice Date:</div>
+                    <div class="invoice-meta-value" contenteditable="true">May 27, 2025</div>
+                    <div class="invoice-meta-label">Due Date:</div>
+                    <div class="invoice-meta-value" contenteditable="true">June 10, 2025</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Billing Info -->
+        <div class="billing-section">
+            <div class="billing-box">
+                <div class="billing-title">FROM:</div>
+                <div class="billing-name" contenteditable="true">Company Name</div>
+                <div contenteditable="true">
+                    123 Business Street, Suite 100<br>
+                    Lahore, Pakistan<br>
+                    info@company.com<br>
+                    +92 300 1234567
+                </div>
+            </div>
+            <div class="billing-box">
+                <div class="billing-title">BILL TO:</div>
+                <div class="billing-name" contenteditable="true">Client Name</div>
+                <div contenteditable="true">
+                    456 Industrial Area<br>
+                    Karachi, Pakistan<br>
+                    contact@client.com<br>
+                    +92 321 7654321
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>DESCRIPTION</th>
+                        <th>QTY</th>
+                        <th>UNIT PRICE</th>
+                        <th>AMOUNT</th>
+                    </tr>
+                </thead>
+                <tbody id="invoice-items">
+                    <tr>
+                        <td contenteditable="true">1</td>
+                        <td>
+                            <div contenteditable="true" style="font-weight: 500;">Service Name</div>
+                            <div class="item-desc" contenteditable="true">Short description of the service provided</div>
+                        </td>
+                        <td contenteditable="true">1</td>
+                        <td contenteditable="true">PKR 45,000</td>
+                        <td contenteditable="true">PKR 45,000</td>
+                    </tr>
+                    <tr>
+                        <td contenteditable="true">2</td>
+                        <td>
+                            <div contenteditable="true" style="font-weight: 500;">Additional Service</div>
+                            <div class="item-desc" contenteditable="true">Details about this item</div>
+                        </td>
+                        <td contenteditable="true">1</td>
+                        <td contenteditable="true">PKR 8,000</td>
+                        <td contenteditable="true">PKR 8,000</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Summary & Payment -->
+        <div class="summary-section">
+            <div class="payment-link">
+                <div class="payment-icon">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                </div>
+                <div class="payment-info">
+                    <h4>PAYMENT LINK</h4>
+                    <p>Pay securely using the link below:</p>
+                    <a href="#" contenteditable="true">https://pay.company.com/INV-2025-0001</a>
+                </div>
+            </div>
+
+            <div class="totals-box">
+                <div class="total-row">
+                    <span>SUBTOTAL</span>
+                    <span contenteditable="true">PKR 53,000</span>
+                </div>
+                <div class="total-row">
+                    <span>DISCOUNT</span>
+                    <span contenteditable="true">PKR 0</span>
+                </div>
+                <div class="total-row">
+                    <span>TAX (0%)</span>
+                    <span contenteditable="true">PKR 0</span>
+                </div>
+                <div class="total-row final">
+                    <span>TOTAL</span>
+                    <span contenteditable="true">PKR 53,000</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Notes & Terms -->
+        <div class="bottom-details">
+            <div class="notes-box">
+                <div class="section-header">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    NOTES
+                </div>
+                <div contenteditable="true">
+                    Thank you for your business!<br><br>
+                    If you have any questions, feel free to contact us.
+                </div>
+            </div>
+            
+            <div class="terms-box">
+                <div class="section-header">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    TERMS & CONDITIONS
+                </div>
+                <ul class="terms-list" contenteditable="true">
+                    <li>Payment is due by the due date mentioned above.</li>
+                    <li>Late payments may incur additional charges.</li>
+                    <li>This invoice is valid for 15 days from the invoice date.</li>
+                    <li>No refund once the payment is made.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Signature & Thank you Box -->
+        <div class="footer-action">
+            <div class="signature-section">
+                <!-- Signature Upload -->
+                <label class="signature-box" id="signature-container">
+                    <span id="signature-text">Upload Signature</span>
+                    <img id="signature-image" src="" alt="Signature">
+                    <input type="file" id="signature-input" accept="image/*">
+                </label>
+                <div class="signature-line"></div>
+                <div class="signature-name" contenteditable="true">Your Name</div>
+                <div class="signature-title" contenteditable="true">Authorized Signature</div>
+            </div>
+
+            <div class="thank-you-box">
+                <div>
+                    <svg width="24" height="24" fill="none" stroke="var(--primary-color)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div>
+                    <h4>THANK YOU!</h4>
+                    <p contenteditable="true">We appreciate your trust in<br>Company Name.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="computer-generated">
+            This is a computer generated invoice.
+        </div>
+    </div>
+
+    <!-- JavaScript for Handling Image Uploads purely in-browser -->
+    <script>
+        function handleImageUpload(inputId, imageId, textId) {
+            const input = document.getElementById(inputId);
+            const image = document.getElementById(imageId);
+            const text = document.getElementById(textId);
+
+            input.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        image.src = event.target.result;
+                        image.style.display = 'block';
+                        text.style.display = 'none';
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // Initialize Uploaders
+        handleImageUpload('logo-input', 'logo-image', 'logo-text');
+        handleImageUpload('signature-input', 'signature-image', 'signature-text');
+    </script>
+</body>
+</html>
