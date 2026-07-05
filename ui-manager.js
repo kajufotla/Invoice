@@ -7,7 +7,6 @@ import { renderPreview } from "./preview-manager.js";
 // 1. UTILITIES & DATABASE ABSTRACTIONS
 // ==========================================
 
-// Security Helper: Prevent XSS by escaping HTML entities from user input
 function escapeHTML(str) {
     if (typeof str !== 'string') return str;
     return str.replace(/[&<>'"]/g, tag => ({
@@ -19,7 +18,6 @@ function escapeHTML(str) {
     }[tag]));
 }
 
-// Firebase Reliability Helper: Safe retry logic for network operations
 async function withRetry(fn, retries = 3, delay = 1000) {
     for (let i = 0; i < retries; i++) {
         try {
@@ -40,7 +38,6 @@ export function showToast(msg) {
             console.warn("Toast element missing. Fallback alert used.");
             return alert(msg);
         }
-        // Use textContent instead of innerHTML for security
         toastElApp.textContent = msg;
         toastElApp.classList.remove('translate-y-24', 'opacity-0');
 
@@ -59,7 +56,6 @@ const DOMUtils = {
     on: (id, evt, cb) => { const el = document.getElementById(id); if (el) el.addEventListener(evt, cb); }
 };
 
-// IndexedDB Wrapper for Enterprise Offline Scalability (Maintains LS Backward Compatibility)
 const idbStorage = {
     dbName: 'SaaS_Invoice_Enterprise_DB',
     async getDB() {
@@ -78,7 +74,7 @@ const idbStorage = {
             const db = await this.getDB();
             const tx = db.transaction('appData', 'readwrite');
             tx.objectStore('appData').put(value, key);
-            localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value)); // Backward Sync
+            localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
         } catch (e) {
             console.warn("IDB write failed, falling back to LocalStorage", e);
             localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
@@ -395,7 +391,6 @@ export function renderItemsEditor() {
     if (!itemsContainer) return;
 
     try { 
-        // Modified to perfectly match event delegation logic in app.js
         itemsContainer.innerHTML = store.state.items.map((item, index) => { 
             const qtyValue = item.qty === 0 ? '' : item.qty; 
             const priceValue = item.price === 0 ? '' : item.price; 
@@ -449,6 +444,7 @@ function initDocumentControls() {
                 paymentLinks: { stripe: '', paypal: '', wise: '', bank: '' },
                 logoDataUrl: '',
                 sigDataUrl: '',
+                stampDataUrl: '', // Added for new dynamic design
                 lang: store.state.lang, 
                 items: [{ id: crypto.randomUUID(), desc: '', qty: 0, price: 0 }] 
             }; 
@@ -781,12 +777,40 @@ function initEditorInteractions() {
     }); 
 }
 
+// ---------------------------------------------------------
+// NEW ADDITION: Secure Client-Side Image Uploaders
+// ---------------------------------------------------------
+function initImageUploaders() {
+    const attachUploader = (inputId, stateKey) => {
+        const inputElement = DOMUtils.get(inputId);
+        if (inputElement) {
+            inputElement.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (evt) => {
+                        store.state[stateKey] = evt.target.result;
+                        saveState();
+                        renderPreview(); // Instantly update preview UI
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    };
+
+    // Make sure you have inputs with these IDs in your HTML editor panel
+    attachUploader('logo-upload', 'logoDataUrl');
+    attachUploader('sig-upload', 'sigDataUrl');
+    attachUploader('stamp-upload', 'stampDataUrl'); 
+}
+
 function initFormInputBindings() {
     const bindChange = (id) => {
         DOMUtils.on(id, 'change', (e) => {
             const key = id.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
             if (id === 'doc-template') store.state.template_id = e.target.value;
-            else if (id === 'doc-status') store.state.status = e.target.value; // Synced Key
+            else if (id === 'doc-status') store.state.status = e.target.value;
             else store.state[key] = e.target.value;
 
             if (id === 'region') { 
@@ -803,7 +827,6 @@ function initFormInputBindings() {
     
     const bindInput = (id) => { 
         DOMUtils.on(id, 'input', (e) => { 
-            // Exact mappings aligned with app.js and invoice-manager.js
             const mapping = { 
                 'invoice-notes': 'notes', 
                 'invoice-terms': 'terms', 
@@ -846,6 +869,10 @@ export function setupUIListeners() {
         initHistoryAndBackupListeners();
         initEditorInteractions();
         initFormInputBindings();
+        
+        // Initialize the new image uploaders for Logo, Sign, and Stamp
+        initImageUploaders(); 
+        
     } catch (error) {
         console.error("Critical Application Boot Error:", error);
         showToast("System initialization encountered an issue. Check console.");
