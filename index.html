@@ -179,8 +179,8 @@
                         </div>
                         <div id="items-container" class="item-list"></div>
                         <div style="margin-top: 16px; display:flex; gap:10px;">
-                            <button class="btn btn-outline" style="flex:1;" onclick="addItem()"><i class="fa-solid fa-plus"></i> Add Line Item</button>
-                            <button class="btn btn-outline" style="flex:1;" onclick="clearItems()"><i class="fa-solid fa-eraser"></i> Clear All</button>
+                            <button id="add-item-btn" class="btn btn-outline" style="flex:1;" onclick="addItem()"><i class="fa-solid fa-plus"></i> Add Line Item</button>
+                            <button id="clear-items-btn" class="btn btn-outline" style="flex:1;" onclick="clearItems()"><i class="fa-solid fa-eraser"></i> Clear All</button>
                         </div>
                     </div>
                 </div>
@@ -430,10 +430,8 @@
 
         <div id="toast-container" class="toast-container"></div>
     </div>
-<!-- Linked script files in correct execution dependency sequence -->
-    <script src="database.js"></script>
+<script src="database.js"></script>
     <script src="utils.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
-    
