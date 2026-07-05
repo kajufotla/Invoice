@@ -15,7 +15,7 @@ const AppConfig = {
     debugMode: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1',
     maxHistoryStates: 100,
     defaultCurrencySym: '$',
-    defaultCurrencyCode: 'USD',
+    defaultCurrencyCode: 'USD', 
     defaultLocale: 'en-US',
     animationDuration: 150,
     storagePrefix: 'erp_inv_v3_'
