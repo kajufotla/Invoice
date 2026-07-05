@@ -3,74 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enterprise SaaS Invoice Generator</title>
     
-    <!-- External Libraries -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- === SEO & META TAGS === -->
+    <title>Enterprise SaaS Invoice Generator</title>
+    <meta name="description" content="Free Enterprise SaaS Invoice Generator. Create professional invoices for US, UK, CA, and AU markets. Works offline in Guest Mode.">
+    <meta name="keywords" content="Invoice Generator, PDF Invoice, SaaS Invoice, Tax Invoice, Online Invoice Tool">
+    <meta name="author" content="Zaraar">
+    
+    <!-- === SCHEMA MARKUP FOR GOOGLE === -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "SaaS Invoice Pro",
+      "description": "Professional Invoice Generator with Multi-Tier Tax and PDF Export.",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
-        /* === THEME & VARIABLES === */
+        /* === PREMIUM THEME & VARIABLES === */
         :root {
-            --bg-body: #F1F5F9;
-            --bg-sidebar: #FFFFFF;
+            --bg-body: #F7F9FC;
+            --bg-sidebar: rgba(255, 255, 255, 0.85);
             --bg-card: #FFFFFF;
-            --bg-input: #F8FAFC;
-            --border-color: #E2E8F0;
-            --text-main: #0F172A;
-            --text-muted: #64748B;
-            --primary: #4F46E5;
-            --primary-hover: #4338CA;
+            --bg-input: #F9FAFB;
+            --border-color: #E5E7EB;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --primary: #635BFF; 
+            --primary-hover: #4B45C6;
             --danger: #EF4444;
             --success: #10B981;
             --warning: #F59E0B;
             
             /* Print Variables */
-            --inv-color: #4F46E5;
+            --inv-color: #111827;
             --inv-font: 'Inter', sans-serif;
-            --radius-sm: 6px;
-            --radius-md: 10px;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
-
-        body.dark-mode {
-            --bg-body: #0F172A;
-            --bg-sidebar: #1E293B;
-            --bg-card: #334155;
-            --bg-input: #0F172A;
-            --border-color: #475569;
-            --text-main: #F8FAFC;
-            --text-muted: #94A3B8;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
         }
 
         /* === GLOBAL RESET === */
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; transition: background-color 0.3s; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-body); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 10px; }
         
         /* === LAYOUT === */
-        .app-container { display: flex; width: 100%; height: 100%; }
+        .app-container { display: flex; width: 100%; height: 100%; position: relative; }
         
         /* === SIDEBAR (EDITOR) === */
-        .sidebar { width: 480px; min-width: 400px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; z-index: 10; box-shadow: var(--shadow-sm); transition: transform 0.3s ease, margin-left 0.3s ease; }
-        .sidebar.hidden { margin-left: -480px; } /* Sidebar Toggle Animation */
-        .sidebar-header { padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-sidebar); }
+        .sidebar { 
+            width: 500px; min-width: 450px; 
+            background: var(--bg-sidebar); 
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.5); 
+            display: flex; flex-direction: column; z-index: 20; 
+            box-shadow: var(--shadow-glass); 
+            transition: margin-left 0.4s cubic-bezier(0.16, 1, 0.3, 1), margin-top 0.4s; 
+        }
+        .sidebar.hidden { margin-left: -500px; } 
+        
+        /* Auth Banner */
+        .auth-banner {
+            padding: 10px 20px; background: #e0f2fe; color: #0284c7; font-size: 12px; font-weight: 600;
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #bae6fd;
+        }
+
+        .sidebar-header { padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         .sidebar-header h1 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: var(--text-main); }
         
         /* Tabs */
-        .tabs-wrapper { display: flex; overflow-x: auto; border-bottom: 1px solid var(--border-color); background: var(--bg-sidebar); padding: 0 10px; flex-shrink: 0; }
+        .tabs-wrapper { display: flex; overflow-x: auto; border-bottom: 1px solid var(--border-color); padding: 0 10px; flex-shrink: 0; }
         .tab-btn { padding: 14px 16px; background: none; border: none; font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; }
         .tab-btn:hover { color: var(--text-main); }
         .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
 
         /* Content Area */
-        .tab-content { flex: 1; overflow-y: auto; padding: 20px; background: var(--bg-body); }
+        .tab-content { flex: 1; overflow-y: auto; padding: 20px; }
         .tab-pane { display: none; animation: fadeIn 0.2s ease-out; }
         .tab-pane.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
@@ -78,190 +104,195 @@
         /* Cards & Forms */
         .card { background: var(--bg-card); border-radius: var(--radius-md); padding: 20px; margin-bottom: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); }
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
-        .card-footer { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px; }
+        .card-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; }
         
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group.full { grid-column: 1 / -1; }
-        .form-group label { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
-        .input-control { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; background: var(--bg-input); color: var(--text-main); transition: all 0.2s; width: 100%; }
-        .input-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15); }
+        .form-group label { font-size: 12px; font-weight: 600; color: var(--text-main); margin-bottom: 6px; display: flex; justify-content: space-between; }
+        .input-control { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; background: var(--bg-input); color: var(--text-main); transition: all 0.2s; width: 100%; box-shadow: inset 0 1px 2px rgba(0,0,0,0.02); }
+        .input-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.15); background: var(--bg-card); }
         .input-group { display: flex; gap: 8px; }
 
         /* Buttons */
         .btn { padding: 10px 16px; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; user-select: none; }
-        .btn-primary { background: var(--primary); color: #fff; }
-        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
-        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
-        .btn-outline:hover { background: var(--bg-input); }
+        .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 4px rgba(99, 91, 255, 0.2); }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 6px rgba(99, 91, 255, 0.3); }
+        .btn-outline { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); box-shadow: var(--shadow-sm); }
+        .btn-outline:hover { background: var(--bg-input); border-color: #D1D5DB; }
         .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
         .btn-danger:hover { background: var(--danger); color: #fff; }
-        .btn-sm { padding: 6px 10px; font-size: 12px; }
-        .btn-icon { padding: 8px; border-radius: var(--radius-sm); background: transparent; border: 1px solid var(--border-color); cursor: pointer; color: var(--text-muted); }
-        .btn-icon:hover { background: var(--bg-input); color: var(--text-main); }
+        .btn-icon { padding: 8px; border-radius: var(--radius-sm); background: transparent; border: 1px solid transparent; cursor: pointer; color: var(--text-muted); }
+        .btn-icon:hover { background: var(--bg-input); color: var(--text-main); border-color: var(--border-color); }
 
         /* Advanced Items Manager */
         .item-list { display: flex; flex-direction: column; gap: 12px; }
         .item-row { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; display: flex; flex-direction: column; gap: 8px; transition: box-shadow 0.2s; }
-        .item-row:hover { border-color: #CBD5E1; box-shadow: var(--shadow-sm); }
-        .item-row.drag-ghost { opacity: 0.5; background: #F8FAFC; border: 2px dashed var(--primary); }
-        .item-main { display: grid; grid-template-columns: 24px 3fr 1fr 1fr auto; gap: 8px; align-items: center; } /* Adjusted Grid for smaller boxes */
-        .drag-handle { cursor: grab; color: #94A3B8; text-align: center; }
-        .item-meta { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-color); }
+        .item-row:hover { border-color: #D1D5DB; box-shadow: var(--shadow-md); }
+        .item-main { display: grid; grid-template-columns: 24px 2fr 1fr 1fr 1fr 1fr auto; gap: 8px; align-items: center; } 
+        .drag-handle { cursor: grab; color: #9CA3AF; text-align: center; }
         .item-total-display { font-weight: 700; font-size: 13px; text-align: right; padding-right: 8px; color: var(--primary); }
 
         /* Toast Notifications */
         .toast-container { position: fixed; bottom: 20px; left: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: #1E293B; color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); animation: slideIn 0.3s, fadeOut 0.5s 2.5s forwards; }
+        .toast { background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(8px); color: #fff; padding: 12px 20px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow-md); animation: slideIn 0.3s, fadeOut 0.5s 3s forwards; }
         @keyframes slideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOut { to { opacity: 0; visibility: hidden; } }
 
         /* === PREVIEW AREA & TOOLBAR === */
-        .main-content { flex: 1; display: flex; flex-direction: column; background: #CBD5E1; overflow: hidden; }
+        .main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg-body); overflow: hidden; position: relative; }
         
-        /* Top Toolbar */
-        .top-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #fff; border-bottom: 1px solid var(--border-color); z-index: 5; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .top-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.5); z-index: 5; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
         .toolbar-actions { display: flex; gap: 10px; }
 
         .preview-wrapper { flex: 1; overflow-y: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; }
         
-        /* A4 Corporate Template */
+        /* A4 Corporate Template - Content Editable */
+        [contenteditable="true"] { transition: background 0.2s, outline 0.2s; border-radius: 4px; outline: 1px dashed transparent; min-width: 10px; display: inline-block;}
+        [contenteditable="true"]:hover { background: rgba(99, 91, 255, 0.05); outline-color: rgba(99, 91, 255, 0.3); cursor: text; }
+        [contenteditable="true"]:focus { background: rgba(99, 91, 255, 0.1); outline: 1px dashed var(--primary); }
+
         .a4-paper {
             width: 210mm; min-height: 297mm; background: #ffffff;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            box-shadow: var(--shadow-md);
             padding: 20mm; margin: 0 auto; position: relative;
-            font-family: var(--inv-font); color: #1E293B; line-height: 1.5;
+            font-family: var(--inv-font); color: #111827; line-height: 1.5;
         }
 
         /* Header */
         .doc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
-        .logo-container { width: 150px; min-height: 50px; display: flex; align-items: flex-start; margin-bottom: 15px; cursor: pointer; } /* Clickable */
-        .logo-container img { max-width: 100%; max-height: 90px; object-fit: contain; }
-        .logo-placeholder { width: 100%; height: 60px; background: #F1F5F9; border: 1px dashed #94A3B8; display: flex; align-items: center; justify-content: center; color: #94A3B8; font-size: 12px; font-weight: 600; border-radius: 4px; transition: 0.2s; }
-        .logo-placeholder:hover { background: #E2E8F0; border-color: var(--primary); color: var(--primary); }
+        .logo-container { width: 160px; min-height: 60px; display: flex; align-items: flex-start; margin-bottom: 15px; cursor: pointer; position: relative; } 
+        .logo-container img { max-width: 100%; max-height: 100px; object-fit: contain; z-index: 2; }
+        .logo-placeholder { position: absolute; inset: 0; background: #F3F4F6; border: 1px dashed #9CA3AF; display: flex; align-items: center; justify-content: center; color: #6B7280; font-size: 11px; font-weight: 600; border-radius: 4px; transition: 0.2s; z-index: 1;}
         
-        .company-info h2 { font-size: 20px; font-weight: 800; color: #0F172A; margin: 0 0 4px 0; }
-        .company-info p { font-size: 11px; color: #475569; margin: 2px 0; }
+        .company-info h2 { font-size: 20px; font-weight: 800; color: #111827; margin: 0 0 4px 0; }
+        .company-info p { font-size: 11px; color: #4B5563; margin: 2px 0; }
         
         .invoice-title-sec { text-align: right; }
-        .invoice-title { font-size: 40px; font-weight: 800; color: var(--inv-color); margin: 0; text-transform: uppercase; letter-spacing: -1px; line-height: 1; }
-        .invoice-number { font-size: 16px; font-weight: 700; color: #334155; margin-top: 8px; }
+        .invoice-title { font-size: 36px; font-weight: 800; color: var(--inv-color); margin: 0; text-transform: uppercase; letter-spacing: -1px; line-height: 1; }
+        .invoice-number { font-size: 14px; font-weight: 600; color: #4B5563; margin-top: 8px; }
 
         /* Meta Grid */
-        .meta-details { display: grid; grid-template-columns: repeat(2, auto); gap: 12px 30px; margin-top: 20px; background: #F8FAFC; padding: 15px; border-radius: 8px; text-align: left; border-left: 4px solid var(--inv-color); }
+        .meta-details { display: grid; grid-template-columns: repeat(2, auto); gap: 12px 30px; margin-top: 20px; text-align: left; }
         .meta-item { display: flex; flex-direction: column; }
-        .meta-lbl { font-size: 9px; text-transform: uppercase; font-weight: 700; color: #64748B; letter-spacing: 0.5px; }
-        .meta-val { font-size: 12px; font-weight: 600; color: #0F172A; }
+        .meta-lbl { font-size: 9px; text-transform: uppercase; font-weight: 700; color: #6B7280; letter-spacing: 0.5px; }
+        .meta-val { font-size: 12px; font-weight: 600; color: #111827; }
 
         /* Addresses */
-        .address-section { display: flex; justify-content: space-between; margin-bottom: 30px; padding-top: 25px; border-top: 2px solid #E2E8F0; }
+        .address-section { display: flex; justify-content: space-between; margin-bottom: 30px; padding-top: 25px; border-top: 1px solid #E5E7EB; }
         .address-block { width: 45%; }
-        .address-lbl { font-size: 10px; text-transform: uppercase; font-weight: 700; color: var(--inv-color); margin-bottom: 10px; letter-spacing: 0.5px; }
-        .address-name { font-size: 14px; font-weight: 700; color: #0F172A; margin-bottom: 4px; }
-        .address-text { font-size: 11px; color: #475569; }
+        .address-lbl { font-size: 10px; text-transform: uppercase; font-weight: 700; color: #6B7280; margin-bottom: 8px; letter-spacing: 0.5px; }
+        .address-name { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+        .address-text { font-size: 11px; color: #4B5563; }
 
-        /* Table */
+        /* Table (Notion Minimalist) */
         .inv-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
-        .inv-table th { background: var(--inv-color); color: #fff; padding: 12px; font-size: 10px; font-weight: 600; text-transform: uppercase; text-align: left; letter-spacing: 0.5px; }
+        .inv-table th { border-bottom: 2px solid #E5E7EB; color: #6B7280; padding: 10px 8px; font-size: 10px; font-weight: 600; text-transform: uppercase; text-align: left; letter-spacing: 0.5px; }
         .inv-table th.right { text-align: right; }
         .inv-table th.center { text-align: center; }
-        .inv-table td { padding: 12px; border-bottom: 1px solid #E2E8F0; font-size: 11px; color: #334155; vertical-align: top; }
+        .inv-table td { padding: 12px 8px; border-bottom: 1px solid #F3F4F6; font-size: 11px; color: #374151; vertical-align: top; }
         .inv-table td.right { text-align: right; }
         .inv-table td.center { text-align: center; }
-        .inv-table tr { page-break-inside: avoid; } /* Multi-page support */
-        .td-item-name { font-size: 12px; font-weight: 600; color: #0F172A; display: block; margin-bottom: 2px; }
-        .td-item-desc { font-size: 10px; color: #64748B; display: block; }
-        .td-item-meta { font-size: 9px; color: #94A3B8; margin-top: 4px; display: block; font-style: italic; }
+        .inv-table tr { page-break-inside: avoid; } 
+        .td-item-name { font-size: 12px; font-weight: 600; color: #111827; display: block; margin-bottom: 2px; }
 
         /* Summary */
         .summary-wrapper { display: flex; justify-content: space-between; align-items: flex-start; page-break-inside: avoid; }
         .notes-area { width: 55%; }
-        .info-box { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
-        .info-title { font-size: 10px; font-weight: 700; color: var(--inv-color); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 0.5px; }
-        .info-content { font-size: 10px; color: #475569; white-space: pre-wrap; line-height: 1.5; }
+        .info-box { margin-bottom: 15px; }
+        .info-title { font-size: 10px; font-weight: 700; color: #111827; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px; }
+        .info-content { font-size: 10px; color: #4B5563; white-space: pre-wrap; line-height: 1.6; }
+        
+        .bank-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 10px; color: #4B5563; margin-top: 6px; }
+        .bank-grid strong { color: #111827; }
 
         .totals-area { width: 40%; }
-        .total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 11px; color: #475569; border-bottom: 1px solid #E2E8F0; }
-        .total-row:last-child { border-bottom: none; }
-        .total-row span:last-child { font-weight: 600; color: #0F172A; font-size: 12px; }
-        .grand-total { background: var(--inv-color); color: #fff; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-top: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .grand-total span:first-child { font-size: 12px; font-weight: 600; text-transform: uppercase; }
-        .grand-total span:last-child { font-size: 18px; font-weight: 800; }
-        .words-amt { font-size: 9px; color: #64748B; font-style: italic; text-align: right; margin-top: 6px; }
+        .total-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 11px; color: #4B5563; }
+        .total-row span:last-child { font-weight: 600; color: #111827; font-size: 12px; }
+        .total-row.discount-row { color: var(--danger); }
+        .total-row.discount-row span:last-child { color: var(--danger); }
+        .grand-total { border-top: 2px solid #E5E7EB; padding-top: 10px; display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+        .grand-total span:first-child { font-size: 12px; font-weight: 700; text-transform: uppercase; color: #111827; }
+        .grand-total span:last-child { font-size: 18px; font-weight: 800; color: var(--inv-color); }
 
         /* Footer & Signatures */
-        .doc-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; padding-top: 20px; border-top: 1px solid #E2E8F0; page-break-inside: avoid; }
-        .verification-zone { display: flex; gap: 15px; align-items: center; }
-        .qr-box { width: 70px; height: 70px; }
-        .barcode-box { height: 35px; margin-top: 5px; }
+        .doc-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; padding-top: 20px; page-break-inside: avoid; }
+        .verification-zone { display: flex; gap: 15px; align-items: center; cursor: pointer; position: relative;}
+        .qr-box { width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; }
+        .qr-box img.custom-qr { max-width: 100%; max-height: 100%; object-fit: contain; }
         
         .signature-zone { display: flex; gap: 30px; align-items: flex-end; }
-        .stamp-box img { max-width: 80px; max-height: 80px; opacity: 0.7; mix-blend-mode: multiply; }
-        .sign-box { text-align: center; width: 150px; cursor: pointer; } /* Clickable */
-        .sign-img { max-height: 50px; max-width: 100%; margin-bottom: 5px; object-fit: contain; }
-        .sign-line { border-top: 1px dashed #94A3B8; margin-bottom: 5px; padding-top: 10px; color: #94A3B8; font-size: 10px; transition: 0.2s; }
-        .sign-box:hover .sign-line { border-top-color: var(--primary); color: var(--primary); }
-        .sign-name { font-size: 11px; font-weight: 700; color: #0F172A; }
-        .sign-role { font-size: 9px; color: #64748B; }
+        .sign-box { text-align: center; width: 160px; cursor: pointer; position: relative; }
+        .sign-img { max-height: 60px; max-width: 100%; margin-bottom: 5px; object-fit: contain; position: relative; z-index: 2; }
+        .sign-line { border-top: 1px solid #D1D5DB; margin-bottom: 5px; padding-top: 5px; color: #9CA3AF; font-size: 9px; transition: 0.2s; position: relative; z-index: 1;}
+        .sign-name { font-size: 11px; font-weight: 700; color: #111827; }
+        .sign-role { font-size: 9px; color: #6B7280; }
 
-        .footer-msg { text-align: center; font-size: 9px; color: #94A3B8; margin-top: 30px; }
-        .color-strip { position: absolute; bottom: 0; left: 0; right: 0; height: 8px; background: var(--inv-color); }
-
-        /* Save Modal */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.7); display: none; z-index: 9999; justify-content: center; align-items: center; animation: fadeIn 0.2s; }
-        .modal-overlay.active { display: flex; }
-        .modal-box { background: #fff; padding: 25px; border-radius: var(--radius-md); width: 400px; max-width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: center; }
-        .modal-box h3 { margin-bottom: 15px; color: var(--text-main); }
-        .modal-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 10px; }
-        .modal-details { background: var(--bg-input); padding: 15px; border-radius: 8px; margin: 15px 0; text-align: left; }
-
-        /* Floating Actions */
-        .fab-container { position: fixed; bottom: 30px; right: 40px; display: flex; gap: 12px; z-index: 100; }
-        .fab-container .btn { padding: 14px 24px; font-size: 14px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.2); border-radius: 30px; }
+        .color-strip { position: absolute; top: 0; left: 0; bottom: 0; width: 6px; background: var(--inv-color); }
 
         /* Print Specifics */
         @media print {
-            body { background: #fff; display: block; }
-            .sidebar, .fab-container, .toast-container, .top-toolbar { display: none !important; }
+            body { background: #fff; display: block; overflow: visible; }
+            .sidebar, .toast-container, .top-toolbar { display: none !important; }
             .main-content { overflow: visible; display: block; background: #fff; }
             .preview-wrapper { padding: 0; background: #fff; overflow: visible; display: block; }
-            .a4-paper { box-shadow: none; margin: 0; padding: 0; width: 100%; min-height: auto; }
-            .grand-total { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .a4-paper { box-shadow: none; margin: 0; padding: 0; width: 100%; min-height: auto; transform: none !important; }
+            .grand-total span:last-child { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .color-strip { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            [contenteditable="true"] { outline: none !important; }
+            /* Force page breaks cleanly */
+            h1, h2, h3, h4, h5 { page-break-after: avoid; }
+            table, figure { page-break-inside: avoid; }
+        }
+
+        /* === MOBILE RESPONSIVENESS === */
+        @media (max-width: 900px) {
+            .app-container { flex-direction: column; }
+            .sidebar { width: 100%; min-width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); flex: 1; max-height: 50vh; margin-left: 0 !important;}
+            .sidebar.hidden { margin-left: 0 !important; margin-top: -50vh; }
+            .main-content { flex: 1; max-height: 50vh; }
+            .preview-wrapper { padding: 10px; justify-content: flex-start; }
+            .a4-paper { transform: scale(0.45); transform-origin: top left; margin-bottom: 150px; }
+            .top-toolbar { padding: 8px 12px; }
+            .toolbar-actions .btn { padding: 8px 12px; font-size: 11px; }
         }
     </style>
 </head>
 <body>
 
     <div class="app-container">
-        <!-- SIDEBAR -->
         <div class="sidebar" id="app-sidebar">
+            
+            <!-- Auth & Guest Banner -->
+            <div class="auth-banner" id="auth-banner">
+                <span><i class="fa-solid fa-user-astronaut"></i> Guest Mode (Offline)</span>
+                <button class="btn btn-primary" style="padding: 4px 10px; font-size: 11px; height: 26px;" onclick="handleGoogleLogin()"><i class="fa-brands fa-google"></i> Login</button>
+            </div>
+
             <div class="sidebar-header">
                 <h1><i class="fa-solid fa-file-invoice" style="color:var(--primary);"></i> SaaS Invoice Pro</h1>
-                <div style="display:flex; gap:8px;">
-                    <button class="btn btn-icon" onclick="undo()" title="Undo"><i class="fa-solid fa-rotate-left"></i></button>
-                    <button class="btn btn-icon" onclick="redo()" title="Redo"><i class="fa-solid fa-rotate-right"></i></button>
-                    <button class="btn btn-icon" onclick="toggleDarkMode()" title="Dark Mode"><i class="fa-solid fa-moon"></i></button>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <!-- New Export/Import Buttons -->
+                    <button class="btn btn-icon" onclick="exportData()" title="Backup Data to File"><i class="fa-solid fa-download"></i></button>
+                    <input type="file" id="import-file" style="display:none;" onchange="importData(event)" accept=".json">
+                    <button class="btn btn-icon" onclick="document.getElementById('import-file').click()" title="Restore Data from File"><i class="fa-solid fa-upload"></i></button>
+                    
+                    <button class="btn btn-icon" onclick="clearData()" title="Clear Local Data"><i class="fa-solid fa-eraser"></i></button>
+                    <button class="btn btn-icon" onclick="toggleSidebar()" title="Close Sidebar"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
 
-            <!-- TABS -->
             <div class="tabs-wrapper">
-                <button class="tab-btn active" onclick="switchTab('tab-invoice')">Invoice</button>
+                <button class="tab-btn active" onclick="switchTab('tab-invoice')">Setup & Tax</button>
                 <button class="tab-btn" onclick="switchTab('tab-company')">Company</button>
                 <button class="tab-btn" onclick="switchTab('tab-client')">Client</button>
                 <button class="tab-btn" onclick="switchTab('tab-items')">Items</button>
-                <button class="tab-btn" onclick="switchTab('tab-payment')">Payment</button>
-                <button class="tab-btn" onclick="switchTab('tab-notes')">Notes</button>
-                <button class="tab-btn" onclick="switchTab('tab-branding')">Branding</button>
+                <button class="tab-btn" onclick="switchTab('tab-payment')">Banking</button>
+                <button class="tab-btn" onclick="switchTab('tab-notes')">Notes & QR</button>
             </div>
 
-            <!-- CONTENT -->
             <div class="tab-content" id="form-container">
                 
-                <!-- 1. INVOICE TAB -->
                 <div id="tab-invoice" class="tab-pane active">
                     <div class="card">
                         <div class="card-header"><span class="card-title">Document Details</span></div>
@@ -270,16 +301,16 @@
                                 <label>Document Type</label>
                                 <select class="input-control" id="f-doc-type" onchange="sync()">
                                     <option value="TAX INVOICE">Tax Invoice</option>
+                                    <option value="INVOICE">Invoice</option>
                                     <option value="PROFORMA INVOICE">Proforma Invoice</option>
                                     <option value="RECEIPT">Receipt</option>
-                                    <option value="ESTIMATE">Estimate / Quote</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label>Invoice Number</label>
                                 <div class="input-group">
                                     <input type="text" class="input-control" id="f-inv-num" oninput="sync()">
-                                    <button class="btn btn-outline btn-icon" onclick="generateInvoiceNumber()" title="Auto Generate"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+                                    <button class="btn btn-outline btn-icon" onclick="generateInvoiceNumber()"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
                                 </div>
                             </div>
                             <div class="form-group"><label>Issue Date</label><input type="date" class="input-control" id="f-date" onchange="autoCalcDueDate(); sync()"></div>
@@ -289,213 +320,143 @@
                                     <option value="7">Net 7</option>
                                     <option value="15">Net 15</option>
                                     <option value="30">Net 30</option>
-                                    <option value="45">Net 45</option>
-                                    <option value="60">Net 60</option>
-                                    <option value="custom">Custom Date</option>
                                 </select>
                             </div>
                             <div class="form-group"><label>Due Date</label><input type="date" class="input-control" id="f-due" onchange="sync()"></div>
-                            <div class="form-group"><label>P.O. Number</label><input type="text" class="input-control" id="f-po" placeholder="Optional" oninput="sync()"></div>
-                            <div class="form-group"><label>Reference No.</label><input type="text" class="input-control" id="f-ref" placeholder="Optional" oninput="sync()"></div>
+                            <div class="form-group"><label>P.O. Number</label><input type="text" class="input-control" id="f-po" oninput="sync()"></div>
                         </div>
                     </div>
                     <div class="card">
-                        <div class="card-header"><span class="card-title">Regional & Totals Config</span></div>
+                        <div class="card-header"><span class="card-title">Multi-Tier Tax Engine</span></div>
                         <div class="form-grid">
-                            <div class="form-group">
+                            <div class="form-group full">
                                 <label>Currency</label>
-                                <select class="input-control" id="f-currency" onchange="sync()">
+                                <select class="input-control" id="f-currency" onchange="autoConfigRegion()">
                                     <option value="USD|$">USD ($)</option>
-                                    <option value="EUR|€">EUR (€)</option>
                                     <option value="GBP|£">GBP (£)</option>
                                     <option value="AUD|A$">AUD (A$)</option>
+                                    <option value="EUR|€">EUR (€)</option>
                                     <option value="CAD|C$">CAD (C$)</option>
-                                    <option value="PKR|Rs ">PKR (Rs)</option>
-                                    <option value="INR|₹">INR (₹)</option>
                                 </select>
                             </div>
+                            <!-- Tier 1 Tax -->
+                            <div class="form-group"><label>Tax 1 Name</label><input type="text" class="input-control" id="f-tax1-label" placeholder="e.g. State Tax" value="Tax" oninput="sync()"></div>
+                            <div class="form-group"><label>Tax 1 (%)</label><input type="number" class="input-control" id="f-tax1-val" value="0" min="0" step="0.01" oninput="sync()"></div>
+                            <!-- Tier 2 Tax -->
+                            <div class="form-group"><label>Tax 2 Name</label><input type="text" class="input-control" id="f-tax2-label" placeholder="e.g. Local Tax / PST" value="" oninput="sync()"></div>
+                            <div class="form-group"><label>Tax 2 (%)</label><input type="number" class="input-control" id="f-tax2-val" value="0" min="0" step="0.01" oninput="sync()"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">Adjustments & Branding</span></div>
+                        <div class="form-grid">
                             <div class="form-group">
-                                <label>Global Tax Label</label>
-                                <select class="input-control" id="f-tax-label" onchange="sync()">
-                                    <option value="Tax">Tax</option>
-                                    <option value="VAT">VAT</option>
-                                    <option value="GST">GST</option>
-                                    <option value="Sales Tax">Sales Tax</option>
+                                <label>Global Discount Type</label>
+                                <select class="input-control" id="f-g-dist-type" onchange="sync()">
+                                    <option value="none">None</option>
+                                    <option value="%">Percentage (%)</option>
+                                    <option value="flat">Flat Amount</option>
                                 </select>
                             </div>
-                            <div class="form-group"><label>Global Tax (%)</label><input type="number" class="input-control" id="f-global-tax" value="" placeholder="0" min="0" oninput="sync()"></div>
-                            <div class="form-group"><label>Global Discount</label>
-                                <div class="input-group">
-                                    <select class="input-control" id="f-disc-type" style="width:70px;" onchange="sync()"><option value="fixed">Fixed</option><option value="percent">%</option></select>
-                                    <input type="number" class="input-control" id="f-disc-val" value="" placeholder="0" min="0" oninput="sync()">
-                                </div>
+                            <div class="form-group"><label>Discount Value</label><input type="number" class="input-control" id="f-g-dist-val" value="0" min="0" step="0.01" oninput="sync()"></div>
+                            <div class="form-group full"><label>Shipping / Handling Fees</label><input type="number" class="input-control" id="f-shipping" value="0" min="0" step="0.01" oninput="sync()"></div>
+                            <div class="form-group"><label>Brand Color</label><input type="color" id="b-color" class="input-control" value="#111827" style="height:38px; padding:2px;" oninput="applyBranding()"></div>
+                            <div class="form-group">
+                                <label>Font Family</label>
+                                <select class="input-control" id="b-font" onchange="applyBranding()">
+                                    <option value="'Inter', sans-serif">Inter</option>
+                                    <option value="'Roboto', sans-serif">Roboto</option>
+                                </select>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 2. COMPANY TAB -->
                 <div id="tab-company" class="tab-pane">
                     <div class="card">
-                        <div class="card-header"><span class="card-title">My Company Profiles</span></div>
-                        <div class="input-group" style="margin-bottom:16px;">
-                            <select class="input-control" id="db-company" onchange="loadProfile('company')"><option value="">-- Select Saved Profile --</option></select>
-                            <button class="btn btn-danger btn-icon" onclick="deleteProfile('company')"><i class="fa-solid fa-trash"></i></button>
-                        </div>
+                        <div class="card-header"><span class="card-title">Company Profile (Auto-Saved)</span></div>
                         <div class="form-grid">
-                            <div class="form-group full"><label>Business Name</label><input type="text" class="input-control" id="c-name" oninput="sync()"></div>
-                            <div class="form-group full"><label>Address Line 1</label><input type="text" class="input-control" id="c-addr1" oninput="sync()"></div>
-                            <div class="form-group full"><label>Address Line 2 (City, Zip, Country)</label><input type="text" class="input-control" id="c-addr2" oninput="sync()"></div>
-                            <div class="form-group"><label>Email</label><input type="email" class="input-control" id="c-email" oninput="sync()"></div>
-                            <div class="form-group"><label>Phone</label><input type="text" class="input-control" id="c-phone" oninput="sync()"></div>
-                            <div class="form-group"><label>Website</label><input type="text" class="input-control" id="c-web" oninput="sync()"></div>
-                            <div class="form-group"><label>Tax/VAT Number</label><input type="text" class="input-control" id="c-taxid" oninput="sync()"></div>
-                            <div class="form-group"><label>Business Reg. No.</label><input type="text" class="input-control" id="c-reg" oninput="sync()"></div>
+                            <div class="form-group full"><label>Business Name</label><input type="text" class="input-control" id="c-name" oninput="sync(); saveData();"></div>
+                            <div class="form-group full"><label>Address Line 1</label><input type="text" class="input-control" id="c-addr1" oninput="sync(); saveData();"></div>
+                            <div class="form-group full"><label>Address Line 2</label><input type="text" class="input-control" id="c-addr2" oninput="sync(); saveData();"></div>
+                            <div class="form-group"><label>Email</label><input type="email" class="input-control" id="c-email" oninput="sync(); saveData();"></div>
+                            <div class="form-group"><label>Phone</label><input type="text" class="input-control" id="c-phone" oninput="sync(); saveData();"></div>
+                            <div class="form-group"><label>Website</label><input type="text" class="input-control" id="c-web" oninput="sync(); saveData();"></div>
+                            <div class="form-group"><label>Tax/VAT Number</label><input type="text" class="input-control" id="c-taxid" oninput="sync(); saveData();"></div>
                         </div>
-                        
-                        <!-- Added Logo and Signature inside Company Tab for convenience -->
-                        <div class="card-header" style="margin-top:20px;"><span class="card-title">Quick Uploads</span></div>
-                        <div class="form-group full" style="margin-bottom:16px;">
+                        <div class="form-group full" style="margin-top:16px;">
                             <label>Company Logo</label>
                             <input type="file" id="up-logo-comp" class="input-control" accept="image/*" onchange="handleImageUpload(this, 'img-logo')">
                         </div>
-                        <div class="form-group full">
-                            <label>Authorized Signature</label>
-                            <input type="file" id="up-sign-comp" class="input-control" accept="image/*" onchange="handleImageUpload(this, 'img-sign')">
-                        </div>
-
-                        <div class="card-footer"><button class="btn btn-outline" onclick="saveProfile('company')"><i class="fa-solid fa-cloud-arrow-up"></i> Save Company Profile</button></div>
                     </div>
                 </div>
 
-                <!-- 3. CLIENT TAB -->
                 <div id="tab-client" class="tab-pane">
                     <div class="card">
-                        <div class="card-header"><span class="card-title">Client Database</span></div>
-                        <div class="input-group" style="margin-bottom:16px;">
-                            <select class="input-control" id="db-client" onchange="loadProfile('client')"><option value="">-- Select Saved Client --</option></select>
-                            <button class="btn btn-danger btn-icon" onclick="deleteProfile('client')"><i class="fa-solid fa-trash"></i></button>
-                        </div>
+                        <div class="card-header"><span class="card-title">Client Details</span></div>
                         <div class="form-grid">
-                            <div class="form-group full"><label>Client / Company Name</label><input type="text" class="input-control" id="cli-name" oninput="sync()"></div>
+                            <div class="form-group full"><label>Client Name</label><input type="text" class="input-control" id="cli-name" oninput="sync()"></div>
                             <div class="form-group full"><label>Address Line 1</label><input type="text" class="input-control" id="cli-addr1" oninput="sync()"></div>
-                            <div class="form-group full"><label>Address Line 2 (City, Zip, Country)</label><input type="text" class="input-control" id="cli-addr2" oninput="sync()"></div>
+                            <div class="form-group full"><label>Address Line 2</label><input type="text" class="input-control" id="cli-addr2" oninput="sync()"></div>
                             <div class="form-group"><label>Contact Person</label><input type="text" class="input-control" id="cli-contact" oninput="sync()"></div>
                             <div class="form-group"><label>Email</label><input type="email" class="input-control" id="cli-email" oninput="sync()"></div>
-                            <div class="form-group"><label>Phone</label><input type="text" class="input-control" id="cli-phone" oninput="sync()"></div>
                             <div class="form-group"><label>Tax ID / VAT No</label><input type="text" class="input-control" id="cli-taxid" oninput="sync()"></div>
                         </div>
-                        <div class="card-footer"><button class="btn btn-outline" onclick="saveProfile('client')"><i class="fa-solid fa-user-plus"></i> Save Client Profile</button></div>
                     </div>
                 </div>
 
-                <!-- 4. ITEMS TAB -->
                 <div id="tab-items" class="tab-pane">
                     <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">Line Items</span>
-                            <div style="display:flex; gap:8px;">
-                                <button class="btn btn-sm btn-outline" onclick="items.forEach(i=>i.showAdv=!i.showAdv); renderItems();"><i class="fa-solid fa-sliders"></i> Toggle Advanced</button>
-                            </div>
-                        </div>
+                        <div class="card-header"><span class="card-title">Line Items</span></div>
                         <div id="items-container" class="item-list"></div>
                         <div style="margin-top: 16px; display:flex; gap:10px;">
                             <button class="btn btn-outline" style="flex:1;" onclick="addItem()"><i class="fa-solid fa-plus"></i> Add Line Item</button>
-                            <button class="btn btn-outline" style="flex:1;" onclick="clearItems()"><i class="fa-solid fa-eraser"></i> Clear All</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- 5. PAYMENT TAB -->
                 <div id="tab-payment" class="tab-pane">
                     <div class="card">
-                        <div class="card-header"><span class="card-title">Payment Configurations</span></div>
-                        <div class="input-group" style="margin-bottom:16px;">
-                            <select class="input-control" id="db-payment" onchange="loadProfile('payment')"><option value="">-- Load Saved Payment Profile --</option></select>
-                            <button class="btn btn-danger btn-icon" onclick="deleteProfile('payment')"><i class="fa-solid fa-trash"></i></button>
+                        <div class="card-header"><span class="card-title">International Banking Details (Auto-Saved)</span></div>
+                        <div class="form-grid">
+                            <div class="form-group full"><label>Bank Name</label><input type="text" class="input-control" id="p-bank" oninput="sync(); saveData();"></div>
+                            <div class="form-group full"><label>Beneficiary Name</label><input type="text" class="input-control" id="p-bene" oninput="sync(); saveData();"></div>
+                            <div class="form-group"><label>Account No / IBAN</label><input type="text" class="input-control" id="p-acc" oninput="sync(); saveData();"></div>
+                            <div class="form-group"><label>SWIFT / BIC</label><input type="text" class="input-control" id="p-swift" oninput="sync(); saveData();"></div>
                         </div>
-                        
-                        <div class="form-group full" style="margin-bottom:16px;">
-                            <label>Payment Gateway / Method</label>
-                            <select class="input-control" id="p-method" onchange="renderPaymentFields()">
-                                <option value="bank">Bank Transfer (Wire / ACH)</option>
-                                <option value="paypal">PayPal</option>
-                                <option value="stripe">Stripe</option>
-                                <option value="wise">Wise</option>
-                                <option value="payoneer">Payoneer</option>
-                                <option value="crypto">Cryptocurrency</option>
-                                <option value="easypaisa">EasyPaisa / JazzCash</option>
-                                <option value="custom">Custom Instructions</option>
-                            </select>
+                        <div class="form-group full" style="margin-top:16px;">
+                            <label>Additional Payment Instructions</label>
+                            <textarea class="input-control" id="p-custom" rows="3" placeholder="E.g. Routing Number, Reference requirements..." oninput="sync(); saveData();"></textarea>
                         </div>
-
-                        <div id="payment-dynamic-fields" class="form-grid"></div>
-                        
-                        <div class="card-footer"><button class="btn btn-outline" onclick="saveProfile('payment')"><i class="fa-solid fa-credit-card"></i> Save Payment Profile</button></div>
                     </div>
                 </div>
 
-                <!-- 6. NOTES TAB -->
                 <div id="tab-notes" class="tab-pane">
                     <div class="card">
-                        <div class="card-header"><span class="card-title">Document Notes & Terms</span></div>
+                        <div class="card-header"><span class="card-title">Notes, QR & Signatures</span></div>
+                        
                         <div class="form-group full" style="margin-bottom:16px;">
-                            <label>Public Notes (Thank you message)</label>
-                            <textarea class="input-control" id="n-public" rows="3" oninput="sync()"></textarea>
+                            <label>Custom Payment QR Code (Stripe, PayPal)</label>
+                            <span style="font-size:10px; color:var(--text-muted); margin-bottom:6px;">If left blank, an auto-generated invoice QR will be used.</span>
+                            <input type="file" id="up-qr" class="input-control" accept="image/*" onchange="handleImageUpload(this, 'img-custom-qr')">
                         </div>
-                        <div class="form-group full" style="margin-bottom:16px;">
-                            <label>Terms & Conditions</label>
-                            <textarea class="input-control" id="n-terms" rows="4" oninput="sync()"></textarea>
-                        </div>
-                        <div class="form-group full" style="margin-bottom:16px;">
-                            <label>Footer Message (Centered at bottom)</label>
-                            <input type="text" class="input-control" id="n-footer" oninput="sync()">
-                        </div>
-                        <div class="form-group full">
-                            <label>Internal Memo (Not printed)</label>
-                            <textarea class="input-control" id="n-internal" rows="2"></textarea>
-                        </div>
-                        <div class="card-footer"><button class="btn btn-outline" onclick="saveProfile('notes')"><i class="fa-solid fa-file-lines"></i> Save Notes Profile</button></div>
-                    </div>
-                </div>
 
-                <!-- 7. BRANDING TAB -->
-                <div id="tab-branding" class="tab-pane">
-                    <div class="card">
-                        <div class="card-header"><span class="card-title">Visual Identity</span></div>
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label>Brand Color</label>
-                                <input type="color" id="b-color" class="input-control" value="#4F46E5" style="height:42px; padding:2px; cursor:pointer;" oninput="applyBranding()">
-                            </div>
-                            <div class="form-group">
-                                <label>Typography</label>
-                                <select class="input-control" id="b-font" onchange="applyBranding()">
-                                    <option value="'Inter', sans-serif">Inter (Modern & Clean)</option>
-                                    <option value="'Roboto', sans-serif">Roboto (Corporate)</option>
-                                    <option value="'Open Sans', sans-serif">Open Sans (Classic)</option>
-                                    <option value="Times New Roman, serif">Times New Roman (Formal)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header"><span class="card-title">Media Uploads</span></div>
                         <div class="form-group full" style="margin-bottom:16px;">
-                            <label>Company Logo</label>
-                            <input type="file" id="up-logo" class="input-control" accept="image/*" onchange="handleImageUpload(this, 'img-logo')">
-                        </div>
-                        <div class="form-group full" style="margin-bottom:16px;">
-                            <label>Authorized Signature</label>
+                            <label>Authorized Signature Image</label>
                             <input type="file" id="up-sign" class="input-control" accept="image/*" onchange="handleImageUpload(this, 'img-sign')">
                         </div>
-                        <div class="form-group full" style="margin-bottom:16px;">
-                            <label>Company Stamp / Seal</label>
-                            <input type="file" id="up-stamp" class="input-control" accept="image/*" onchange="handleImageUpload(this, 'img-stamp')">
+                        <div class="form-grid" style="margin-bottom:16px;">
+                            <div class="form-group"><label>Signatory Name</label><input type="text" class="input-control" id="b-sign-name" oninput="sync(); saveData();"></div>
+                            <div class="form-group"><label>Signatory Role</label><input type="text" class="input-control" id="b-sign-role" oninput="sync(); saveData();"></div>
                         </div>
-                        <div class="form-grid">
-                            <div class="form-group"><label>Signatory Name</label><input type="text" class="input-control" id="b-sign-name" oninput="sync()"></div>
-                            <div class="form-group"><label>Signatory Role</label><input type="text" class="input-control" id="b-sign-role" oninput="sync()"></div>
+
+                        <div class="form-group full" style="margin-bottom:16px;">
+                            <label>Public Notes</label>
+                            <textarea class="input-control" id="n-public" rows="2" oninput="sync(); saveData();"></textarea>
+                        </div>
+                        <div class="form-group full">
+                            <label>Terms & Conditions</label>
+                            <textarea class="input-control" id="n-terms" rows="2" oninput="sync(); saveData();"></textarea>
                         </div>
                     </div>
                 </div>
@@ -503,48 +464,41 @@
             </div>
         </div>
 
-        <!-- MAIN CONTENT AREA (Toolbar + Preview) -->
         <div class="main-content">
-            <!-- TOP TOOLBAR -->
             <div class="top-toolbar">
-                <button class="btn btn-outline" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i> Edit Panel</button>
+                <button class="btn btn-outline" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i> Editor Panel</button>
                 <div class="toolbar-actions">
-                    <button class="btn btn-outline" onclick="showHistory()"><i class="fa-solid fa-clock-rotate-left"></i> History</button>
-                    <button class="btn btn-outline" onclick="shareInvoice()"><i class="fa-solid fa-share-nodes"></i> Share</button>
-                    <button class="btn btn-outline" onclick="mailInvoice()"><i class="fa-solid fa-envelope"></i> Mail</button>
-                    <button class="btn btn-primary" onclick="saveInvoiceData()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+                    <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> Quick Print</button>
+                    <button class="btn btn-primary" onclick="generatePDF()"><i class="fa-solid fa-download"></i> Export High-Res PDF</button>
                 </div>
             </div>
 
-            <!-- PREVIEW AREA -->
             <div class="preview-wrapper" id="preview-area">
                 <div class="a4-paper" id="invoice-render">
+                    <div class="color-strip"></div>
                     
                     <div class="doc-header">
                         <div class="left-col">
-                            <div class="logo-container" onclick="document.getElementById('up-logo-comp').click()" title="Click to upload logo">
+                            <div class="logo-container" onclick="document.getElementById('up-logo-comp').click()">
                                 <img id="img-logo" src="" style="display:none;">
                                 <div class="logo-placeholder" id="logo-placeholder"><i class="fa-solid fa-image" style="margin-right:5px;"></i> UPLOAD LOGO</div>
                             </div>
                             <div class="company-info">
-                                <h2 id="out-c-name">Acme Corporation</h2>
-                                <p id="out-c-addr1">123 Corporate Blvd, Suite 400</p>
-                                <p id="out-c-addr2">New York, NY 10001, USA</p>
-                                <p>E: <span id="out-c-email">billing@acme.com</span> | P: <span id="out-c-phone">+1 (555) 123-4567</span></p>
-                                <p id="out-c-web">www.acme.com</p>
-                                <p id="wrap-c-taxid"><strong>Tax ID:</strong> <span id="out-c-taxid">US-987654321</span></p>
-                                <p id="wrap-c-reg"><strong>Reg No:</strong> <span id="out-c-reg"></span></p>
+                                <h2 id="out-c-name" contenteditable="true">Acme Corporation</h2>
+                                <p id="out-c-addr1" contenteditable="true">123 Corporate Blvd, Suite 400</p>
+                                <p id="out-c-addr2" contenteditable="true">New York, NY 10001, USA</p>
+                                <p>E: <span id="out-c-email" contenteditable="true">billing@acme.com</span> | P: <span id="out-c-phone" contenteditable="true">+1 (555) 123-4567</span></p>
+                                <p id="wrap-c-taxid"><strong>Tax ID:</strong> <span id="out-c-taxid" contenteditable="true"></span></p>
                             </div>
                         </div>
                         <div class="invoice-title-sec">
-                            <h1 class="invoice-title" id="out-doc-type">TAX INVOICE</h1>
-                            <div class="invoice-number" id="out-inv-num">INV-2026-0001</div>
+                            <h1 class="invoice-title" id="out-doc-type" contenteditable="true">TAX INVOICE</h1>
+                            <div class="invoice-number" id="out-inv-num" contenteditable="true">INV-2026-0001</div>
                             
                             <div class="meta-details">
-                                <div class="meta-item"><span class="meta-lbl">Date Issued</span><span class="meta-val" id="out-date">01 Jan 2026</span></div>
-                                <div class="meta-item"><span class="meta-lbl">Due Date</span><span class="meta-val" id="out-due">15 Jan 2026</span></div>
-                                <div class="meta-item" id="wrap-po"><span class="meta-lbl">P.O. Number</span><span class="meta-val" id="out-po"></span></div>
-                                <div class="meta-item" id="wrap-ref"><span class="meta-lbl">Reference No</span><span class="meta-val" id="out-ref"></span></div>
+                                <div class="meta-item"><span class="meta-lbl">Date Issued</span><span class="meta-val" id="out-date"></span></div>
+                                <div class="meta-item"><span class="meta-lbl">Due Date</span><span class="meta-val" id="out-due"></span></div>
+                                <div class="meta-item" id="wrap-po"><span class="meta-lbl">P.O. Number</span><span class="meta-val" id="out-po" contenteditable="true"></span></div>
                                 <div class="meta-item"><span class="meta-lbl">Amount Due</span><span class="meta-val" style="color:var(--inv-color); font-size:16px;" id="out-grand-top">$0.00</span></div>
                             </div>
                         </div>
@@ -553,14 +507,12 @@
                     <div class="address-section">
                         <div class="address-block">
                             <div class="address-lbl">Billed To</div>
-                            <div class="address-name" id="out-cli-name">Globex Inc.</div>
+                            <div class="address-name" id="out-cli-name" contenteditable="true">Globex Inc.</div>
                             <div class="address-text">
-                                <p id="out-cli-addr1">456 Global Way</p>
-                                <p id="out-cli-addr2">San Francisco, CA 94107</p>
-                                <p id="wrap-cli-contact" style="margin-top:4px;">Attn: <strong id="out-cli-contact">John Smith</strong></p>
-                                <p id="wrap-cli-email">E: <span id="out-cli-email">accounts@globex.com</span></p>
-                                <p id="wrap-cli-phone">P: <span id="out-cli-phone"></span></p>
-                                <p id="wrap-cli-taxid" style="margin-top:4px;">Tax ID: <strong id="out-cli-taxid"></strong></p>
+                                <p id="out-cli-addr1" contenteditable="true">456 Global Way</p>
+                                <p id="out-cli-addr2" contenteditable="true">San Francisco, CA 94107</p>
+                                <p id="wrap-cli-contact" style="margin-top:4px;">Attn: <strong id="out-cli-contact" contenteditable="true"></strong></p>
+                                <p id="wrap-cli-email">E: <span id="out-cli-email" contenteditable="true"></span></p>
                             </div>
                         </div>
                     </div>
@@ -568,11 +520,11 @@
                     <table class="inv-table">
                         <thead>
                             <tr>
-                                <th style="width:45%;">Description</th>
+                                <th style="width:40%;">Description</th>
                                 <th class="center" style="width:10%;">Qty</th>
                                 <th class="right" style="width:15%;">Price</th>
-                                <th class="right" style="width:15%;" id="th-tax">Tax/Disc</th>
-                                <th class="right" style="width:15%;">Total</th>
+                                <th class="right" style="width:15%;">Discount</th>
+                                <th class="right" style="width:20%;">Net Total</th>
                             </tr>
                         </thead>
                         <tbody id="out-items-body">
@@ -583,116 +535,192 @@
                     <div class="summary-wrapper">
                         <div class="notes-area">
                             <div class="info-box" id="wrap-pay">
-                                <div class="info-title">Payment Details</div>
-                                <div class="info-content" id="out-payment"></div>
+                                <div class="info-title">Payment Instructions</div>
+                                <div class="bank-grid" id="wrap-bank-grid">
+                                    <strong id="wrap-bank-name-lbl">Bank Name:</strong> <span id="out-p-bank" contenteditable="true"></span>
+                                    <strong id="wrap-bank-bene-lbl">Beneficiary:</strong> <span id="out-p-bene" contenteditable="true"></span>
+                                    <strong id="wrap-bank-acc-lbl">IBAN / Acc:</strong> <span id="out-p-acc" contenteditable="true"></span>
+                                    <strong id="wrap-bank-swift-lbl">SWIFT / BIC:</strong> <span id="out-p-swift" contenteditable="true"></span>
+                                </div>
+                                <div class="info-content" id="out-payment" contenteditable="true" style="margin-top:6px;"></div>
                             </div>
                             <div class="info-box" id="wrap-n-public">
                                 <div class="info-title">Notes</div>
-                                <div class="info-content" id="out-n-public"></div>
+                                <div class="info-content" id="out-n-public" contenteditable="true"></div>
                             </div>
                             <div class="info-box" id="wrap-n-terms">
                                 <div class="info-title">Terms & Conditions</div>
-                                <div class="info-content" id="out-n-terms"></div>
+                                <div class="info-content" id="out-n-terms" contenteditable="true"></div>
                             </div>
                         </div>
                         
                         <div class="totals-area">
-                            <div class="total-row"><span>Subtotal</span><span id="out-subtotal">$0.00</span></div>
-                            <div class="total-row" id="wrap-global-disc" style="color:var(--danger);"><span>Discount</span><span id="out-global-disc">-$0.00</span></div>
-                            <div class="total-row" id="wrap-global-tax"><span id="out-tax-label">Tax</span><span id="out-global-tax">$0.00</span></div>
+                            <div class="total-row"><span>Gross Subtotal</span><span id="out-subtotal">$0.00</span></div>
+                            <div class="total-row discount-row" id="wrap-global-disc"><span>Global Discount</span><span id="out-global-disc">-$0.00</span></div>
+                            <div class="total-row" id="wrap-shipping"><span>Shipping & Handling</span><span id="out-shipping">$0.00</span></div>
+                            <div class="total-row" id="wrap-tax1"><span id="out-tax1-label-disp">Tax</span><span id="out-tax1-val">$0.00</span></div>
+                            <div class="total-row" id="wrap-tax2"><span id="out-tax2-label-disp">Tax 2</span><span id="out-tax2-val">$0.00</span></div>
                             
                             <div class="grand-total">
                                 <span>Total Due</span>
                                 <span id="out-grand">$0.00</span>
                             </div>
-                            <div class="words-amt" id="out-words">Zero Only</div>
                         </div>
                     </div>
 
                     <div class="doc-footer">
-                        <div class="verification-zone">
+                        <div class="verification-zone" onclick="document.getElementById('up-qr').click()">
                             <div id="qrcode" class="qr-box"></div>
-                            <div>
-                                <div style="font-size:8px; font-weight:700; color:#94A3B8; text-transform:uppercase;">Scan to Verify Document</div>
-                                <svg id="barcode" class="barcode-box"></svg>
+                            <div class="qr-box" id="custom-qr-wrapper" style="display:none;">
+                                <img id="img-custom-qr" class="custom-qr" src="">
                             </div>
                         </div>
                         <div class="signature-zone">
-                            <div class="stamp-box" id="wrap-stamp" style="display:none;">
-                                <img id="img-stamp" src="">
-                                <div style="font-size:9px; color:#64748B; margin-top:4px; text-align:center;">Official Seal</div>
-                            </div>
-                            <div class="sign-box" onclick="document.getElementById('up-sign-comp').click()" title="Click to upload signature">
+                            <div class="sign-box" onclick="document.getElementById('up-sign').click()">
                                 <img id="img-sign" class="sign-img" src="" style="display:none;">
-                                <div class="sign-line" id="sign-placeholder" style="margin-top:40px;">CLICK TO ADD SIGNATURE</div>
-                                <div class="sign-name" id="out-sign-name">Authorized Signature</div>
-                                <div class="sign-role" id="out-sign-role">Director</div>
+                                <div class="sign-line" id="sign-placeholder" style="margin-top:30px;">CLICK TO ADD SIGNATURE</div>
+                                <div class="sign-name" id="out-sign-name" contenteditable="true">Authorized Signature</div>
+                                <div class="sign-role" id="out-sign-role" contenteditable="true">Director</div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="footer-msg" id="out-n-footer">Thank you for your business.</div>
-                    <div class="color-strip"></div>
                 </div>
             </div>
         </div>
 
-        <!-- FLOATING ACTIONS -->
-        <div class="fab-container">
-            <button class="btn btn-outline" style="background:#fff;" onclick="window.print()"><i class="fa-solid fa-print"></i> Print</button>
-            <button class="btn btn-primary" onclick="generatePDF()"><i class="fa-solid fa-download"></i> Export PDF</button>
-        </div>
-        
-        <!-- SAVE MODAL -->
-        <div class="modal-overlay" id="save-modal">
-            <div class="modal-box">
-                <h3><i class="fa-solid fa-check-circle" style="color:var(--success)"></i> Invoice Saved!</h3>
-                <p>Your document has been securely saved to history.</p>
-                <div class="modal-details">
-                    <div><strong>Invoice No:</strong> <span id="modal-inv-no"></span></div>
-                    <div><strong>Client:</strong> <span id="modal-client"></span></div>
-                    <div><strong>Total Amount:</strong> <span id="modal-amount"></span></div>
-                </div>
-                <button class="btn btn-primary" style="width:100%" onclick="document.getElementById('save-modal').classList.remove('active')">Continue Editing</button>
-            </div>
-        </div>
-
-        <!-- TOASTS -->
         <div id="toast-container" class="toast-container"></div>
     </div>
 
     <script>
-        /* ================= STATE MANAGEMENT ================= */
-        let stateHistory = [];
-        let historyIndex = -1;
-        let isUndoing = false;
+        /* ================= AUTHENTICATION & STATE MOCKUP ================= */
+        let isLoggedIn = false; // Mocking guest state
+        
+        function handleGoogleLogin() {
+            // Future placeholder for Firebase/Google Auth
+            alert("Google Authentication integration coming soon! The app is currently fully functional in Offline Guest Mode. Data is saved locally in your browser.");
+        }
 
+        /* ================= STATE MANAGEMENT ================= */
         let items = [
-            { id: Date.now(), desc: '', notes: '', sku: '', unit: '', qty: '', price: '', tax: '', disc: '', showAdv: false }
+            { id: Date.now(), desc: 'SaaS Platform License (Annual)', qty: '1', price: '5000', discType: 'none', discVal: '0' }
         ];
 
         let currencySym = '$';
         let currencyCode = 'USD';
 
-        /* ================= INITIALIZATION ================= */
+        /* ================= INITIALIZATION & LOCALSTORAGE ================= */
         document.addEventListener('DOMContentLoaded', () => {
-            // Set Dates
             document.getElementById('f-date').valueAsDate = new Date();
+            loadData(); // Offline-first restoration
             autoCalcDueDate();
-            generateInvoiceNumber();
-
-            // Default defaults
-            document.getElementById('f-doc-type').value = "TAX INVOICE";
-            document.getElementById('n-public').value = "Thank you for your business. We appreciate your prompt payment.";
-            document.getElementById('n-terms').value = "1. Please quote invoice number when remitting funds.\n2. Late payments are subject to a 2% monthly fee.";
-
+            if(!document.getElementById('f-inv-num').value) generateInvoiceNumber();
+            
             setupDragAndDrop();
-            loadDatabases();
-            renderPaymentFields();
             renderItems();
-            sync(); // Initial render
-            saveState();
+            setupContentEditableSync();
+            sync(true); 
         });
+
+        const PERSISTENCE_KEY = 'invoiceSaaS_staticProfiles';
+        
+        function saveData() {
+            const staticIds = [
+                'c-name', 'c-addr1', 'c-addr2', 'c-email', 'c-phone', 'c-web', 'c-taxid',
+                'p-bank', 'p-bene', 'p-acc', 'p-swift', 'p-custom',
+                'b-sign-name', 'b-sign-role', 'n-public', 'n-terms',
+                'f-currency', 'b-color', 'b-font'
+            ];
+            let data = {};
+            staticIds.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) data[id] = el.value;
+            });
+
+            // Store Images safely
+            data['img-logo'] = document.getElementById('img-logo').src;
+            data['img-sign'] = document.getElementById('img-sign').src;
+            data['img-custom-qr'] = document.getElementById('img-custom-qr').src;
+            
+            try {
+                // If logged in, this could also sync to Firebase/Cloud DB here.
+                // For now, it stays offline.
+                localStorage.setItem(PERSISTENCE_KEY, JSON.stringify(data));
+            } catch(e) {
+                console.warn("Storage quota exceeded, unable to save image data.");
+                showToast("Storage quota exceeded. Clear local data to save new images.", "warning");
+            }
+        }
+
+        function loadData() {
+            try {
+                const raw = localStorage.getItem(PERSISTENCE_KEY);
+                if(raw) {
+                    const data = JSON.parse(raw);
+                    for(let k in data) {
+                        const el = document.getElementById(k);
+                        if(k.startsWith('img-') && el) {
+                            if(data[k] && data[k].length > 100) { // Valid base64
+                                el.src = data[k]; el.style.display = 'block';
+                                if(k === 'img-logo') document.getElementById('logo-placeholder').style.display = 'none';
+                                if(k === 'img-sign') document.getElementById('sign-placeholder').style.display = 'none';
+                                if(k === 'img-custom-qr') {
+                                    document.getElementById('custom-qr-wrapper').style.display = 'block';
+                                    document.getElementById('qrcode').style.display = 'none';
+                                }
+                            }
+                        } else if(el) { el.value = data[k]; }
+                    }
+                    applyBranding();
+                }
+            } catch(e) { console.error("Failed to parse local storage", e); }
+        }
+
+        function clearData() {
+            if(confirm("Clear all auto-saved company and banking data?")) {
+                localStorage.removeItem(PERSISTENCE_KEY);
+                location.reload();
+            }
+        }
+
+        /* ================= EXPORT & IMPORT DATA (JSON BACKUP) ================= */
+        function exportData() {
+            const data = localStorage.getItem(PERSISTENCE_KEY);
+            if (!data) {
+                showToast("No data to export. Save some data first.", "warning");
+                return;
+            }
+            const blob = new Blob([data], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `SaaS_Invoice_Backup_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("Backup downloaded successfully!");
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const jsonData = JSON.parse(e.target.result);
+                    // Minimal validation
+                    if(typeof jsonData === 'object' && jsonData !== null) {
+                        localStorage.setItem(PERSISTENCE_KEY, JSON.stringify(jsonData));
+                        showToast("Data restored successfully! Reloading...");
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        throw new Error("Invalid format");
+                    }
+                } catch (error) {
+                    showToast("Error: Invalid backup file format.", "danger");
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ""; // Reset input
+        }
 
         /* ================= UI INTERACTION ================= */
         function toggleSidebar() {
@@ -704,146 +732,89 @@
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             event.target.classList.add('active');
-            
-            // Ensure sidebar is open when clicking a tab if it was hidden
             document.getElementById('app-sidebar').classList.remove('hidden');
-        }
-
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
         }
 
         function showToast(msg, type='success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = 'toast';
-            toast.innerHTML = `<i class="fa-solid ${type==='success'?'fa-check-circle text-success':'fa-info-circle text-primary'}" style="color:var(--${type})"></i> ${msg}`;
+            toast.innerHTML = `<i class="fa-solid ${type==='success'?'fa-check-circle':(type==='warning'?'fa-triangle-exclamation':'fa-info-circle')}" style="color:var(--${type})"></i> ${msg}`;
             container.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+            setTimeout(() => toast.remove(), 3500);
         }
 
-        /* ================= TOP TOOLBAR ACTIONS ================= */
-        function saveInvoiceData() {
-            // Populate Modal data
-            document.getElementById('modal-inv-no').innerText = document.getElementById('f-inv-num').value || 'N/A';
-            document.getElementById('modal-client').innerText = document.getElementById('cli-name').value || 'Unknown Client';
-            document.getElementById('modal-amount').innerText = document.getElementById('out-grand').innerText;
-            // Show Modal
-            document.getElementById('save-modal').classList.add('active');
-            // Backend saving logic will go here
-        }
-
-        function mailInvoice() { showToast("Mail window opened", "primary"); }
-        function shareInvoice() { showToast("Share link copied to clipboard!", "success"); }
-        function showHistory() { showToast("Loading invoice history...", "primary"); }
-
-        /* ================= HISTORY (UNDO/REDO) ================= */
-        function saveState() {
-            if(isUndoing) return;
-            const currentState = {
-                items: JSON.parse(JSON.stringify(items)),
-                inputs: {}
-            };
-            document.querySelectorAll('input, select, textarea').forEach(el => {
-                if(el.id && el.type !== 'file') currentState.inputs[el.id] = el.value;
-            });
-            
-            stateHistory = stateHistory.slice(0, historyIndex + 1);
-            stateHistory.push(currentState);
-            if(stateHistory.length > 30) stateHistory.shift(); // Keep last 30
-            else historyIndex++;
-        }
-
-        function undo() {
-            if (historyIndex > 0) {
-                isUndoing = true;
-                historyIndex--;
-                restoreState(stateHistory[historyIndex]);
-                isUndoing = false;
-                showToast("Undo successful", "primary");
-            }
-        }
-
-        function redo() {
-            if (historyIndex < stateHistory.length - 1) {
-                isUndoing = true;
-                historyIndex++;
-                restoreState(stateHistory[historyIndex]);
-                isUndoing = false;
-                showToast("Redo successful", "primary");
-            }
-        }
-
-        function restoreState(state) {
-            items = JSON.parse(JSON.stringify(state.items));
-            for(let id in state.inputs) {
-                let el = document.getElementById(id);
-                if(el) el.value = state.inputs[id];
-            }
-            renderItems();
-            sync();
-        }
-
-        /* ================= CORE LOGIC & SYNC ================= */
+        /* ================= CORE LOGIC & TAX ENGINE ================= */
         function autoCalcDueDate() {
             const terms = document.getElementById('f-terms').value;
-            if(terms !== 'custom') {
-                let d = new Date(document.getElementById('f-date').value);
-                d.setDate(d.getDate() + parseInt(terms));
-                document.getElementById('f-due').valueAsDate = d;
-            }
+            let d = new Date(document.getElementById('f-date').value);
+            d.setDate(d.getDate() + parseInt(terms));
+            document.getElementById('f-due').valueAsDate = d;
             sync();
         }
 
         function generateInvoiceNumber() {
-            const date = new Date();
-            const year = date.getFullYear();
-            const ran = Math.floor(1000 + Math.random() * 9000);
-            document.getElementById('f-inv-num').value = `INV-${year}-${ran}`;
+            document.getElementById('f-inv-num').value = `INV-${new Date().getFullYear()}-${Math.floor(1000+Math.random()*9000)}`;
             sync();
         }
 
-        function formatDate(dStr) {
-            if(!dStr) return '';
-            return new Date(dStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        function autoConfigRegion() {
+            const currParts = document.getElementById('f-currency').value.split('|');
+            currencyCode = currParts[0];
+            currencySym = currParts[1];
+            
+            const t1lbl = document.getElementById('f-tax1-label');
+            const t1val = document.getElementById('f-tax1-val');
+            const t2lbl = document.getElementById('f-tax2-label');
+            const t2val = document.getElementById('f-tax2-val');
+
+            if (currencyCode === 'GBP') { t1lbl.value = 'VAT'; t1val.value = 20; t2lbl.value = ''; t2val.value = 0; }
+            else if (currencyCode === 'AUD') { t1lbl.value = 'GST'; t1val.value = 10; t2lbl.value = ''; t2val.value = 0; }
+            else if (currencyCode === 'CAD') { t1lbl.value = 'GST/HST'; t1val.value = 5; t2lbl.value = 'PST'; t2val.value = 7; }
+            else if (currencyCode === 'USD') { t1lbl.value = 'State Tax'; t1val.value = 0; t2lbl.value = 'Local Tax'; t2val.value = 0; }
+            
+            sync();
+            saveData();
         }
 
-        function numberToWords(amount) {
-            if(amount === 0) return 'Zero';
-            const a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
-            const b = ['', '', 'Twenty','Thirty','Forty','Fifty', 'Sixty','Seventy','Eighty','Ninety'];
-            
-            let str = '';
-            let numStr = Math.floor(amount).toString();
-            if (numStr.length > 9) return 'Amount exceeds limit';
-            
-            let n = ('000000000' + numStr).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
-            if (!n) return '';
-            
-            str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
-            str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
-            str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
-            str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
-            str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
-            
-            let decimal = Math.round((amount - Math.floor(amount)) * 100);
-            if(decimal > 0) {
-                str = str.trim() + ' and ' + decimal + '/100';
-            }
-            return str.trim() + ' Only';
+        /* ================= ROBUST CONTENT-EDITABLE SYNC ================= */
+        const textMap = {
+            'out-doc-type': 'f-doc-type', 'out-inv-num': 'f-inv-num', 'out-po': 'f-po',
+            'out-c-name': 'c-name', 'out-c-addr1': 'c-addr1', 'out-c-addr2': 'c-addr2', 'out-c-email': 'c-email', 'out-c-phone': 'c-phone', 'out-c-taxid': 'c-taxid',
+            'out-cli-name': 'cli-name', 'out-cli-addr1': 'cli-addr1', 'out-cli-addr2': 'cli-addr2', 'out-cli-contact': 'cli-contact', 'out-cli-email': 'cli-email',
+            'out-sign-name': 'b-sign-name', 'out-sign-role': 'b-sign-role',
+            'out-p-bank': 'p-bank', 'out-p-bene': 'p-bene', 'out-p-acc': 'p-acc', 'out-p-swift': 'p-swift',
+            'out-payment': 'p-custom', 'out-n-public': 'n-public', 'out-n-terms': 'n-terms'
+        };
+
+        function setupContentEditableSync() {
+            document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                el.addEventListener('input', (e) => {
+                    const inputId = textMap[e.target.id];
+                    if(inputId && document.getElementById(inputId)) {
+                        let val = e.target.innerText;
+                        document.getElementById(inputId).value = val;
+                        sync(false); 
+                        saveData();
+                    }
+                });
+
+                el.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    let text = (e.originalEvent || e).clipboardData.getData('text/plain');
+                    document.execCommand('insertText', false, text);
+                });
+            });
         }
 
         /* ================= ITEMS MANAGEMENT ================= */
         function setupDragAndDrop() {
             new Sortable(document.getElementById('items-container'), {
-                handle: '.drag-handle',
-                animation: 150,
-                ghostClass: 'drag-ghost',
+                handle: '.drag-handle', animation: 150,
                 onEnd: function (evt) {
                     const moved = items.splice(evt.oldIndex, 1)[0];
                     items.splice(evt.newIndex, 0, moved);
                     renderItems();
-                    saveState();
                 }
             });
         }
@@ -852,201 +823,165 @@
             const cont = document.getElementById('items-container');
             cont.innerHTML = '';
             items.forEach((it, idx) => {
-                let q = Number(it.qty) || 0;
-                let p = Number(it.price) || 0;
-                let t = Number(it.tax) || 0;
-                let d = Number(it.disc) || 0;
-                const total = (q * p) - d + ((q * p - d) * (t/100));
+                let q = Number(it.qty) || 0; let p = Number(it.price) || 0;
+                let gross = q * p;
                 
+                let discAmt = 0;
+                if(it.discType === '%') discAmt = gross * (Number(it.discVal)/100);
+                else if(it.discType === 'flat') discAmt = Number(it.discVal);
+                
+                const net = gross - discAmt;
+
                 cont.innerHTML += `
                     <div class="item-row" data-id="${it.id}">
                         <div class="item-main">
-                            <div class="drag-handle" title="Drag to reorder"><i class="fa-solid fa-grip-vertical"></i></div>
-                            <div style="display:flex; flex-direction:column; gap:4px;">
-                                <input type="text" class="input-control" placeholder="Item Name / Description" value="${it.desc}" oninput="updateItem(${idx}, 'desc', this.value)">
-                                <input type="text" class="input-control" style="font-size:11px; padding:6px; color:var(--text-muted);" placeholder="Additional notes (optional)..." value="${it.notes}" oninput="updateItem(${idx}, 'notes', this.value)">
-                            </div>
-                            <input type="number" class="input-control" placeholder="Qty" value="${it.qty !== '' ? it.qty : ''}" oninput="updateItem(${idx}, 'qty', this.value)">
-                            <input type="number" class="input-control" placeholder="Price" value="${it.price !== '' ? it.price : ''}" oninput="updateItem(${idx}, 'price', this.value)">
-                            <div style="display:flex; gap:4px;">
-                                <button class="btn btn-icon" onclick="items[${idx}].showAdv=!items[${idx}].showAdv; renderItems();" title="Edit Advanced (Tax/Discount)"><i class="fa-solid fa-sliders"></i></button>
-                                <button class="btn btn-icon btn-danger" onclick="deleteItem(${idx})" title="Delete Item"><i class="fa-solid fa-trash"></i></button>
-                            </div>
+                            <div class="drag-handle"><i class="fa-solid fa-grip-vertical"></i></div>
+                            <input type="text" class="input-control" placeholder="Description" value="${it.desc}" oninput="updateItem(${idx}, 'desc', this.value)">
+                            <input type="number" class="input-control" placeholder="Qty" value="${it.qty}" oninput="updateItem(${idx}, 'qty', this.value)">
+                            <input type="number" class="input-control" placeholder="Price" value="${it.price}" oninput="updateItem(${idx}, 'price', this.value)">
+                            <select class="input-control" onchange="updateItem(${idx}, 'discType', this.value)">
+                                <option value="none" ${it.discType==='none'?'selected':''}>No Disc</option>
+                                <option value="%" ${it.discType==='%'?'selected':''}>%</option>
+                                <option value="flat" ${it.discType==='flat'?'selected':''}>Flat</option>
+                            </select>
+                            <input type="number" class="input-control" placeholder="Disc Val" value="${it.discVal}" oninput="updateItem(${idx}, 'discVal', this.value)">
+                            <button class="btn btn-icon btn-danger" onclick="deleteItem(${idx})"><i class="fa-solid fa-trash"></i></button>
                         </div>
-                        ${it.showAdv ? `
-                        <div class="item-meta">
-                            <div class="form-group"><label>SKU</label><input type="text" class="input-control input-sm" value="${it.sku||''}" oninput="updateItem(${idx}, 'sku', this.value)"></div>
-                            <div class="form-group"><label>Unit</label><input type="text" class="input-control input-sm" placeholder="hrs, pcs, kg" value="${it.unit||''}" oninput="updateItem(${idx}, 'unit', this.value)"></div>
-                            <div class="form-group"><label>Discount ($)</label><input type="number" class="input-control input-sm" placeholder="0" value="${it.disc !== '' ? it.disc : ''}" oninput="updateItem(${idx}, 'disc', this.value)"></div>
-                            <div class="form-group"><label>Tax (%)</label><input type="number" class="input-control input-sm" placeholder="0" value="${it.tax !== '' ? it.tax : ''}" oninput="updateItem(${idx}, 'tax', this.value)"></div>
-                        </div>
-                        <div class="item-total-display">Line Total: ${currencySym}${total.toFixed(2)}</div>
-                        ` : ''}
-                    </div>
-                `;
+                        <div class="item-total-display">Net: ${currencySym}${net.toFixed(2)}</div>
+                    </div>`;
             });
             sync();
         }
 
-        function addItem() { items.push({ id: Date.now(), desc: '', notes: '', sku: '', unit: '', qty: '', price: '', tax: '', disc: '', showAdv: false }); renderItems(); saveState(); }
-        function duplicateItem(idx) { items.splice(idx+1, 0, {...items[idx], id: Date.now()}); renderItems(); saveState(); }
-        function deleteItem(idx) { items.splice(idx, 1); renderItems(); saveState(); }
-        function clearItems() { if(confirm("Clear all items?")) { items = []; renderItems(); saveState(); } }
-        function updateItem(idx, field, val) { 
-            items[idx][field] = val; 
-            sync(); 
-        }
-
-        /* ================= PAYMENT GATEWAYS ================= */
-        const payFields = {
-            bank: `<div class="form-group full"><label>Bank Name</label><input type="text" class="input-control" id="p-bank" oninput="sync()"></div>
-                   <div class="form-group"><label>Account Name</label><input type="text" class="input-control" id="p-accname" oninput="sync()"></div>
-                   <div class="form-group"><label>Account Number</label><input type="text" class="input-control" id="p-accno" oninput="sync()"></div>
-                   <div class="form-group"><label>Routing / IBAN</label><input type="text" class="input-control" id="p-iban" oninput="sync()"></div>
-                   <div class="form-group"><label>SWIFT / BIC</label><input type="text" class="input-control" id="p-swift" oninput="sync()"></div>`,
-            paypal: `<div class="form-group full"><label>PayPal Email / Link</label><input type="text" class="input-control" id="p-paypal" placeholder="paypal.me/username" oninput="sync()"></div>`,
-            stripe: `<div class="form-group full"><label>Stripe Payment Link</label><input type="text" class="input-control" id="p-stripe" placeholder="https://buy.stripe.com/..." oninput="sync()"></div>`,
-            wise: `<div class="form-group full"><label>Wise Account Email</label><input type="email" class="input-control" id="p-wise" oninput="sync()"></div>`,
-            payoneer: `<div class="form-group full"><label>Payoneer Email</label><input type="email" class="input-control" id="p-payoneer" oninput="sync()"></div>`,
-            crypto: `<div class="form-group"><label>Cryptocurrency (e.g. USDT, BTC)</label><input type="text" class="input-control" id="p-coin" oninput="sync()"></div>
-                     <div class="form-group"><label>Network (e.g. TRC20, ERC20)</label><input type="text" class="input-control" id="p-net" oninput="sync()"></div>
-                     <div class="form-group full"><label>Wallet Address</label><input type="text" class="input-control" id="p-wallet" oninput="sync()"></div>`,
-            easypaisa: `<div class="form-group"><label>Account Title</label><input type="text" class="input-control" id="p-mobi-name" oninput="sync()"></div>
-                        <div class="form-group"><label>Mobile Number</label><input type="text" class="input-control" id="p-mobi-no" oninput="sync()"></div>`,
-            custom: `<div class="form-group full"><label>Custom Payment Instructions</label><textarea class="input-control" id="p-custom" rows="4" oninput="sync()"></textarea></div>`
-        };
-
-        function renderPaymentFields() {
-            const method = document.getElementById('p-method').value;
-            document.getElementById('payment-dynamic-fields').innerHTML = payFields[method];
-            sync();
-        }
+        function addItem() { items.push({ id: Date.now(), desc: '', qty: '1', price: '0', discType: 'none', discVal: '0' }); renderItems(); }
+        function deleteItem(idx) { items.splice(idx, 1); renderItems(); }
+        function updateItem(idx, field, val) { items[idx][field] = val; sync(); }
 
         /* ================= MAIN SYNC (DOM to PREVIEW) ================= */
         let qrInst = null;
 
-        function sync() {
-            const textMap = {
-                'out-doc-type': 'f-doc-type', 'out-inv-num': 'f-inv-num', 'out-po': 'f-po', 'out-ref': 'f-ref',
-                'out-c-name': 'c-name', 'out-c-addr1': 'c-addr1', 'out-c-addr2': 'c-addr2', 'out-c-email': 'c-email', 'out-c-phone': 'c-phone', 'out-c-web': 'c-web', 'out-c-taxid': 'c-taxid', 'out-c-reg': 'c-reg',
-                'out-cli-name': 'cli-name', 'out-cli-addr1': 'cli-addr1', 'out-cli-addr2': 'cli-addr2', 'out-cli-contact': 'cli-contact', 'out-cli-email': 'cli-email', 'out-cli-phone': 'cli-phone', 'out-cli-taxid': 'cli-taxid',
-                'out-sign-name': 'b-sign-name', 'out-sign-role': 'b-sign-role',
-                'out-tax-label': 'f-tax-label'
-            };
-            
+        function sync(forceTextUpdate = true) {
             for(let outId in textMap) {
                 const el = document.getElementById(outId);
-                const val = document.getElementById(textMap[outId])?.value.trim();
-                if(el) el.innerText = val || '';
+                const val = document.getElementById(textMap[outId])?.value.trim() || '';
+                if(forceTextUpdate && el && document.activeElement !== el) {
+                    if(['p-custom', 'n-public', 'n-terms'].includes(textMap[outId])) {
+                        el.innerHTML = val.replace(/\n/g, '<br>'); 
+                    } else {
+                        el.innerText = val;
+                    }
+                }
             }
 
-            const opts = ['c-taxid','c-reg','po','ref','cli-contact','cli-email','cli-phone','cli-taxid'];
+            const opts = ['c-taxid','po','cli-contact','cli-email'];
             opts.forEach(o => {
                 const wrap = document.getElementById(`wrap-${o}`);
-                if(wrap) wrap.style.display = document.getElementById(o === 'po'||o==='ref' ? `f-${o}` : o.replace('-','-')).value ? 'block' : 'none';
+                if(wrap) wrap.style.display = document.getElementById(o === 'po' ? 'f-po' : o).value ? 'block' : 'none';
             });
 
+            ['bank', 'bene', 'acc', 'swift'].forEach(f => {
+                const wrap = document.getElementById(`wrap-bank-${f}-lbl`);
+                const val = document.getElementById(`out-p-${f}`);
+                const hasVal = document.getElementById(`p-${f}`).value.trim() !== '';
+                if(wrap) wrap.style.display = hasVal ? 'block' : 'none';
+                if(val) val.style.display = hasVal ? 'block' : 'none';
+            });
+            const hasAnyBank = ['p-bank', 'p-bene', 'p-acc', 'p-swift'].some(id => document.getElementById(id).value.trim() !== '');
+            document.getElementById('wrap-bank-grid').style.display = hasAnyBank ? 'grid' : 'none';
+
+            document.getElementById('out-date').innerText = new Date(document.getElementById('f-date').value).toLocaleDateString();
+            document.getElementById('out-due').innerText = new Date(document.getElementById('f-due').value).toLocaleDateString();
+
+            ['n-public', 'n-terms'].forEach(id => {
+                document.getElementById(`wrap-${id}`).style.display = document.getElementById(id).value ? 'block' : 'none';
+            });
+            document.getElementById('wrap-pay').style.display = (hasAnyBank || document.getElementById('p-custom').value) ? 'block' : 'none';
+
             const currParts = document.getElementById('f-currency').value.split('|');
-            currencyCode = currParts[0];
-            currencySym = currParts[1];
-
-            document.getElementById('out-date').innerText = formatDate(document.getElementById('f-date').value);
-            document.getElementById('out-due').innerText = formatDate(document.getElementById('f-due').value);
-
-            document.getElementById('out-n-public').innerText = document.getElementById('n-public').value;
-            document.getElementById('wrap-n-public').style.display = document.getElementById('n-public').value ? 'block' : 'none';
-            
-            document.getElementById('out-n-terms').innerText = document.getElementById('n-terms').value;
-            document.getElementById('wrap-n-terms').style.display = document.getElementById('n-terms').value ? 'block' : 'none';
-            
-            document.getElementById('out-n-footer').innerText = document.getElementById('n-footer').value;
-
-            const pMethod = document.getElementById('p-method').value;
-            let pStr = '';
-            if(pMethod === 'bank') pStr = `<strong>Bank:</strong> ${document.getElementById('p-bank')?.value}<br><strong>Account:</strong> ${document.getElementById('p-accname')?.value} (${document.getElementById('p-accno')?.value})<br><strong>IBAN:</strong> ${document.getElementById('p-iban')?.value} | <strong>SWIFT:</strong> ${document.getElementById('p-swift')?.value}`;
-            else if(pMethod === 'paypal') pStr = `<strong>PayPal:</strong> ${document.getElementById('p-paypal')?.value}`;
-            else if(pMethod === 'stripe') pStr = `<strong>Pay Online:</strong> ${document.getElementById('p-stripe')?.value}`;
-            else if(pMethod === 'wise') pStr = `<strong>Wise Account:</strong> ${document.getElementById('p-wise')?.value}`;
-            else if(pMethod === 'payoneer') pStr = `<strong>Payoneer:</strong> ${document.getElementById('p-payoneer')?.value}`;
-            else if(pMethod === 'crypto') pStr = `<strong>Coin:</strong> ${document.getElementById('p-coin')?.value} (${document.getElementById('p-net')?.value})<br><strong>Wallet:</strong> ${document.getElementById('p-wallet')?.value}`;
-            else if(pMethod === 'easypaisa') pStr = `<strong>Mobile Money:</strong> ${document.getElementById('p-mobi-name')?.value} - ${document.getElementById('p-mobi-no')?.value}`;
-            else pStr = document.getElementById('p-custom')?.value.replace(/\n/g, '<br>');
-            
-            document.getElementById('out-payment').innerHTML = pStr;
-            document.getElementById('wrap-pay').style.display = pStr.trim().replace(/<br>|<strong>|<\/strong>/g,'') ? 'block' : 'none';
+            currencyCode = currParts[0]; currencySym = currParts[1];
 
             let tbody = document.getElementById('out-items-body');
             tbody.innerHTML = '';
-            let subtotal = 0;
-            let hasItemTaxDisc = items.some(i => (Number(i.tax) || 0) > 0 || (Number(i.disc) || 0) > 0);
-            
-            document.getElementById('th-tax').style.display = hasItemTaxDisc ? 'table-cell' : 'none';
+            let grossSubtotal = 0;
 
             items.forEach(it => {
-                let q = Number(it.qty) || 0;
-                let p = Number(it.price) || 0;
-                let t = Number(it.tax) || 0;
-                let d = Number(it.disc) || 0;
-
-                let baseTotal = q * p;
-                let finalTotal = baseTotal - d + ((baseTotal - d) * (t/100));
-                subtotal += finalTotal;
+                let q = Number(it.qty) || 0; let p = Number(it.price) || 0;
+                let lineGross = q * p;
                 
-                if(it.desc || finalTotal > 0) {
+                let lineDisc = 0;
+                if(it.discType === '%') lineDisc = lineGross * (Number(it.discVal)/100);
+                else if(it.discType === 'flat') lineDisc = Number(it.discVal);
+                
+                let lineNet = lineGross - lineDisc;
+                grossSubtotal += lineNet;
+                
+                if(it.desc || lineNet > 0) {
+                    let discStr = lineDisc > 0 ? `-${currencySym}${lineDisc.toFixed(2)}` : '-';
                     tbody.innerHTML += `
                         <tr>
-                            <td>
-                                <span class="td-item-name">${it.desc}</span>
-                                ${it.notes ? `<span class="td-item-desc">${it.notes}</span>` : ''}
-                                ${it.sku || it.unit ? `<span class="td-item-meta">SKU: ${it.sku||'N/A'} | Unit: ${it.unit||'N/A'}</span>` : ''}
-                            </td>
+                            <td><span class="td-item-name">${it.desc}</span></td>
                             <td class="center">${q}</td>
                             <td class="right">${currencySym}${p.toFixed(2)}</td>
-                            ${hasItemTaxDisc ? `<td class="right" style="color:#64748B;">${d>0?`-${currencySym}${d}`:''}${t>0?` +${t}%`:''}</td>` : ''}
-                            <td class="right" style="font-weight:600;">${currencySym}${finalTotal.toFixed(2)}</td>
-                        </tr>
-                    `;
+                            <td class="right" style="color:var(--danger);">${discStr}</td>
+                            <td class="right" style="font-weight:600;">${currencySym}${lineNet.toFixed(2)}</td>
+                        </tr>`;
                 }
             });
 
-            let gDiscType = document.getElementById('f-disc-type').value;
-            let gDiscVal = Number(document.getElementById('f-disc-val').value) || 0;
-            let gTax = Number(document.getElementById('f-global-tax').value) || 0;
+            const gDiscType = document.getElementById('f-g-dist-type').value;
+            const gDiscVal = Number(document.getElementById('f-g-dist-val').value) || 0;
+            let globalDiscAmt = 0;
+            if(gDiscType === '%') globalDiscAmt = grossSubtotal * (gDiscVal/100);
+            else if(gDiscType === 'flat') globalDiscAmt = gDiscVal;
 
-            let discAmt = gDiscType === 'percent' ? subtotal * (gDiscVal/100) : gDiscVal;
-            let afterDisc = subtotal - discAmt;
-            let taxAmt = afterDisc * (gTax/100);
-            let grandTotal = afterDisc + taxAmt;
+            let preTaxSubtotal = grossSubtotal - globalDiscAmt;
+            if (preTaxSubtotal < 0) preTaxSubtotal = 0;
 
-            document.getElementById('out-subtotal').innerText = `${currencySym}${subtotal.toFixed(2)}`;
+            const t1Lbl = document.getElementById('f-tax1-label').value;
+            const t1Rate = Number(document.getElementById('f-tax1-val').value) || 0;
+            const t2Lbl = document.getElementById('f-tax2-label').value;
+            const t2Rate = Number(document.getElementById('f-tax2-val').value) || 0;
             
-            document.getElementById('wrap-global-disc').style.display = discAmt > 0 ? 'flex' : 'none';
-            document.getElementById('out-global-disc').innerText = `-${currencySym}${discAmt.toFixed(2)}`;
+            let tax1Amt = preTaxSubtotal * (t1Rate/100);
+            let tax2Amt = preTaxSubtotal * (t2Rate/100);
+
+            let shipping = Number(document.getElementById('f-shipping').value) || 0;
+
+            let grandTotal = preTaxSubtotal + tax1Amt + tax2Amt + shipping;
+
+            document.getElementById('out-subtotal').innerText = `${currencySym}${grossSubtotal.toFixed(2)}`;
             
-            document.getElementById('wrap-global-tax').style.display = taxAmt > 0 ? 'flex' : 'none';
-            document.getElementById('out-global-tax').innerText = `${currencySym}${taxAmt.toFixed(2)}`;
+            document.getElementById('wrap-global-disc').style.display = globalDiscAmt > 0 ? 'flex' : 'none';
+            document.getElementById('out-global-disc').innerText = `-${currencySym}${globalDiscAmt.toFixed(2)}`;
             
+            document.getElementById('wrap-shipping').style.display = shipping > 0 ? 'flex' : 'none';
+            document.getElementById('out-shipping').innerText = `${currencySym}${shipping.toFixed(2)}`;
+            
+            document.getElementById('wrap-tax1').style.display = tax1Amt > 0 ? 'flex' : 'none';
+            document.getElementById('out-tax1-label-disp').innerText = t1Lbl || 'Tax 1';
+            document.getElementById('out-tax1-val').innerText = `${currencySym}${tax1Amt.toFixed(2)}`;
+
+            document.getElementById('wrap-tax2').style.display = tax2Amt > 0 ? 'flex' : 'none';
+            document.getElementById('out-tax2-label-disp').innerText = t2Lbl || 'Tax 2';
+            document.getElementById('out-tax2-val').innerText = `${currencySym}${tax2Amt.toFixed(2)}`;
+
             document.getElementById('out-grand').innerText = `${currencySym}${grandTotal.toFixed(2)}`;
             document.getElementById('out-grand-top').innerText = `${currencySym}${grandTotal.toFixed(2)}`;
-            document.getElementById('out-words').innerText = numberToWords(grandTotal) + ` ${currencyCode}`;
 
-            generateCodes(document.getElementById('f-inv-num').value, grandTotal.toFixed(2));
-        }
-
-        function generateCodes(invNum, amt) {
-            const dataStr = `INV:${invNum}|AMT:${amt}|CUR:${currencyCode}`;
-            document.getElementById('qrcode').innerHTML = '';
-            qrInst = new QRCode(document.getElementById('qrcode'), { text: dataStr, width: 70, height: 70, colorDark: "#0F172A", colorLight: "#ffffff" });
-            try { JsBarcode("#barcode", invNum, { format: "CODE128", width: 1.2, height: 25, displayValue: true, fontSize: 10, margin: 0, background: 'transparent' }); } catch(e){}
+            if(document.getElementById('img-custom-qr').src === "" || document.getElementById('img-custom-qr').src === window.location.href) {
+                const dataStr = `INV:${document.getElementById('f-inv-num').value}|AMT:${grandTotal.toFixed(2)}|CUR:${currencyCode}`;
+                document.getElementById('qrcode').innerHTML = '';
+                qrInst = new QRCode(document.getElementById('qrcode'), { text: dataStr, width: 70, height: 70, colorDark: "#111827", colorLight: "#ffffff" });
+                document.getElementById('qrcode').style.display = 'flex';
+                document.getElementById('custom-qr-wrapper').style.display = 'none';
+            }
         }
 
         /* ================= BRANDING & IMAGES ================= */
         function applyBranding() {
-            const c = document.getElementById('b-color').value;
-            const f = document.getElementById('b-font').value;
-            document.documentElement.style.setProperty('--inv-color', c);
-            document.documentElement.style.setProperty('--inv-font', f);
-            saveState();
+            document.documentElement.style.setProperty('--inv-color', document.getElementById('b-color').value);
+            document.documentElement.style.setProperty('--inv-font', document.getElementById('b-font').value);
+            saveData();
         }
 
         function handleImageUpload(input, imgId) {
@@ -1054,94 +989,31 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const img = document.getElementById(imgId);
-                    img.src = e.target.result;
+                    img.src = e.target.result; 
                     img.style.display = 'block';
+                    
                     if(imgId === 'img-logo') document.getElementById('logo-placeholder').style.display = 'none';
                     if(imgId === 'img-sign') document.getElementById('sign-placeholder').style.display = 'none';
-                    if(imgId === 'img-stamp') document.getElementById('wrap-stamp').style.display = 'block';
-                    saveState();
+                    if(imgId === 'img-custom-qr') {
+                        document.getElementById('custom-qr-wrapper').style.display = 'block';
+                        document.getElementById('qrcode').style.display = 'none';
+                    }
+                    saveData();
                 }
                 reader.readAsDataURL(input.files[0]);
             }
         }
 
-        /* ================= DATABASES (LOCAL STORAGE) ================= */
-        const dbConfigs = {
-            company: ['c-name','c-addr1','c-addr2','c-email','c-phone','c-web','c-taxid','c-reg'],
-            client: ['cli-name','cli-addr1','cli-addr2','cli-contact','cli-email','cli-phone','cli-taxid'],
-            notes: ['n-public','n-terms','n-footer','n-internal'],
-            payment: ['p-method', 'p-bank', 'p-accname', 'p-accno', 'p-iban', 'p-swift', 'p-paypal', 'p-stripe', 'p-wise', 'p-payoneer', 'p-coin', 'p-net', 'p-wallet', 'p-mobi-name', 'p-mobi-no', 'p-custom']
-        };
-
-        function getDB(type) { return JSON.parse(localStorage.getItem(`erp_inv_${type}`) || '{}'); }
-        function setDB(type, data) { localStorage.setItem(`erp_inv_${type}`, JSON.stringify(data)); loadDatabases(); }
-
-        function saveProfile(type) {
-            const name = prompt(`Enter a memorable name for this ${type} profile (e.g., Default US):`);
-            if(!name) return;
-            let data = {};
-            dbConfigs[type].forEach(id => {
-                let el = document.getElementById(id);
-                if(el) data[id] = el.value;
-            });
-            let db = getDB(type);
-            db[name] = data;
-            setDB(type, db);
-            showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} profile saved!`);
-        }
-
-        function loadProfile(type) {
-            const name = document.getElementById(`db-${type}`).value;
-            if(!name) return;
-            let profile = getDB(type)[name];
-            if(profile) {
-                for(let id in profile) {
-                    let el = document.getElementById(id);
-                    if(el) el.value = profile[id];
-                }
-                if(type === 'payment') renderPaymentFields();
-                sync();
-                saveState();
-                showToast(`Profile loaded successfully`);
-            }
-        }
-
-        function deleteProfile(type) {
-            const name = document.getElementById(`db-${type}`).value;
-            if(!name) { showToast(`Please select a profile to delete`, 'warning'); return; }
-            if(confirm(`Are you sure you want to delete the profile "${name}"?`)) {
-                let db = getDB(type);
-                delete db[name];
-                setDB(type, db);
-                document.getElementById(`db-${type}`).value = '';
-                showToast(`Profile deleted`);
-            }
-        }
-
-        function loadDatabases() {
-            Object.keys(dbConfigs).forEach(type => {
-                let sel = document.getElementById(`db-${type}`);
-                if(sel) {
-                    let prevVal = sel.value;
-                    sel.innerHTML = `<option value="">-- Select Saved Profile --</option>`;
-                    let db = getDB(type);
-                    for(let key in db) sel.innerHTML += `<option value="${key}">${key}</option>`;
-                    sel.value = prevVal;
-                }
-            });
-        }
-
-        /* ================= EXPORT ================= */
+        /* ================= EXPORT & PRINT ================= */
         function generatePDF() {
             const element = document.getElementById('invoice-render');
             const invNum = document.getElementById('f-inv-num').value || 'Invoice';
             const client = document.getElementById('cli-name').value || 'Client';
             
-            showToast('Generating high-resolution PDF...', 'primary');
+            showToast('Generating Production PDF...', 'success');
             
-            // Added pagebreak settings for multipage support
             const opt = {
-                margin:       0,
+                margin:       [0, 0, 0, 0],
                 filename:     `${invNum}_${client}.pdf`,
                 image:        { type: 'jpeg', quality: 1 },
                 html2canvas:  { scale: 3, useCORS: true, logging: false },
@@ -1150,7 +1022,7 @@
             };
             
             html2pdf().set(opt).from(element).save().then(() => {
-                showToast('PDF downloaded successfully!');
+                showToast('PDF Exported Successfully!');
             });
         }
     </script>
