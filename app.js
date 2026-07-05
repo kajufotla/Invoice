@@ -68,16 +68,26 @@ const NotificationManager = {
         if (NotificationManager.queue.length === 0) { NotificationManager.isShowing = false; return; }
         NotificationManager.isShowing = true;
         const { msg, type } = NotificationManager.queue.shift();
-        let container = Utility.getEl('toast-container');
+        let container = typeof Utility !== 'undefined' ? Utility.getEl('toast-container') : document.getElementById('toast-container');
         
         if (!container) { 
-            container = DOM.create('div', { id: 'toast-container', style: { position: 'fixed', bottom: '20px', right: '20px', zIndex: '9999', display: 'flex', flexDirection: 'column', gap: '10px' } });
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.style.position = 'fixed'; container.style.bottom = '20px'; container.style.right = '20px';
+            container.style.zIndex = '9999'; container.style.display = 'flex'; container.style.flexDirection = 'column'; container.style.gap = '10px';
             document.body.appendChild(container);
         }
 
         let iconClass = type === 'success' ? 'fa-check-circle text-success' : type === 'error' ? 'fa-circle-xmark text-danger' : type === 'warning' ? 'fa-triangle-exclamation text-warning' : 'fa-info-circle text-primary';  
-        const icon = DOM.create('i', { className: `fa-solid ${iconClass}`, style: { color: `var(--${type})`, marginRight: '8px' } });  
-        const toast = DOM.create('div', { className: `toast toast-${type}`, style: { backgroundColor: '#fff', padding: '12px 20px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', fontWeight: '500', minWidth: '250px', transition: 'opacity 0.3s ease' }, role: 'alert', 'aria-live': 'assertive' }, [icon, document.createTextNode(msg)]);  
+        
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.style.backgroundColor = '#fff'; toast.style.padding = '12px 20px'; toast.style.borderRadius = '8px';
+        toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'; toast.style.display = 'flex'; toast.style.alignItems = 'center';
+        toast.style.fontWeight = '500'; toast.style.minWidth = '250px'; toast.style.transition = 'opacity 0.3s ease';
+        toast.setAttribute('role', 'alert'); toast.setAttribute('aria-live', 'assertive');
+        
+        toast.innerHTML = `<i class="fa-solid ${iconClass}" style="color: var(--${type}); margin-right: 8px;"></i> ${msg}`;
           
         container.appendChild(toast);  
         setTimeout(() => {  
@@ -90,6 +100,7 @@ const NotificationManager = {
 /* ================= INVOICE ENGINE ================= */
 const InvoiceEngine = {
     autoCalcDueDate: () => {
+        if (typeof Utility === 'undefined') return;
         const terms = Utility.getVal('f-terms'), dateInput = Utility.getEl('f-date'), dueInput = Utility.getEl('f-due');
         if (terms !== 'custom' && dateInput && dueInput && dateInput.value) {
             let d = new Date(dateInput.value); d.setDate(d.getDate() + parseInt(terms)); dueInput.valueAsDate = d;
@@ -100,38 +111,51 @@ const InvoiceEngine = {
     generateInvoiceNumber: async () => {  
         const date = new Date(), year = date.getFullYear();  
         let seq = (typeof StorageEngine !== 'undefined' ? StorageEngine.getKV('invoice_sequence') : 1) || 1;  
-        const invInput = Utility.getEl('f-inv-num');  
+        const invInput = typeof Utility !== 'undefined' ? Utility.getEl('f-inv-num') : document.getElementById('f-inv-num');  
         if (invInput) invInput.value = `INV-${year}-${String(seq).padStart(6, '0')}`;  
         if (typeof StorageEngine !== 'undefined') StorageEngine.setKV('invoice_sequence', seq + 1);  
         InvoiceEngine.syncDebounced();  
     },  
 
     addItem: () => {  
-        if (typeof StateManager === 'undefined') return;
-        StateManager.items.push({ id: Date.now(), desc: '', notes: '', sku: '', unit: '', qty: '', price: '', tax: '', disc: '', showAdv: false });  
-        UIManager.renderItems(); StateManager.saveState();  
+        if (!window._fallbackItems) window._fallbackItems = [];
+        let items = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : window._fallbackItems;
+        
+        items.push({ id: Date.now(), desc: '', notes: '', sku: '', unit: '', qty: '', price: '', tax: '', disc: '', showAdv: false });  
+        UIManager.renderItems(); 
+        if (typeof StateManager !== 'undefined') StateManager.saveState();  
     },  
 
     deleteItem: (idx) => {  
-        if (typeof StateManager === 'undefined') return;
-        if (StateManager.items.length === 1 && !confirm("This is the last item. Delete?")) return;  
-        else if (StateManager.items.length > 1 && typeof I18nManager !== 'undefined' && !confirm(I18nManager.t('deleted'))) return;  
-        StateManager.items.splice(idx, 1);  
-        if (StateManager.items.length === 0) InvoiceEngine.addItem();  
+        let items = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : window._fallbackItems;
+        if (!items || items.length === 0) return;
+        
+        if (items.length === 1 && !confirm("This is the last item. Delete?")) return;  
+        else if (items.length > 1 && typeof I18nManager !== 'undefined' && !confirm(I18nManager.t('deleted'))) return;  
+        
+        items.splice(idx, 1);  
+        if (items.length === 0) InvoiceEngine.addItem();  
         else UIManager.renderItems();  
-        StateManager.saveState();  
+        
+        if (typeof StateManager !== 'undefined') StateManager.saveState();  
     },  
 
     clearItems: () => {  
-        if (typeof StateManager === 'undefined') return;
-        if(confirm("Clear all items?")) { StateManager.items = []; InvoiceEngine.addItem(); }  
+        let items = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : window._fallbackItems;
+        if(confirm("Clear all items?")) { 
+            if (typeof StateManager !== 'undefined' && StateManager.items) StateManager.items = [];
+            else window._fallbackItems = [];
+            InvoiceEngine.addItem(); 
+        }  
     },  
 
     updateItem: (idx, field, val) => {  
-        if (typeof StateManager === 'undefined') return;
+        let items = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : window._fallbackItems;
+        if (!items || !items[idx]) return;
+        
         try {  
             if (['qty', 'price', 'tax', 'disc'].includes(field) && val !== '' && typeof Validator !== 'undefined') Validator.validateItemBounds(val, field.toUpperCase());  
-            StateManager.items[idx][field] = val;  
+            items[idx][field] = val;  
             InvoiceEngine.syncDebounced();  
         } catch (e) { 
             const errLabel = typeof I18nManager !== 'undefined' ? I18nManager.t('validationErr') : 'Validation Error';
@@ -141,9 +165,14 @@ const InvoiceEngine = {
     },  
 
     saveInvoiceAction: async (status) => {  
-        if (typeof StorageEngine === 'undefined' || typeof StateManager === 'undefined') return;
+        if (typeof StorageEngine === 'undefined') return;
         UIManager.setLoadingState(true, `Saving Invoice as ${status}...`);  
         try {  
+            let items = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : window._fallbackItems;
+            let cCode = typeof StateManager !== 'undefined' ? StateManager.currencyCode : 'USD';
+            let img = typeof StateManager !== 'undefined' ? StateManager.images : {};
+            let upQR = typeof StateManager !== 'undefined' ? StateManager.uploadedQRImage : null;
+
             const invNum = Utility.getVal('f-inv-num') || Utility.generateId();
             const invoiceData = {  
                 id: invNum,  
@@ -152,10 +181,10 @@ const InvoiceEngine = {
                 client: Utility.getVal('cli-name'),
                 company: Utility.getVal('c-name'),
                 total: parseFloat(Utility.getEl('out-grand')?.textContent.replace(/[^0-9.-]+/g,"")) || 0,
-                currency: StateManager.currencyCode,
+                currency: cCode,
                 status: status,
                 lastModified: Date.now(),
-                state: { items: StateManager.items, customQR: StateManager.uploadedQRImage, inputs: {}, images: StateManager.images }  
+                state: { items: items, customQR: upQR, inputs: {}, images: img }  
             };  
             document.querySelectorAll('input, select, textarea').forEach(el => { if (el.id && el.type !== 'file') invoiceData.state.inputs[el.id] = el.type === 'checkbox' ? el.checked : el.value; });  
             
@@ -169,6 +198,7 @@ const InvoiceEngine = {
 
     sync: () => {  
         try {  
+            if (typeof Utility === 'undefined') return;
             const textMap = {  
                 'out-doc-type': 'f-doc-type', 'out-inv-num': 'f-inv-num', 'out-po': 'f-po', 'out-ref': 'f-ref',  
                 'out-c-name': 'c-name', 'out-c-addr1': 'c-addr1', 'out-c-addr2': 'c-addr2', 'out-c-email': 'c-email', 'out-c-phone': 'c-phone', 'out-c-web': 'c-web', 'out-c-taxid': 'c-taxid', 'out-c-reg': 'c-reg',  
@@ -193,17 +223,29 @@ const InvoiceEngine = {
             if (Utility.getEl('out-date')) Utility.getEl('out-date').textContent = Utility.formatDate(Utility.getVal('f-date'));  
             if (Utility.getEl('out-due')) Utility.getEl('out-due').textContent = Utility.formatDate(Utility.getVal('f-due'));  
 
-            const nPublic = Utility.getVal('n-public');  
-            if(Utility.getEl('out-n-public')) Utility.getEl('out-n-public').textContent = nPublic;  
-            if(Utility.getEl('wrap-n-public')) Utility.getEl('wrap-n-public').style.display = nPublic ? 'block' : 'none';  
+            // --- BUG FIX: Fixed Notes & Terms not updating with Line Breaks ---
+            const nPublicEl = document.getElementById('n-public');
+            const nPublic = nPublicEl ? nPublicEl.value : '';  
+            const outNPublic = document.getElementById('out-n-public');
+            if (outNPublic) outNPublic.innerHTML = nPublic ? nPublic.replace(/\n/g, '<br>') : '';  
+            const wrapNPublic = document.getElementById('wrap-n-public');
+            if (wrapNPublic) wrapNPublic.style.display = nPublic ? 'block' : 'none';  
               
-            const nTerms = Utility.getVal('n-terms');  
-            if(Utility.getEl('out-n-terms')) Utility.getEl('out-n-terms').textContent = nTerms;  
-            if(Utility.getEl('wrap-n-terms')) Utility.getEl('wrap-n-terms').style.display = nTerms ? 'block' : 'none';  
-            if(Utility.getEl('out-n-footer')) Utility.getEl('out-n-footer').textContent = Utility.getVal('n-footer');  
+            const nTermsEl = document.getElementById('n-terms');
+            const nTerms = nTermsEl ? nTermsEl.value : '';  
+            const outNTerms = document.getElementById('out-n-terms');
+            if (outNTerms) outNTerms.innerHTML = nTerms ? nTerms.replace(/\n/g, '<br>') : '';  
+            const wrapNTerms = document.getElementById('wrap-n-terms');
+            if (wrapNTerms) wrapNTerms.style.display = nTerms ? 'block' : 'none';  
+            
+            const nFooterEl = document.getElementById('n-footer');
+            const nFooter = nFooterEl ? nFooterEl.value : '';
+            const outNFooter = document.getElementById('out-n-footer');
+            if (outNFooter) outNFooter.innerHTML = nFooter ? nFooter.replace(/\n/g, '<br>') : '';
+            // -------------------------------------------------------------------
 
             const outPayment = Utility.getEl('out-payment'), wrapPay = Utility.getEl('wrap-pay');  
-            if (outPayment) {  
+            if (outPayment && typeof DOM !== 'undefined') {  
                 DOM.clear(outPayment);  
                 const pMethod = Utility.getVal('p-method'), frag = document.createDocumentFragment();  
                 let hasData = false;  
@@ -224,11 +266,11 @@ const InvoiceEngine = {
             }  
 
             let tbody = Utility.getEl('out-items-body'), subtotal = 0;  
-            if(tbody) DOM.clear(tbody);  
+            if(tbody && typeof DOM !== 'undefined') DOM.clear(tbody);  
             
-            let currentItems = typeof StateManager !== 'undefined' ? StateManager.items : [];
-            let cSym = typeof StateManager !== 'undefined' ? StateManager.currencySym : '$';
-            let cCode = typeof StateManager !== 'undefined' ? StateManager.currencyCode : 'USD';
+            let currentItems = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : (window._fallbackItems || []);
+            let cSym = typeof StateManager !== 'undefined' ? StateManager.currencySym : (currParts[1] || '$');
+            let cCode = typeof StateManager !== 'undefined' ? StateManager.currencyCode : (currParts[0] || 'USD');
 
             let hasItemTaxDisc = currentItems.some(i => (Number(i.tax) || 0) > 0 || (Number(i.disc) || 0) > 0);  
             if (Utility.getEl('th-tax')) Utility.getEl('th-tax').style.display = hasItemTaxDisc ? 'table-cell' : 'none';  
@@ -240,23 +282,25 @@ const InvoiceEngine = {
                 subtotal += finalTotal;  
                   
                 if (it.desc || finalTotal > 0) {  
-                    const tr = DOM.create('tr', { className: 'keep-together' });  
-                    const tdDetails = DOM.create('td');  
-                    tdDetails.appendChild(DOM.create('span', { className: 'td-item-name' }, [it.desc]));  
-                    if (it.notes) tdDetails.appendChild(DOM.create('span', { className: 'td-item-desc', style: { display: 'block', fontSize: '11px', color: '#64748b' } }, [it.notes]));  
-                    if (it.sku || it.unit) tdDetails.appendChild(DOM.create('span', { className: 'td-item-meta', style: { display: 'block', fontSize: '11px', color: '#94a3b8' } }, [`SKU: ${it.sku||'N/A'} | Unit: ${it.unit||'N/A'}`]));  
-                    tr.appendChild(tdDetails);  
-                    tr.appendChild(DOM.create('td', { className: 'center' }, [q.toString()]));  
-                    tr.appendChild(DOM.create('td', { className: 'right' }, [`${cSym}${Utility.formatCurrency(p)}`]));  
-                      
-                    if (hasItemTaxDisc) {  
-                        const tdMeta = DOM.create('td', { className: 'right', style: { color: '#64748B' } });  
-                        if (d > 0) tdMeta.appendChild(document.createTextNode(`-${cSym}${d} `));  
-                        if (t > 0) tdMeta.appendChild(document.createTextNode(`+${t}%`));  
-                        tr.appendChild(tdMeta);  
-                    }  
-                    tr.appendChild(DOM.create('td', { className: 'right', style: { fontWeight: '600' } }, [`${cSym}${Utility.formatCurrency(finalTotal)}`]));  
-                    tbFrag.appendChild(tr);  
+                    if (typeof DOM !== 'undefined') {
+                        const tr = DOM.create('tr', { className: 'keep-together' });  
+                        const tdDetails = DOM.create('td');  
+                        tdDetails.appendChild(DOM.create('span', { className: 'td-item-name' }, [it.desc]));  
+                        if (it.notes) tdDetails.appendChild(DOM.create('span', { className: 'td-item-desc', style: { display: 'block', fontSize: '11px', color: '#64748b' } }, [it.notes]));  
+                        if (it.sku || it.unit) tdDetails.appendChild(DOM.create('span', { className: 'td-item-meta', style: { display: 'block', fontSize: '11px', color: '#94a3b8' } }, [`SKU: ${it.sku||'N/A'} | Unit: ${it.unit||'N/A'}`]));  
+                        tr.appendChild(tdDetails);  
+                        tr.appendChild(DOM.create('td', { className: 'center' }, [q.toString()]));  
+                        tr.appendChild(DOM.create('td', { className: 'right' }, [`${cSym}${Utility.formatCurrency(p)}`]));  
+                          
+                        if (hasItemTaxDisc) {  
+                            const tdMeta = DOM.create('td', { className: 'right', style: { color: '#64748B' } });  
+                            if (d > 0) tdMeta.appendChild(document.createTextNode(`-${cSym}${d} `));  
+                            if (t > 0) tdMeta.appendChild(document.createTextNode(`+${t}%`));  
+                            tr.appendChild(tdMeta);  
+                        }  
+                        tr.appendChild(DOM.create('td', { className: 'right', style: { fontWeight: '600' } }, [`${cSym}${Utility.formatCurrency(finalTotal)}`]));  
+                        tbFrag.appendChild(tr);  
+                    }
                 }  
             });  
             if (tbody) tbody.appendChild(tbFrag);  
@@ -281,7 +325,8 @@ const InvoiceEngine = {
         } catch (error) { SafeLogger.error('Sync failed:', error); }  
     }
 };
-InvoiceEngine.syncDebounced = Utility.debounce(InvoiceEngine.sync, 150);
+
+InvoiceEngine.syncDebounced = typeof Utility !== 'undefined' && Utility.debounce ? Utility.debounce(InvoiceEngine.sync, 150) : () => { setTimeout(InvoiceEngine.sync, 150); };
 
 /* ================= DASHBOARD & ANALYTICS MANAGER ================= */
 const DashboardManager = {
@@ -323,12 +368,12 @@ const DashboardManager = {
 
 /* ================= UI MANAGER ================= */
 const UIManager = {
-    toggleSidebar: () => { const s = Utility.getEl('app-sidebar'); if (s) s.classList.toggle('hidden'); },
+    toggleSidebar: () => { const s = document.getElementById('app-sidebar'); if (s) s.classList.toggle('hidden'); },
     switchTab: (tabId, event) => {
         document.querySelectorAll('.tab-pane, .tab-btn').forEach(el => el.classList.remove('active'));
-        const target = Utility.getEl(tabId); if (target) target.classList.add('active');
+        const target = document.getElementById(tabId); if (target) target.classList.add('active');
         if (event && event.target) event.target.classList.add('active');
-        const s = Utility.getEl('app-sidebar'); if (s) s.classList.remove('hidden');
+        const s = document.getElementById('app-sidebar'); if (s) s.classList.remove('hidden');
     },
     toggleDarkMode: async () => { 
         const isDark = document.body.classList.toggle('dark-mode'); 
@@ -339,54 +384,65 @@ const UIManager = {
         if (StorageEngine.getKV('theme_dark')) document.body.classList.add('dark-mode');
         const branding = StorageEngine.getKV('theme_branding');
         if (branding) {
-            if (branding.color) { document.documentElement.style.setProperty('--inv-color', branding.color); const c = Utility.getEl('b-color'); if(c) c.value = branding.color; }
-            if (branding.font) { document.documentElement.style.setProperty('--inv-font', branding.font); const f = Utility.getEl('b-font'); if(f) f.value = branding.font; }
+            if (branding.color) { document.documentElement.style.setProperty('--inv-color', branding.color); const c = document.getElementById('b-color'); if(c) c.value = branding.color; }
+            if (branding.font) { document.documentElement.style.setProperty('--inv-font', branding.font); const f = document.getElementById('b-font'); if(f) f.value = branding.font; }
         }
     },
     setupDragAndDrop: () => {
-        const container = Utility.getEl('items-container');
-        if (!container || typeof Sortable === 'undefined' || typeof StateManager === 'undefined') return;
+        const container = document.getElementById('items-container');
+        if (!container || typeof Sortable === 'undefined') return;
         const animDuration = typeof AppConfig !== 'undefined' ? AppConfig.animationDuration : 200;
         new Sortable(container, { handle: '.drag-handle', animation: animDuration, ghostClass: 'drag-ghost', delay: 150, delayOnTouchOnly: true, onEnd: function (evt) {
-            const moved = StateManager.items.splice(evt.oldIndex, 1)[0]; StateManager.items.splice(evt.newIndex, 0, moved); UIManager.renderItems(); StateManager.saveState();
+            let items = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : window._fallbackItems;
+            if (items) {
+                const moved = items.splice(evt.oldIndex, 1)[0]; items.splice(evt.newIndex, 0, moved); UIManager.renderItems(); 
+                if (typeof StateManager !== 'undefined') StateManager.saveState();
+            }
         }});
     },
     renderItems: () => {
-        const cont = Utility.getEl('items-container'); if (!cont) return;
-        DOM.clear(cont); const frag = document.createDocumentFragment();
-        if (typeof StateManager === 'undefined') return;
+        const cont = document.getElementById('items-container'); if (!cont) return;
+        while(cont.firstChild) cont.removeChild(cont.firstChild); 
+        const frag = document.createDocumentFragment();
+        
+        let items = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : (window._fallbackItems || []);
 
-        StateManager.items.forEach((it, idx) => {  
+        items.forEach((it, idx) => {  
             let q = Number(it.qty) || 0, p = Number(it.price) || 0, t = Number(it.tax) || 0, d = Number(it.disc) || 0, total = (q * p) - d + ((q * p - d) * (t/100));  
-            const row = DOM.create('div', { className: 'item-row', dataset: { id: it.id } });  
-              
-            const dragHandle = DOM.create('div', { className: 'drag-handle', title: 'Drag to reorder', role: 'button', tabIndex: '0', 'aria-label': 'Drag' }, [DOM.create('i', { className: 'fa-solid fa-grip-vertical' })]);  
-            const textCol = DOM.create('div', { style: { display: 'flex', flexDirection: 'column', gap: '4px', flex: '1' } }, [  
-                DOM.create('input', { type: 'text', className: 'input-control', placeholder: 'Item Name / Description', value: it.desc, oninput: (e) => InvoiceEngine.updateItem(idx, 'desc', e.target.value) }),  
-                DOM.create('input', { type: 'text', className: 'input-control', style: { fontSize: '11px', padding: '6px', color: 'var(--text-muted)' }, placeholder: 'Additional notes...', value: it.notes, oninput: (e) => InvoiceEngine.updateItem(idx, 'notes', e.target.value) })  
-            ]);  
-            const qtyInput = DOM.create('input', { type: 'number', className: 'input-control', style: { width: '80px' }, placeholder: 'Qty', value: it.qty, oninput: (e) => InvoiceEngine.updateItem(idx, 'qty', e.target.value) });  
-            const priceInput = DOM.create('input', { type: 'number', className: 'input-control', style: { width: '100px' }, placeholder: 'Price', value: it.price, oninput: (e) => InvoiceEngine.updateItem(idx, 'price', e.target.value) });  
-              
-            const btnAdv = DOM.create('button', { className: 'btn btn-icon', title: 'Edit Advanced', 'aria-label': 'Toggle Advanced', onclick: () => { StateManager.items[idx].showAdv = !it.showAdv; UIManager.renderItems(); } }, [DOM.create('i', { className: 'fa-solid fa-sliders' })]);  
-            const btnLib = DOM.create('button', { className: 'btn btn-icon text-primary', title: 'Save to Product Library', onclick: () => { if(typeof EntityManager !== 'undefined') EntityManager.saveProductToLibrary(idx); } }, [DOM.create('i', { className: 'fa-solid fa-bookmark' })]);  
-            const btnDel = DOM.create('button', { className: 'btn btn-icon btn-danger', title: 'Delete Item', onclick: () => InvoiceEngine.deleteItem(idx) }, [DOM.create('i', { className: 'fa-solid fa-trash' })]);  
-            const btnGroup = DOM.create('div', { style: { display: 'flex', gap: '4px' } }, [btnAdv, btnLib, btnDel]);  
+            
+            if (typeof DOM !== 'undefined') {
+                const row = DOM.create('div', { className: 'item-row', dataset: { id: it.id } });  
+                  
+                const dragHandle = DOM.create('div', { className: 'drag-handle', title: 'Drag to reorder', role: 'button', tabIndex: '0', 'aria-label': 'Drag' }, [DOM.create('i', { className: 'fa-solid fa-grip-vertical' })]);  
+                const textCol = DOM.create('div', { style: { display: 'flex', flexDirection: 'column', gap: '4px', flex: '1' } }, [  
+                    DOM.create('input', { type: 'text', className: 'input-control', placeholder: 'Item Name / Description', value: it.desc, oninput: (e) => InvoiceEngine.updateItem(idx, 'desc', e.target.value) }),  
+                    DOM.create('input', { type: 'text', className: 'input-control', style: { fontSize: '11px', padding: '6px', color: 'var(--text-muted)' }, placeholder: 'Additional notes...', value: it.notes, oninput: (e) => InvoiceEngine.updateItem(idx, 'notes', e.target.value) })  
+                ]);  
+                const qtyInput = DOM.create('input', { type: 'number', className: 'input-control', style: { width: '80px' }, placeholder: 'Qty', value: it.qty, oninput: (e) => InvoiceEngine.updateItem(idx, 'qty', e.target.value) });  
+                const priceInput = DOM.create('input', { type: 'number', className: 'input-control', style: { width: '100px' }, placeholder: 'Price', value: it.price, oninput: (e) => InvoiceEngine.updateItem(idx, 'price', e.target.value) });  
+                  
+                const btnAdv = DOM.create('button', { className: 'btn btn-icon', title: 'Edit Advanced', 'aria-label': 'Toggle Advanced', onclick: () => { items[idx].showAdv = !it.showAdv; UIManager.renderItems(); } }, [DOM.create('i', { className: 'fa-solid fa-sliders' })]);  
+                const btnLib = DOM.create('button', { className: 'btn btn-icon text-primary', title: 'Save to Product Library', onclick: () => { if(typeof EntityManager !== 'undefined') EntityManager.saveProductToLibrary(idx); } }, [DOM.create('i', { className: 'fa-solid fa-bookmark' })]);  
+                const btnDel = DOM.create('button', { className: 'btn btn-icon btn-danger', title: 'Delete Item', onclick: () => InvoiceEngine.deleteItem(idx) }, [DOM.create('i', { className: 'fa-solid fa-trash' })]);  
+                const btnGroup = DOM.create('div', { style: { display: 'flex', gap: '4px' } }, [btnAdv, btnLib, btnDel]);  
 
-            row.appendChild(DOM.create('div', { className: 'item-main', style: { display: 'flex', gap: '10px', alignItems: 'flex-start' } }, [dragHandle, textCol, qtyInput, priceInput, btnGroup]));  
+                row.appendChild(DOM.create('div', { className: 'item-main', style: { display: 'flex', gap: '10px', alignItems: 'flex-start' } }, [dragHandle, textCol, qtyInput, priceInput, btnGroup]));  
 
-            if (it.showAdv) {  
-                const metaGroup = DOM.create('div', { className: 'item-meta', style: { display: 'flex', gap: '10px', marginTop: '10px', padding: '10px', backgroundColor: 'var(--bg-light)' } });  
-                const createFormGroup = (l, t, ph, val, field) => DOM.create('div', { className: 'form-group' }, [DOM.create('label', {}, [l]), DOM.create('input', { type: t, className: 'input-control input-sm', placeholder: ph, value: val, oninput: (e) => InvoiceEngine.updateItem(idx, field, e.target.value) })]);  
-                metaGroup.appendChild(createFormGroup('SKU', 'text', '', it.sku||'', 'sku')); 
-                metaGroup.appendChild(createFormGroup('Unit', 'text', 'hrs, pcs', it.unit||'', 'unit')); 
-                metaGroup.appendChild(createFormGroup(`Disc (${StateManager.currencySym})`, 'number', '0', it.disc, 'disc')); 
-                metaGroup.appendChild(createFormGroup('Tax (%)', 'number', '0', it.tax, 'tax'));  
-                
-                row.appendChild(metaGroup); 
-                row.appendChild(DOM.create('div', { className: 'item-total-display', style: { textAlign: 'right', fontWeight: 'bold', marginTop: '5px' } }, [`Line Total: ${StateManager.currencySym}${Utility.formatCurrency(total)}`]));  
-            }  
-            frag.appendChild(row);  
+                if (it.showAdv) {  
+                    const metaGroup = DOM.create('div', { className: 'item-meta', style: { display: 'flex', gap: '10px', marginTop: '10px', padding: '10px', backgroundColor: 'var(--bg-light)' } });  
+                    const createFormGroup = (l, t, ph, val, field) => DOM.create('div', { className: 'form-group' }, [DOM.create('label', {}, [l]), DOM.create('input', { type: t, className: 'input-control input-sm', placeholder: ph, value: val, oninput: (e) => InvoiceEngine.updateItem(idx, field, e.target.value) })]);  
+                    metaGroup.appendChild(createFormGroup('SKU', 'text', '', it.sku||'', 'sku')); 
+                    metaGroup.appendChild(createFormGroup('Unit', 'text', 'hrs, pcs', it.unit||'', 'unit')); 
+                    
+                    let cSym = typeof StateManager !== 'undefined' ? StateManager.currencySym : '$';
+                    metaGroup.appendChild(createFormGroup(`Disc (${cSym})`, 'number', '0', it.disc, 'disc')); 
+                    metaGroup.appendChild(createFormGroup('Tax (%)', 'number', '0', it.tax, 'tax'));  
+                    
+                    row.appendChild(metaGroup); 
+                    row.appendChild(DOM.create('div', { className: 'item-total-display', style: { textAlign: 'right', fontWeight: 'bold', marginTop: '5px' } }, [`Line Total: ${cSym}${typeof Utility !== 'undefined' ? Utility.formatCurrency(total) : total.toFixed(2)}`]));  
+                }  
+                frag.appendChild(row);  
+            }
         });  
         cont.appendChild(frag); InvoiceEngine.syncDebounced();  
     },  
@@ -396,7 +452,8 @@ const UIManager = {
     markPaid: () => InvoiceEngine.saveInvoiceAction('Paid'),
       
     applyBranding: async () => {  
-        const c = Utility.getVal('b-color'), f = Utility.getVal('b-font');  
+        const c = typeof Utility !== 'undefined' ? Utility.getVal('b-color') : document.getElementById('b-color').value;  
+        const f = typeof Utility !== 'undefined' ? Utility.getVal('b-font') : document.getElementById('b-font').value;  
         if (c) document.documentElement.style.setProperty('--inv-color', c);  
         if (f) document.documentElement.style.setProperty('--inv-font', f);  
         if (typeof StorageEngine !== 'undefined') await StorageEngine.setKV('theme_branding', { color: c, font: f }); 
@@ -404,18 +461,18 @@ const UIManager = {
     },  
 
     handleImageUpload: (input, imgId) => {  
-        if (input.files && input.files[0] && typeof StateManager !== 'undefined') {  
+        if (input.files && input.files[0]) {  
             const reader = new FileReader();  
             reader.onload = function(e) {  
                 const key = imgId.replace('img-', '');
-                StateManager.images[key] = e.target.result;
-                const img = Utility.getEl(imgId);  
+                if (typeof StateManager !== 'undefined') StateManager.images[key] = e.target.result;
+                const img = document.getElementById(imgId);  
                 if (img) {  
                     img.src = e.target.result; img.style.display = 'block';  
-                    if (imgId === 'img-logo' && Utility.getEl('logo-placeholder')) Utility.getEl('logo-placeholder').style.display = 'none';  
-                    if (imgId === 'img-sign' && Utility.getEl('sign-placeholder')) Utility.getEl('sign-placeholder').style.display = 'none';  
-                    if (imgId === 'img-stamp' && Utility.getEl('wrap-stamp')) Utility.getEl('wrap-stamp').style.display = 'block';  
-                    StateManager.saveState();  
+                    if (imgId === 'img-logo' && document.getElementById('logo-placeholder')) document.getElementById('logo-placeholder').style.display = 'none';  
+                    if (imgId === 'img-sign' && document.getElementById('sign-placeholder')) document.getElementById('sign-placeholder').style.display = 'none';  
+                    if (imgId === 'img-stamp' && document.getElementById('wrap-stamp')) document.getElementById('wrap-stamp').style.display = 'block';  
+                    if (typeof StateManager !== 'undefined') StateManager.saveState();  
                 }  
             };  
             reader.onerror = () => NotificationManager.show('Failed to load image.', 'error');  
@@ -424,14 +481,24 @@ const UIManager = {
     },  
 
     setLoadingState: (isLoading, text = 'Loading...') => {  
-        let overlay = Utility.getEl('enterprise-loading-overlay');  
+        let overlay = document.getElementById('enterprise-loading-overlay');  
         if (isLoading) {  
             if (!overlay) {  
-                overlay = DOM.create('div', { id: 'enterprise-loading-overlay', role: 'alert', 'aria-busy': 'true', style: { position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh', backgroundColor: 'rgba(15, 23, 42, 0.8)', zIndex: '9999', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'white', fontFamily: 'inherit' } }, [  
-                    DOM.create('div', { className: 'spinner', style: { border: '4px solid rgba(255,255,255,0.3)', borderTop: '4px solid white', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' } }),  
-                    DOM.create('div', { style: { marginTop: '15px', fontWeight: '500' } }, [text]),  
-                    DOM.create('style', {}, ['@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }'])  
-                ]);  
+                overlay = document.createElement('div');
+                overlay.id = 'enterprise-loading-overlay';
+                overlay.setAttribute('role', 'alert');
+                overlay.setAttribute('aria-busy', 'true');
+                overlay.style.position = 'fixed'; overlay.style.top = '0'; overlay.style.left = '0';
+                overlay.style.width = '100vw'; overlay.style.height = '100vh';
+                overlay.style.backgroundColor = 'rgba(15, 23, 42, 0.8)'; overlay.style.zIndex = '9999';
+                overlay.style.display = 'flex'; overlay.style.flexDirection = 'column'; overlay.style.alignItems = 'center'; overlay.style.justifyContent = 'center';
+                overlay.style.color = 'white'; overlay.style.fontFamily = 'inherit';
+                
+                overlay.innerHTML = `
+                    <div class="spinner" style="border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;"></div>
+                    <div style="margin-top: 15px; font-weight: 500;">${text}</div>
+                    <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+                `;
                 document.body.appendChild(overlay);  
             }  
             document.body.style.overflow = 'hidden'; document.querySelectorAll('button').forEach(b => b.disabled = true);  
@@ -445,9 +512,33 @@ const UIManager = {
 /* ================= PAYMENT MANAGER ================= */
 const PaymentManager = {
     renderPaymentFields: () => {
-        const method = Utility.getVal('p-method'), container = Utility.getEl('payment-dynamic-fields');
-        if (!container) return; DOM.clear(container); const frag = document.createDocumentFragment();
-        const createGroup = (label, id, type = 'text', placeholder = '', isFull = false) => DOM.create('div', { className: `form-group${isFull ? ' full' : ''}` }, [DOM.create('label', {}, [label]), DOM.create(type === 'textarea' ? 'textarea' : 'input', { type: type !== 'textarea' ? type : undefined, className: 'input-control', id, placeholder, rows: type === 'textarea' ? '4' : undefined, oninput: InvoiceEngine.syncDebounced })]);
+        // --- BUG FIX: Completely robust payment fields generation ---
+        const methodEl = document.getElementById('p-method');
+        const method = methodEl ? methodEl.value : 'bank';
+        const container = document.getElementById('payment-dynamic-fields');
+        if (!container) return; 
+        
+        while(container.firstChild) container.removeChild(container.firstChild); 
+        const frag = document.createDocumentFragment();
+        
+        const createGroup = (label, id, type = 'text', placeholder = '', isFull = false) => {
+            const div = document.createElement('div');
+            div.className = `form-group${isFull ? ' full' : ''}`;
+            
+            const lbl = document.createElement('label');
+            lbl.textContent = label;
+            div.appendChild(lbl);
+            
+            const input = document.createElement(type === 'textarea' ? 'textarea' : 'input');
+            if (type !== 'textarea') input.type = type;
+            input.className = 'input-control';
+            input.id = id;
+            if (placeholder) input.placeholder = placeholder;
+            if (type === 'textarea') input.rows = 4;
+            input.oninput = InvoiceEngine.syncDebounced;
+            div.appendChild(input);
+            return div;
+        };
 
         if (method === 'bank') { frag.appendChild(createGroup('Bank Name', 'p-bank', 'text', '', true)); frag.appendChild(createGroup('Account Name', 'p-accname')); frag.appendChild(createGroup('Account Number', 'p-accno')); frag.appendChild(createGroup('Routing / IBAN', 'p-iban')); frag.appendChild(createGroup('SWIFT / BIC', 'p-swift')); }  
         else if (method === 'paypal') frag.appendChild(createGroup('PayPal Email / Link', 'p-paypal', 'text', 'paypal.me/username', true));  
@@ -459,10 +550,19 @@ const PaymentManager = {
         else if (method === 'custom') frag.appendChild(createGroup('Custom Instructions', 'p-custom', 'textarea', '', true));  
 
         if(method && typeof EntityManager !== 'undefined') {  
-            const saveBtn = DOM.create('button', { className: 'btn btn-outline', style: { marginTop: '10px' }, onclick: EntityManager.savePaymentMethod }, [DOM.create('i', { className: 'fa-solid fa-save' }), ' Save this Payment Template']);  
-            frag.appendChild(DOM.create('div', { className: 'form-group full' }, [saveBtn]));  
+            const saveBtn = document.createElement('button');
+            saveBtn.className = 'btn btn-outline';
+            saveBtn.style.marginTop = '10px';
+            saveBtn.onclick = EntityManager.savePaymentMethod;
+            saveBtn.innerHTML = '<i class="fa-solid fa-save"></i> Save this Payment Template';
+            
+            const btnWrap = document.createElement('div');
+            btnWrap.className = 'form-group full';
+            btnWrap.appendChild(saveBtn);
+            frag.appendChild(btnWrap);  
         }  
-        container.appendChild(frag); InvoiceEngine.syncDebounced();  
+        container.appendChild(frag); 
+        InvoiceEngine.syncDebounced();  
     },  
     handleQRUpload: (input) => {  
         if (input.files && input.files[0] && typeof StateManager !== 'undefined') {  
@@ -472,8 +572,15 @@ const PaymentManager = {
         }  
     },  
     renderQRCode: () => {  
-        const qrContainer = Utility.getEl('qrcode'); if (!qrContainer || typeof StateManager === 'undefined') return; DOM.clear(qrContainer);  
-        if (StateManager.uploadedQRImage) qrContainer.appendChild(DOM.create('img', { src: StateManager.uploadedQRImage, alt: 'Payment QR', style: { maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '4px' } }));  
+        const qrContainer = document.getElementById('qrcode'); if (!qrContainer || typeof StateManager === 'undefined') return; 
+        while(qrContainer.firstChild) qrContainer.removeChild(qrContainer.firstChild);
+        if (StateManager.uploadedQRImage) {
+            const img = document.createElement('img');
+            img.src = StateManager.uploadedQRImage;
+            img.alt = 'Payment QR';
+            img.style.maxWidth = '100%'; img.style.maxHeight = '100%'; img.style.objectFit = 'contain'; img.style.borderRadius = '4px';
+            qrContainer.appendChild(img);
+        }
     }
 };
 
@@ -512,8 +619,8 @@ const PrintManager = {
 /* ================= ENTERPRISE EXPORT / BACKUP ENGINE (FIXED PDF CUTTING OFF) ================= */
 const ExportManager = {
     generatePDF: async () => {
-        const element = Utility.getEl('invoice-render'); if (!element) return NotificationManager.show('Render area not found.', 'error');
-        const invNum = Utility.getVal('f-inv-num') || 'Invoice', client = Utility.getVal('cli-name') || 'Client';
+        const element = document.getElementById('invoice-render'); if (!element) return NotificationManager.show('Render area not found.', 'error');
+        const invNum = typeof Utility !== 'undefined' ? Utility.getVal('f-inv-num') : 'Invoice', client = typeof Utility !== 'undefined' ? Utility.getVal('cli-name') : 'Client';
         UIManager.setLoadingState(true, 'Rendering Enterprise A4 PDF...');
         try {
             if (typeof window.html2pdf !== 'undefined') {
@@ -590,29 +697,30 @@ const ExportManager = {
     },
 
     exportCSV: () => {  
-        if (typeof StateManager === 'undefined') return;
+        let items = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : window._fallbackItems;
+        if (!items) return;
         let csvContent = "data:text/csv;charset=utf-8,Description,Notes,SKU,Unit,Qty,Price,Tax,Discount,Total\n";  
-        StateManager.items.forEach(it => {  
+        items.forEach(it => {  
             let q = Number(it.qty) || 0, p = Number(it.price) || 0, t = Number(it.tax) || 0, d = Number(it.disc) || 0, total = (q * p) - d + ((q * p - d) * (t/100));  
             let row = [ `"${it.desc}"`, `"${it.notes}"`, `"${it.sku}"`, `"${it.unit}"`, q, p, t, d, total ].join(",");  
             csvContent += row + "\n";  
         });  
         const encodedUri = encodeURI(csvContent); const link = document.createElement("a");  
-        link.setAttribute("href", encodedUri); link.setAttribute("download", `Invoice_${Utility.getVal('f-inv-num')}_Items.csv`);  
+        link.setAttribute("href", encodedUri); link.setAttribute("download", `Invoice_${typeof Utility !== 'undefined' ? Utility.getVal('f-inv-num') : 'Export'}_Items.csv`);  
         document.body.appendChild(link); link.click(); document.body.removeChild(link);  
         NotificationManager.show('CSV Exported', 'success');  
     },  
 
     mailInvoice: () => {  
-        const email = Utility.getVal('cli-email');  
+        const email = typeof Utility !== 'undefined' ? Utility.getVal('cli-email') : '';  
         if (email && typeof Validator !== 'undefined' && !Validator.isEmail(email)) return NotificationManager.show("Invalid client email address.", "warning");  
-        const invNum = Utility.getVal('f-inv-num') || 'Invoice', total = Utility.getEl('out-grand')?.textContent || '0.00';  
+        const invNum = typeof Utility !== 'undefined' ? Utility.getVal('f-inv-num') : 'Invoice', total = document.getElementById('out-grand')?.textContent || '0.00';  
         window.location.href = `mailto:${email}?subject=${encodeURIComponent(`New Invoice: ${invNum}`)}&body=${encodeURIComponent(`Hello,\n\nPlease find attached details for invoice ${invNum}. Total due: ${total}.\n\nThank you.`)}`;  
         NotificationManager.show("Opening Mail Client...", "success");  
     },  
 
     shareInvoice: async () => {  
-        const shareData = `Invoice ${Utility.getVal('f-inv-num')} - Total: ${Utility.getEl('out-grand')?.textContent}`;  
+        const shareData = `Invoice ${typeof Utility !== 'undefined' ? Utility.getVal('f-inv-num') : ''} - Total: ${document.getElementById('out-grand')?.textContent}`;  
         const copyLabel = typeof I18nManager !== 'undefined' ? I18nManager.t('copied') : 'Copied to clipboard';
         try {  
             if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(shareData); NotificationManager.show(copyLabel, "success"); }   
@@ -652,15 +760,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (typeof StorageEngine !== 'undefined') await StorageEngine.init();  
-        const dateEl = Utility.getEl('f-date'); if (dateEl) dateEl.valueAsDate = new Date();  
+        const dateEl = document.getElementById('f-date'); if (dateEl) dateEl.valueAsDate = new Date();  
         
         await UIManager.loadThemePersistence();  
         InvoiceEngine.autoCalcDueDate();  
         await InvoiceEngine.generateInvoiceNumber();  
 
-        const docType = Utility.getEl('f-doc-type'); if (docType) docType.value = "TAX INVOICE";  
-        const nPublic = Utility.getEl('n-public'); if (nPublic) nPublic.value = "Thank you for your business. We appreciate your prompt payment.";  
-        const nTerms = Utility.getEl('n-terms'); if (nTerms) nTerms.value = "1. Please quote invoice number when remitting funds.\n2. Late payments are subject to a 2% monthly fee.";  
+        const docType = document.getElementById('f-doc-type'); if (docType) docType.value = "TAX INVOICE";  
+        const nPublic = document.getElementById('n-public'); if (nPublic) nPublic.value = "Thank you for your business. We appreciate your prompt payment.";  
+        const nTerms = document.getElementById('n-terms'); if (nTerms) nTerms.value = "1. Please quote invoice number when remitting funds.\n2. Late payments are subject to a 2% monthly fee.";  
 
         UIManager.setupDragAndDrop();  
         PaymentManager.renderPaymentFields();  
@@ -672,7 +780,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof StateManager !== 'undefined') await StateManager.recoverDraft();  
         if (typeof StateManager !== 'undefined') StateManager.saveState();  
 
-        const bindFilter = (id, func) => { const el = Utility.getEl(id); if (el) el.addEventListener('input', func); };
+        const bindFilter = (id, func) => { const el = document.getElementById(id); if (el) el.addEventListener('input', func); };
         
         if (typeof HistoryManager !== 'undefined') {
             bindFilter('history-search', HistoryManager.renderHistoryTable);
