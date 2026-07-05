@@ -941,7 +941,7 @@ const PrintManager = {
                 #invoice-render, #invoice-render * { visibility: visible; }
                 #invoice-render { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; box-shadow: none; border: none; }
                 .no-print { display: none !important; }
-                @page { size: A4; margin: 15mm; }
+                @page { size: A4; margin: 10mm; }
                 table { page-break-inside: auto; width: 100%; }
                 tr { page-break-inside: avoid; page-break-after: auto; }
                 thead { display: table-header-group; }
