@@ -684,6 +684,46 @@ document.addEventListener('DOMContentLoaded', async () => {
             bindFilter('final-status-filter', HistoryManager.renderFinalsTable);
             bindFilter('final-sort', HistoryManager.renderFinalsTable);
         }
+
+        // ================= DIRECT EVENT BINDINGS FOR UI FIXES =================
+        // 1. Fix: Ensure "Add Line Item" button triggers the add function
+        const btnAddItem = document.getElementById('add-item-btn');
+        if (btnAddItem) {
+            btnAddItem.addEventListener('click', (e) => { e.preventDefault(); window.addItem(); });
+        } else {
+            document.querySelectorAll('button').forEach(btn => {
+                if (btn.textContent.includes('Add Line Item')) {
+                    btn.addEventListener('click', (e) => { e.preventDefault(); window.addItem(); });
+                }
+            });
+        }
+
+        // 2. Fix: Ensure "Clear All" button works as well
+        const btnClearAll = document.getElementById('clear-items-btn');
+        if (btnClearAll) {
+            btnClearAll.addEventListener('click', (e) => { e.preventDefault(); window.clearItems(); });
+        } else {
+            document.querySelectorAll('button').forEach(btn => {
+                if (btn.textContent.includes('Clear All')) {
+                    btn.addEventListener('click', (e) => { e.preventDefault(); window.clearItems(); });
+                }
+            });
+        }
+
+        // 3. Fix: Ensure Payment Dropdown updates the fields below it on change
+        const pMethodDropdown = document.getElementById('p-method');
+        if (pMethodDropdown) {
+            pMethodDropdown.addEventListener('change', () => { window.renderPaymentFields(); });
+        } else {
+            document.querySelectorAll('select').forEach(sel => {
+                sel.addEventListener('change', (e) => {
+                    if (e.target.value === 'stripe' || e.target.value === 'bank' || e.target.value === 'paypal' || e.target.value === 'crypto') {
+                        window.renderPaymentFields();
+                    }
+                });
+            });
+        }
+        // ======================================================================
           
         UIManager.setLoadingState(false);  
     } catch (error) {  
