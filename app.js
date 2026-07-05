@@ -3,7 +3,7 @@ const NotificationManager = {
     queue: [], isShowing: false,
     show: (msg, type = 'success') => {
         NotificationManager.queue.push({ msg, type });
-        if (!NotificationManager.isShowing) NotificationManager.processQueue();
+        if (!NotificationManager.isShowing) NotificationManager.processQueue(); 
     },
     processQueue: () => {
         if (NotificationManager.queue.length === 0) { NotificationManager.isShowing = false; return; }
