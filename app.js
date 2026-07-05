@@ -1,3 +1,62 @@
+/* ================= GLOBAL PROXY BINDINGS (MOVED TO TOP FOR IMMEDIATE REGISTRATION) ================= */
+window.toggleSidebar = () => UIManager.toggleSidebar();
+window.switchTab = (tabId, event) => UIManager.switchTab(tabId, event);
+window.toggleDarkMode = () => UIManager.toggleDarkMode();
+window.showToast = (msg, type) => NotificationManager.show(msg, type);
+window.setLanguage = (lang) => { if(typeof I18nManager !== 'undefined') I18nManager.setLanguage(lang); };
+window.saveDraft = () => UIManager.saveDraft();
+window.saveFinal = () => UIManager.saveFinal();
+window.markPaid = () => UIManager.markPaid();
+window.mailInvoice = () => ExportManager.mailInvoice();
+window.shareInvoice = () => ExportManager.shareInvoice();
+window.saveState = () => { if(typeof StateManager !== 'undefined') StateManager.saveState(); };
+window.undo = () => { if(typeof StateManager !== 'undefined') StateManager.undo(); };
+window.redo = () => { if(typeof StateManager !== 'undefined') StateManager.redo(); };
+window.restoreState = (s) => { if(typeof StateManager !== 'undefined') StateManager.restoreState(s); };
+window.autoCalcDueDate = () => InvoiceEngine.autoCalcDueDate();
+window.generateInvoiceNumber = () => InvoiceEngine.generateInvoiceNumber();
+window.formatDate = (d) => Utility.formatDate(d);
+window.numberToWords = (n) => Utility.numberToWords(n);
+window.setupDragAndDrop = () => UIManager.setupDragAndDrop();
+window.renderItems = () => UIManager.renderItems();
+window.addItem = () => InvoiceEngine.addItem();
+window.deleteItem = (idx) => InvoiceEngine.deleteItem(idx);
+window.clearItems = () => InvoiceEngine.clearItems();
+window.updateItem = (idx, field, val) => InvoiceEngine.updateItem(idx, field, val);
+window.renderPaymentFields = () => PaymentManager.renderPaymentFields();
+window.sync = () => InvoiceEngine.sync();
+window.generateCodes = () => PaymentManager.renderQRCode();
+window.handleQRUpload = (input) => PaymentManager.handleQRUpload(input);
+window.applyBranding = () => UIManager.applyBranding();
+window.handleImageUpload = (input, imgId) => UIManager.handleImageUpload(input, imgId);
+window.generatePDF = () => ExportManager.generatePDF();
+window.printInvoice = () => PrintManager.printInvoice();
+window.exportCSV = () => ExportManager.exportCSV();
+window.exportFullDatabase = () => ExportManager.exportFullDatabase();
+window.importFullDatabase = (e) => ExportManager.importFullDatabase(e);
+window.loadHistory = () => { if(typeof HistoryManager !== 'undefined') HistoryManager.loadHistory(); };
+window.openInvoice = (id) => { if(typeof HistoryManager !== 'undefined') HistoryManager.openInvoice(id); };
+window.moveToTrash = (id) => { if(typeof HistoryManager !== 'undefined') HistoryManager.moveToTrash(id); };
+window.restoreFromTrash = (id) => { if(typeof HistoryManager !== 'undefined') HistoryManager.restoreFromTrash(id); };
+window.deletePermanently = (id) => { if(typeof HistoryManager !== 'undefined') HistoryManager.deletePermanently(id); };
+window.duplicateInvoice = (id) => { if(typeof HistoryManager !== 'undefined') HistoryManager.duplicateInvoice(id); };
+window.saveCustomerProfile = () => { if(typeof EntityManager !== 'undefined') EntityManager.saveCustomerProfile(); };
+window.loadCustomerProfile = () => { if(typeof EntityManager !== 'undefined') EntityManager.loadCustomerProfile(); };
+window.deleteCustomerProfile = () => { if(typeof EntityManager !== 'undefined') EntityManager.deleteCustomerProfile(); };
+window.saveCompanyProfile = () => { if(typeof EntityManager !== 'undefined') EntityManager.saveCompanyProfile(); };
+window.saveNotesTemplate = () => { if(typeof EntityManager !== 'undefined') EntityManager.saveNotesTemplate(); };
+window.savePaymentMethod = () => { if(typeof EntityManager !== 'undefined') EntityManager.savePaymentMethod(); };
+window.saveProductToLibrary = (idx) => { if(typeof EntityManager !== 'undefined') EntityManager.saveProductToLibrary(idx); };
+window.loadProductToItem = () => { if(typeof EntityManager !== 'undefined') EntityManager.loadProductToItem(); };
+window.deleteProduct = () => { if(typeof EntityManager !== 'undefined') EntityManager.deleteProduct(); };
+
+/* ================= SAFE LOGGER FALLBACK ================= */
+const SafeLogger = {
+    info: (msg, data) => { if(typeof Logger !== 'undefined') Logger.info(msg, data); else console.log('INFO:', msg, data || ''); },
+    warn: (msg, data) => { if(typeof Logger !== 'undefined') Logger.warn(msg, data); else console.warn('WARN:', msg, data || ''); },
+    error: (msg, data) => { if(typeof Logger !== 'undefined') Logger.error(msg, data); else console.error('ERROR:', msg, data || ''); }
+};
+
 /* ================= NOTIFICATION MANAGER ================= */
 const NotificationManager = {
     queue: [], isShowing: false,
@@ -40,21 +99,23 @@ const InvoiceEngine = {
 
     generateInvoiceNumber: async () => {  
         const date = new Date(), year = date.getFullYear();  
-        let seq = StorageEngine.getKV('invoice_sequence') || 1;  
+        let seq = (typeof StorageEngine !== 'undefined' ? StorageEngine.getKV('invoice_sequence') : 1) || 1;  
         const invInput = Utility.getEl('f-inv-num');  
         if (invInput) invInput.value = `INV-${year}-${String(seq).padStart(6, '0')}`;  
-        StorageEngine.setKV('invoice_sequence', seq + 1);  
+        if (typeof StorageEngine !== 'undefined') StorageEngine.setKV('invoice_sequence', seq + 1);  
         InvoiceEngine.syncDebounced();  
     },  
 
     addItem: () => {  
+        if (typeof StateManager === 'undefined') return;
         StateManager.items.push({ id: Date.now(), desc: '', notes: '', sku: '', unit: '', qty: '', price: '', tax: '', disc: '', showAdv: false });  
         UIManager.renderItems(); StateManager.saveState();  
     },  
 
     deleteItem: (idx) => {  
+        if (typeof StateManager === 'undefined') return;
         if (StateManager.items.length === 1 && !confirm("This is the last item. Delete?")) return;  
-        else if (StateManager.items.length > 1 && !confirm(I18nManager.t('deleted'))) return;  
+        else if (StateManager.items.length > 1 && typeof I18nManager !== 'undefined' && !confirm(I18nManager.t('deleted'))) return;  
         StateManager.items.splice(idx, 1);  
         if (StateManager.items.length === 0) InvoiceEngine.addItem();  
         else UIManager.renderItems();  
@@ -62,18 +123,25 @@ const InvoiceEngine = {
     },  
 
     clearItems: () => {  
+        if (typeof StateManager === 'undefined') return;
         if(confirm("Clear all items?")) { StateManager.items = []; InvoiceEngine.addItem(); }  
     },  
 
     updateItem: (idx, field, val) => {  
+        if (typeof StateManager === 'undefined') return;
         try {  
-            if (['qty', 'price', 'tax', 'disc'].includes(field) && val !== '') Validator.validateItemBounds(val, field.toUpperCase());  
+            if (['qty', 'price', 'tax', 'disc'].includes(field) && val !== '' && typeof Validator !== 'undefined') Validator.validateItemBounds(val, field.toUpperCase());  
             StateManager.items[idx][field] = val;  
             InvoiceEngine.syncDebounced();  
-        } catch (e) { NotificationManager.show(`${I18nManager.t('validationErr')} ${e.message}`, 'error'); UIManager.renderItems(); }  
+        } catch (e) { 
+            const errLabel = typeof I18nManager !== 'undefined' ? I18nManager.t('validationErr') : 'Validation Error';
+            NotificationManager.show(`${errLabel} ${e.message}`, 'error'); 
+            UIManager.renderItems(); 
+        }  
     },  
 
     saveInvoiceAction: async (status) => {  
+        if (typeof StorageEngine === 'undefined' || typeof StateManager === 'undefined') return;
         UIManager.setLoadingState(true, `Saving Invoice as ${status}...`);  
         try {  
             const invNum = Utility.getVal('f-inv-num') || Utility.generateId();
@@ -92,10 +160,10 @@ const InvoiceEngine = {
             document.querySelectorAll('input, select, textarea').forEach(el => { if (el.id && el.type !== 'file') invoiceData.state.inputs[el.id] = el.type === 'checkbox' ? el.checked : el.value; });  
             
             await StorageEngine.put('invoices', invoiceData);  
-            await HistoryManager.loadHistory();
-            await DashboardManager.updateDashboard(); 
+            if (typeof HistoryManager !== 'undefined') await HistoryManager.loadHistory();
+            if (typeof DashboardManager !== 'undefined') await DashboardManager.updateDashboard(); 
             NotificationManager.show(`Invoice ${status} Saved Successfully`, 'success');  
-        } catch (e) { Logger.error(e); NotificationManager.show('Failed to save invoice', 'error'); }  
+        } catch (e) { SafeLogger.error(e); NotificationManager.show('Failed to save invoice', 'error'); }  
         finally { UIManager.setLoadingState(false); }  
     },  
 
@@ -115,8 +183,12 @@ const InvoiceEngine = {
             });  
 
             const currParts = Utility.getVal('f-currency').split('|');  
-            StateManager.currencyCode = currParts[0] || AppConfig.defaultCurrencyCode;  
-            StateManager.currencySym = currParts[1] || AppConfig.defaultCurrencySym;  
+            const defCode = typeof AppConfig !== 'undefined' ? AppConfig.defaultCurrencyCode : 'USD';
+            const defSym = typeof AppConfig !== 'undefined' ? AppConfig.defaultCurrencySym : '$';
+            if (typeof StateManager !== 'undefined') {
+                StateManager.currencyCode = currParts[0] || defCode;  
+                StateManager.currencySym = currParts[1] || defSym;  
+            }
 
             if (Utility.getEl('out-date')) Utility.getEl('out-date').textContent = Utility.formatDate(Utility.getVal('f-date'));  
             if (Utility.getEl('out-due')) Utility.getEl('out-due').textContent = Utility.formatDate(Utility.getVal('f-due'));  
@@ -153,11 +225,16 @@ const InvoiceEngine = {
 
             let tbody = Utility.getEl('out-items-body'), subtotal = 0;  
             if(tbody) DOM.clear(tbody);  
-            let hasItemTaxDisc = StateManager.items.some(i => (Number(i.tax) || 0) > 0 || (Number(i.disc) || 0) > 0);  
+            
+            let currentItems = typeof StateManager !== 'undefined' ? StateManager.items : [];
+            let cSym = typeof StateManager !== 'undefined' ? StateManager.currencySym : '$';
+            let cCode = typeof StateManager !== 'undefined' ? StateManager.currencyCode : 'USD';
+
+            let hasItemTaxDisc = currentItems.some(i => (Number(i.tax) || 0) > 0 || (Number(i.disc) || 0) > 0);  
             if (Utility.getEl('th-tax')) Utility.getEl('th-tax').style.display = hasItemTaxDisc ? 'table-cell' : 'none';  
 
             const tbFrag = document.createDocumentFragment();  
-            StateManager.items.forEach(it => {  
+            currentItems.forEach(it => {  
                 let q = Number(it.qty) || 0, p = Number(it.price) || 0, t = Number(it.tax) || 0, d = Number(it.disc) || 0;  
                 let baseTotal = q * p, finalTotal = baseTotal - d + ((baseTotal - d) * (t / 100));  
                 subtotal += finalTotal;  
@@ -170,35 +247,38 @@ const InvoiceEngine = {
                     if (it.sku || it.unit) tdDetails.appendChild(DOM.create('span', { className: 'td-item-meta', style: { display: 'block', fontSize: '11px', color: '#94a3b8' } }, [`SKU: ${it.sku||'N/A'} | Unit: ${it.unit||'N/A'}`]));  
                     tr.appendChild(tdDetails);  
                     tr.appendChild(DOM.create('td', { className: 'center' }, [q.toString()]));  
-                    tr.appendChild(DOM.create('td', { className: 'right' }, [`${StateManager.currencySym}${Utility.formatCurrency(p)}`]));  
+                    tr.appendChild(DOM.create('td', { className: 'right' }, [`${cSym}${Utility.formatCurrency(p)}`]));  
                       
                     if (hasItemTaxDisc) {  
                         const tdMeta = DOM.create('td', { className: 'right', style: { color: '#64748B' } });  
-                        if (d > 0) tdMeta.appendChild(document.createTextNode(`-${StateManager.currencySym}${d} `));  
+                        if (d > 0) tdMeta.appendChild(document.createTextNode(`-${cSym}${d} `));  
                         if (t > 0) tdMeta.appendChild(document.createTextNode(`+${t}%`));  
                         tr.appendChild(tdMeta);  
                     }  
-                    tr.appendChild(DOM.create('td', { className: 'right', style: { fontWeight: '600' } }, [`${StateManager.currencySym}${Utility.formatCurrency(finalTotal)}`]));  
+                    tr.appendChild(DOM.create('td', { className: 'right', style: { fontWeight: '600' } }, [`${cSym}${Utility.formatCurrency(finalTotal)}`]));  
                     tbFrag.appendChild(tr);  
                 }  
             });  
             if (tbody) tbody.appendChild(tbFrag);  
 
             let gDiscType = Utility.getVal('f-disc-type'), gDiscVal = Number(Utility.getVal('f-disc-val')) || 0, gTax = Number(Utility.getVal('f-global-tax')) || 0;  
-            try { Validator.validateDiscount(gDiscVal, subtotal, gDiscType === 'percent'); } catch(e) { gDiscVal = 0; Utility.getEl('f-disc-val').value = '0'; NotificationManager.show(e.message, 'warning'); }  
+            if (typeof Validator !== 'undefined') {
+                try { Validator.validateDiscount(gDiscVal, subtotal, gDiscType === 'percent'); } catch(e) { gDiscVal = 0; Utility.getEl('f-disc-val').value = '0'; NotificationManager.show(e.message, 'warning'); }  
+            }
 
             let discAmt = gDiscType === 'percent' ? subtotal * (gDiscVal/100) : gDiscVal, afterDisc = subtotal - discAmt, taxAmt = afterDisc * (gTax/100), grandTotal = afterDisc + taxAmt;  
 
-            if (Utility.getEl('out-subtotal')) Utility.getEl('out-subtotal').textContent = `${StateManager.currencySym}${Utility.formatCurrency(subtotal)}`;  
+            if (Utility.getEl('out-subtotal')) Utility.getEl('out-subtotal').textContent = `${cSym}${Utility.formatCurrency(subtotal)}`;  
             if (Utility.getEl('wrap-global-disc')) Utility.getEl('wrap-global-disc').style.display = discAmt > 0 ? 'flex' : 'none';  
-            if (Utility.getEl('out-global-disc')) Utility.getEl('out-global-disc').textContent = `-${StateManager.currencySym}${Utility.formatCurrency(discAmt)}`;  
+            if (Utility.getEl('out-global-disc')) Utility.getEl('out-global-disc').textContent = `-${cSym}${Utility.formatCurrency(discAmt)}`;  
             if (Utility.getEl('wrap-global-tax')) Utility.getEl('wrap-global-tax').style.display = taxAmt > 0 ? 'flex' : 'none';  
-            if (Utility.getEl('out-global-tax')) Utility.getEl('out-global-tax').textContent = `${StateManager.currencySym}${Utility.formatCurrency(taxAmt)}`;  
-            if (Utility.getEl('out-grand')) Utility.getEl('out-grand').textContent = `${StateManager.currencySym}${Utility.formatCurrency(grandTotal)}`;  
-            if (Utility.getEl('out-words')) Utility.getEl('out-words').textContent = Utility.numberToWords(grandTotal) + ` ${StateManager.currencyCode}`;  
+            if (Utility.getEl('out-global-tax')) Utility.getEl('out-global-tax').textContent = `${cSym}${Utility.formatCurrency(taxAmt)}`;  
+            if (Utility.getEl('out-grand')) Utility.getEl('out-grand').textContent = `${cSym}${Utility.formatCurrency(grandTotal)}`;  
+            if (Utility.getEl('out-words')) Utility.getEl('out-words').textContent = Utility.numberToWords(grandTotal) + ` ${cCode}`;  
 
-            PaymentManager.renderQRCode(); StateManager.saveState();  
-        } catch (error) { Logger.error('Sync failed:', error); }  
+            if (typeof PaymentManager !== 'undefined') PaymentManager.renderQRCode(); 
+            if (typeof StateManager !== 'undefined') StateManager.saveState();  
+        } catch (error) { SafeLogger.error('Sync failed:', error); }  
     }
 };
 InvoiceEngine.syncDebounced = Utility.debounce(InvoiceEngine.sync, 150);
@@ -206,6 +286,7 @@ InvoiceEngine.syncDebounced = Utility.debounce(InvoiceEngine.sync, 150);
 /* ================= DASHBOARD & ANALYTICS MANAGER ================= */
 const DashboardManager = {
     updateDashboard: async () => {
+        if (typeof StorageEngine === 'undefined') return;
         try {
             const invoices = await StorageEngine.getAll('invoices');
             let totalRev = 0, paidRev = 0, pendingRev = 0, overdueRev = 0, monthlyRev = 0;
@@ -236,7 +317,7 @@ const DashboardManager = {
             bind('dash-overdue-rev', Utility.formatCurrency(overdueRev)); bind('dash-count-total', countTotal);
             bind('dash-count-draft', countDraft); bind('dash-count-paid', countPaid);
             bind('dash-count-pending', countPending); bind('dash-count-overdue', countOverdue);
-        } catch(e) { Logger.warn("Dashboard update skipped", e); }
+        } catch(e) { SafeLogger.warn("Dashboard update skipped", e); }
     }
 };
 
@@ -249,8 +330,12 @@ const UIManager = {
         if (event && event.target) event.target.classList.add('active');
         const s = Utility.getEl('app-sidebar'); if (s) s.classList.remove('hidden');
     },
-    toggleDarkMode: async () => { const isDark = document.body.classList.toggle('dark-mode'); await StorageEngine.setKV('theme_dark', isDark); },
+    toggleDarkMode: async () => { 
+        const isDark = document.body.classList.toggle('dark-mode'); 
+        if (typeof StorageEngine !== 'undefined') await StorageEngine.setKV('theme_dark', isDark); 
+    },
     loadThemePersistence: async () => {
+        if (typeof StorageEngine === 'undefined') return;
         if (StorageEngine.getKV('theme_dark')) document.body.classList.add('dark-mode');
         const branding = StorageEngine.getKV('theme_branding');
         if (branding) {
@@ -260,14 +345,16 @@ const UIManager = {
     },
     setupDragAndDrop: () => {
         const container = Utility.getEl('items-container');
-        if (!container || typeof Sortable === 'undefined') return;
-        new Sortable(container, { handle: '.drag-handle', animation: AppConfig.animationDuration, ghostClass: 'drag-ghost', delay: 150, delayOnTouchOnly: true, onEnd: function (evt) {
+        if (!container || typeof Sortable === 'undefined' || typeof StateManager === 'undefined') return;
+        const animDuration = typeof AppConfig !== 'undefined' ? AppConfig.animationDuration : 200;
+        new Sortable(container, { handle: '.drag-handle', animation: animDuration, ghostClass: 'drag-ghost', delay: 150, delayOnTouchOnly: true, onEnd: function (evt) {
             const moved = StateManager.items.splice(evt.oldIndex, 1)[0]; StateManager.items.splice(evt.newIndex, 0, moved); UIManager.renderItems(); StateManager.saveState();
         }});
     },
     renderItems: () => {
         const cont = Utility.getEl('items-container'); if (!cont) return;
         DOM.clear(cont); const frag = document.createDocumentFragment();
+        if (typeof StateManager === 'undefined') return;
 
         StateManager.items.forEach((it, idx) => {  
             let q = Number(it.qty) || 0, p = Number(it.price) || 0, t = Number(it.tax) || 0, d = Number(it.disc) || 0, total = (q * p) - d + ((q * p - d) * (t/100));  
@@ -282,7 +369,7 @@ const UIManager = {
             const priceInput = DOM.create('input', { type: 'number', className: 'input-control', style: { width: '100px' }, placeholder: 'Price', value: it.price, oninput: (e) => InvoiceEngine.updateItem(idx, 'price', e.target.value) });  
               
             const btnAdv = DOM.create('button', { className: 'btn btn-icon', title: 'Edit Advanced', 'aria-label': 'Toggle Advanced', onclick: () => { StateManager.items[idx].showAdv = !it.showAdv; UIManager.renderItems(); } }, [DOM.create('i', { className: 'fa-solid fa-sliders' })]);  
-            const btnLib = DOM.create('button', { className: 'btn btn-icon text-primary', title: 'Save to Product Library', onclick: () => EntityManager.saveProductToLibrary(idx) }, [DOM.create('i', { className: 'fa-solid fa-bookmark' })]);  
+            const btnLib = DOM.create('button', { className: 'btn btn-icon text-primary', title: 'Save to Product Library', onclick: () => { if(typeof EntityManager !== 'undefined') EntityManager.saveProductToLibrary(idx); } }, [DOM.create('i', { className: 'fa-solid fa-bookmark' })]);  
             const btnDel = DOM.create('button', { className: 'btn btn-icon btn-danger', title: 'Delete Item', onclick: () => InvoiceEngine.deleteItem(idx) }, [DOM.create('i', { className: 'fa-solid fa-trash' })]);  
             const btnGroup = DOM.create('div', { style: { display: 'flex', gap: '4px' } }, [btnAdv, btnLib, btnDel]);  
 
@@ -312,11 +399,12 @@ const UIManager = {
         const c = Utility.getVal('b-color'), f = Utility.getVal('b-font');  
         if (c) document.documentElement.style.setProperty('--inv-color', c);  
         if (f) document.documentElement.style.setProperty('--inv-font', f);  
-        await StorageEngine.setKV('theme_branding', { color: c, font: f }); StateManager.saveState();  
+        if (typeof StorageEngine !== 'undefined') await StorageEngine.setKV('theme_branding', { color: c, font: f }); 
+        if (typeof StateManager !== 'undefined') StateManager.saveState();  
     },  
 
     handleImageUpload: (input, imgId) => {  
-        if (input.files && input.files[0]) {  
+        if (input.files && input.files[0] && typeof StateManager !== 'undefined') {  
             const reader = new FileReader();  
             reader.onload = function(e) {  
                 const key = imgId.replace('img-', '');
@@ -335,7 +423,7 @@ const UIManager = {
         }  
     },  
 
-    setLoadingState: (isLoading, text = I18nManager.t('loading')) => {  
+    setLoadingState: (isLoading, text = 'Loading...') => {  
         let overlay = Utility.getEl('enterprise-loading-overlay');  
         if (isLoading) {  
             if (!overlay) {  
@@ -370,21 +458,21 @@ const PaymentManager = {
         else if (method === 'easypaisa') { frag.appendChild(createGroup('Account Title', 'p-mobi-name')); frag.appendChild(createGroup('Mobile Number', 'p-mobi-no')); }  
         else if (method === 'custom') frag.appendChild(createGroup('Custom Instructions', 'p-custom', 'textarea', '', true));  
 
-        if(method) {  
+        if(method && typeof EntityManager !== 'undefined') {  
             const saveBtn = DOM.create('button', { className: 'btn btn-outline', style: { marginTop: '10px' }, onclick: EntityManager.savePaymentMethod }, [DOM.create('i', { className: 'fa-solid fa-save' }), ' Save this Payment Template']);  
             frag.appendChild(DOM.create('div', { className: 'form-group full' }, [saveBtn]));  
         }  
         container.appendChild(frag); InvoiceEngine.syncDebounced();  
     },  
     handleQRUpload: (input) => {  
-        if (input.files && input.files[0]) {  
+        if (input.files && input.files[0] && typeof StateManager !== 'undefined') {  
             const reader = new FileReader();  
             reader.onload = function(e) { StateManager.uploadedQRImage = e.target.result; PaymentManager.renderQRCode(); StateManager.saveState(); };  
             reader.readAsDataURL(input.files[0]);  
         }  
     },  
     renderQRCode: () => {  
-        const qrContainer = Utility.getEl('qrcode'); if (!qrContainer) return; DOM.clear(qrContainer);  
+        const qrContainer = Utility.getEl('qrcode'); if (!qrContainer || typeof StateManager === 'undefined') return; DOM.clear(qrContainer);  
         if (StateManager.uploadedQRImage) qrContainer.appendChild(DOM.create('img', { src: StateManager.uploadedQRImage, alt: 'Payment QR', style: { maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '4px' } }));  
     }
 };
@@ -443,15 +531,17 @@ const ExportManager = {
                 NotificationManager.show('Offline Mode: Using Native Browser PDF Engine', 'info');
                 PrintManager.printInvoice(); 
             }
-        } catch (error) { Logger.error(error); NotificationManager.show('Failed to generate PDF.', 'error'); }
+        } catch (error) { SafeLogger.error(error); NotificationManager.show('Failed to generate PDF.', 'error'); }
         finally { UIManager.setLoadingState(false); }
     },
 
     exportFullDatabase: async () => {  
+        if (typeof StorageEngine === 'undefined') return;
         UIManager.setLoadingState(true, 'Generating Complete System Backup...');
         try {
+            const ver = typeof AppConfig !== 'undefined' ? AppConfig.version : '1.0.0';
             const data = { 
-                version: AppConfig.version, 
+                version: ver, 
                 timestamp: new Date().toISOString(), 
                 database: {
                     invoices: await StorageEngine.getAll('invoices'),
@@ -466,11 +556,12 @@ const ExportManager = {
             const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `Enterprise_SaaS_Backup_${Date.now()}.json`;  
             link.click(); URL.revokeObjectURL(link.href);  
             NotificationManager.show('Complete Backup Exported', 'success');  
-        } catch (error) { Logger.error(error); NotificationManager.show('Backup failed.', 'error'); }
+        } catch (error) { SafeLogger.error(error); NotificationManager.show('Backup failed.', 'error'); }
         finally { UIManager.setLoadingState(false); }
     },  
 
     importFullDatabase: async (event) => {
+        if (typeof StorageEngine === 'undefined') return;
         const file = event.target.files[0];
         if (!file) return;
         const reader = new FileReader();
@@ -488,17 +579,18 @@ const ExportManager = {
                             for (const item of db[store]) { await StorageEngine.put(store, item); }
                         }
                     }
-                    await HistoryManager.loadHistory();
-                    await DashboardManager.updateDashboard();
+                    if (typeof HistoryManager !== 'undefined') await HistoryManager.loadHistory();
+                    if (typeof DashboardManager !== 'undefined') await DashboardManager.updateDashboard();
                     NotificationManager.show('System Fully Restored', 'success');
                 }
-            } catch (err) { Logger.error(err); NotificationManager.show('Backup validation failed.', 'error'); }
+            } catch (err) { SafeLogger.error(err); NotificationManager.show('Backup validation failed.', 'error'); }
             finally { UIManager.setLoadingState(false); event.target.value = ''; }
         };
         reader.readAsText(file);
     },
 
     exportCSV: () => {  
+        if (typeof StateManager === 'undefined') return;
         let csvContent = "data:text/csv;charset=utf-8,Description,Notes,SKU,Unit,Qty,Price,Tax,Discount,Total\n";  
         StateManager.items.forEach(it => {  
             let q = Number(it.qty) || 0, p = Number(it.price) || 0, t = Number(it.tax) || 0, d = Number(it.disc) || 0, total = (q * p) - d + ((q * p - d) * (t/100));  
@@ -513,7 +605,7 @@ const ExportManager = {
 
     mailInvoice: () => {  
         const email = Utility.getVal('cli-email');  
-        if (email && !Validator.isEmail(email)) return NotificationManager.show("Invalid client email address.", "warning");  
+        if (email && typeof Validator !== 'undefined' && !Validator.isEmail(email)) return NotificationManager.show("Invalid client email address.", "warning");  
         const invNum = Utility.getVal('f-inv-num') || 'Invoice', total = Utility.getEl('out-grand')?.textContent || '0.00';  
         window.location.href = `mailto:${email}?subject=${encodeURIComponent(`New Invoice: ${invNum}`)}&body=${encodeURIComponent(`Hello,\n\nPlease find attached details for invoice ${invNum}. Total due: ${total}.\n\nThank you.`)}`;  
         NotificationManager.show("Opening Mail Client...", "success");  
@@ -521,12 +613,13 @@ const ExportManager = {
 
     shareInvoice: async () => {  
         const shareData = `Invoice ${Utility.getVal('f-inv-num')} - Total: ${Utility.getEl('out-grand')?.textContent}`;  
+        const copyLabel = typeof I18nManager !== 'undefined' ? I18nManager.t('copied') : 'Copied to clipboard';
         try {  
-            if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(shareData); NotificationManager.show(I18nManager.t('copied'), "success"); }   
+            if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(shareData); NotificationManager.show(copyLabel, "success"); }   
             else throw new Error("Clipboard API not supported");  
         } catch (err) {  
             const textArea = document.createElement("textarea"); textArea.value = shareData; document.body.appendChild(textArea); textArea.focus(); textArea.select();  
-            try { document.execCommand('copy'); NotificationManager.show(I18nManager.t('copied'), "success"); } catch (e) { NotificationManager.show('Failed to copy', "error"); }  
+            try { document.execCommand('copy'); NotificationManager.show(copyLabel, "success"); } catch (e) { NotificationManager.show('Failed to copy', "error"); }  
             document.body.removeChild(textArea);  
         }  
     }
@@ -537,8 +630,8 @@ document.addEventListener('keydown', (e) => {
     if (e.ctrlKey || e.metaKey) {
         switch (e.key.toLowerCase()) {
             case 's': e.preventDefault(); UIManager.saveDraft(); break;
-            case 'z': e.preventDefault(); if (e.shiftKey) StateManager.redo(); else StateManager.undo(); break;
-            case 'y': e.preventDefault(); StateManager.redo(); break;
+            case 'z': e.preventDefault(); if (typeof StateManager !== 'undefined') { if (e.shiftKey) StateManager.redo(); else StateManager.undo(); } break;
+            case 'y': e.preventDefault(); if (typeof StateManager !== 'undefined') StateManager.redo(); break;
             case 'p': e.preventDefault(); ExportManager.generatePDF(); break;
         }
     }
@@ -547,14 +640,18 @@ document.addEventListener('keydown', (e) => {
 /* ================= INITIALIZATION BOOTSTRAP ================= */
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        Logger.info(`${AppConfig.appName} Boot Sequence v${AppConfig.version}`);
+        const appName = typeof AppConfig !== 'undefined' ? AppConfig.appName : 'SaaS Invoice Pro';
+        const appVer = typeof AppConfig !== 'undefined' ? AppConfig.version : '1.0.0';
+        const debugMode = typeof AppConfig !== 'undefined' ? AppConfig.debugMode : false;
+
+        SafeLogger.info(`${appName} Boot Sequence v${appVer}`);
         UIManager.setLoadingState(true, 'Initializing Enterprise Architecture...');
 
-        if ('serviceWorker' in navigator && !AppConfig.debugMode) {
-            navigator.serviceWorker.register('/sw.js').then(reg => Logger.info('Service Worker Registered')).catch(err => Logger.warn('Service Worker Failed', err));
+        if ('serviceWorker' in navigator && !debugMode) {
+            navigator.serviceWorker.register('/sw.js').then(reg => SafeLogger.info('Service Worker Registered')).catch(err => SafeLogger.warn('Service Worker Failed', err));
         }
 
-        await StorageEngine.init();  
+        if (typeof StorageEngine !== 'undefined') await StorageEngine.init();  
         const dateEl = Utility.getEl('f-date'); if (dateEl) dateEl.valueAsDate = new Date();  
         
         await UIManager.loadThemePersistence();  
@@ -570,78 +667,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         UIManager.renderItems();  
         InvoiceEngine.sync();   
           
-        await HistoryManager.loadHistory();
-        await DashboardManager.updateDashboard();
-        await StateManager.recoverDraft();  
-        StateManager.saveState();  
+        if (typeof HistoryManager !== 'undefined') await HistoryManager.loadHistory();
+        if (typeof DashboardManager !== 'undefined') await DashboardManager.updateDashboard();
+        if (typeof StateManager !== 'undefined') await StateManager.recoverDraft();  
+        if (typeof StateManager !== 'undefined') StateManager.saveState();  
 
         const bindFilter = (id, func) => { const el = Utility.getEl(id); if (el) el.addEventListener('input', func); };
         
-        bindFilter('history-search', HistoryManager.renderHistoryTable);
-        bindFilter('history-status-filter', HistoryManager.renderHistoryTable);
-        bindFilter('history-sort', HistoryManager.renderHistoryTable);
-        bindFilter('draft-search', HistoryManager.renderDraftsTable);
-        bindFilter('draft-sort', HistoryManager.renderDraftsTable);
-        bindFilter('final-search', HistoryManager.renderFinalsTable);
-        bindFilter('final-status-filter', HistoryManager.renderFinalsTable);
-        bindFilter('final-sort', HistoryManager.renderFinalsTable);
+        if (typeof HistoryManager !== 'undefined') {
+            bindFilter('history-search', HistoryManager.renderHistoryTable);
+            bindFilter('history-status-filter', HistoryManager.renderHistoryTable);
+            bindFilter('history-sort', HistoryManager.renderHistoryTable);
+            bindFilter('draft-search', HistoryManager.renderDraftsTable);
+            bindFilter('draft-sort', HistoryManager.renderDraftsTable);
+            bindFilter('final-search', HistoryManager.renderFinalsTable);
+            bindFilter('final-status-filter', HistoryManager.renderFinalsTable);
+            bindFilter('final-sort', HistoryManager.renderFinalsTable);
+        }
           
         UIManager.setLoadingState(false);  
     } catch (error) {  
         UIManager.setLoadingState(false);  
-        Logger.error('Critical failure during initialization sequence:', error);  
+        SafeLogger.error('Critical failure during initialization sequence:', error);  
         if (typeof NotificationManager !== 'undefined') NotificationManager.show('System Boot Failure. Check console.', 'error');  
     }
 });
-
-/* ================= GLOBAL PROXY BINDINGS (FIXED: ALL BUTTONS WILL WORK NOW) ================= */
-window.toggleSidebar = UIManager.toggleSidebar;
-window.switchTab = UIManager.switchTab;
-window.toggleDarkMode = UIManager.toggleDarkMode;
-window.showToast = NotificationManager.show;
-window.setLanguage = I18nManager.setLanguage;
-window.saveDraft = UIManager.saveDraft;
-window.saveFinal = UIManager.saveFinal;
-window.markPaid = UIManager.markPaid;
-window.mailInvoice = ExportManager.mailInvoice;
-window.shareInvoice = ExportManager.shareInvoice;
-window.saveState = StateManager.saveState;
-window.undo = StateManager.undo;
-window.redo = StateManager.redo;
-window.restoreState = StateManager.restoreState;
-window.autoCalcDueDate = InvoiceEngine.autoCalcDueDate;
-window.generateInvoiceNumber = InvoiceEngine.generateInvoiceNumber;
-window.formatDate = Utility.formatDate;
-window.numberToWords = Utility.numberToWords;
-window.setupDragAndDrop = UIManager.setupDragAndDrop;
-window.renderItems = UIManager.renderItems;
-window.addItem = InvoiceEngine.addItem;
-window.deleteItem = InvoiceEngine.deleteItem;
-window.clearItems = InvoiceEngine.clearItems;
-window.updateItem = InvoiceEngine.updateItem;
-window.renderPaymentFields = PaymentManager.renderPaymentFields;
-window.sync = InvoiceEngine.sync;
-window.generateCodes = PaymentManager.renderQRCode;
-window.handleQRUpload = PaymentManager.handleQRUpload;
-window.applyBranding = UIManager.applyBranding;
-window.handleImageUpload = UIManager.handleImageUpload;
-window.generatePDF = ExportManager.generatePDF;
-window.printInvoice = PrintManager.printInvoice;
-window.exportCSV = ExportManager.exportCSV;
-window.exportFullDatabase = ExportManager.exportFullDatabase;
-window.importFullDatabase = ExportManager.importFullDatabase;
-window.loadHistory = HistoryManager.loadHistory;
-window.openInvoice = HistoryManager.openInvoice;
-window.moveToTrash = HistoryManager.moveToTrash;
-window.restoreFromTrash = HistoryManager.restoreFromTrash;
-window.deletePermanently = HistoryManager.deletePermanently;
-window.duplicateInvoice = HistoryManager.duplicateInvoice;
-window.saveCustomerProfile = EntityManager.saveCustomerProfile;
-window.loadCustomerProfile = EntityManager.loadCustomerProfile;
-window.deleteCustomerProfile = EntityManager.deleteCustomerProfile;
-window.saveCompanyProfile = EntityManager.saveCompanyProfile;
-window.saveNotesTemplate = EntityManager.saveNotesTemplate;
-window.savePaymentMethod = EntityManager.savePaymentMethod;
-window.saveProductToLibrary = EntityManager.saveProductToLibrary;
-window.loadProductToItem = EntityManager.loadProductToItem;
-window.deleteProduct = EntityManager.deleteProduct;
