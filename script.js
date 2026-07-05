@@ -888,7 +888,7 @@ const UIManager = {
             }  
             document.body.style.overflow = 'hidden'; document.querySelectorAll('button').forEach(b => b.disabled = true);  
         } else {  
-            if (overlay) document.body.removeChild(overlay);  
+              if (overlay) overlay.remove();
             document.body.style.overflow = ''; document.querySelectorAll('button').forEach(b => b.disabled = false);  
         }  
     }
