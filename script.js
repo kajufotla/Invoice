@@ -1,5 +1,4 @@
 /**
-
 ============================================================================
 
 ENTERPRISE INVOICE SaaS ENGINE (v3.0.0 - Production Ready)
@@ -31,16 +30,16 @@ storagePrefix: 'erp_inv_v3_'
 
 /* ================= UTILITIES & LOGGING ================= */
 const Logger = {
-info: (msg, ...args) => { if (AppConfig.debugMode) console.info([INFO] ${msg}, ...args); },
-warn: (msg, ...args) => { if (AppConfig.debugMode) console.warn([WARN] ${msg}, ...args); },
-error: (msg, ...args) => { console.error([ERROR] ${msg}, ...args); }
+info: (msg, ...args) => { if (AppConfig.debugMode) console.info(`[INFO] ${msg}`, ...args); },
+warn: (msg, ...args) => { if (AppConfig.debugMode) console.warn(`[WARN] ${msg}`, ...args); },
+error: (msg, ...args) => { console.error(`[ERROR] ${msg}`, ...args); }
 };
 
 const Sanitizer = {
 escapeHTML: (str) => {
 if (typeof str !== 'string') return str;
 return str.replace(/[&<>'"]/g, tag => ({
-'&': '&', '<': '<', '>': '>', "'": ''', '"': '"'
+'&': '&', '<': '<', '>': '>', "'": '&#39;', '"': '&quot;'
 }[tag]));
 },
 sanitizeObject: (obj) => {
@@ -106,7 +105,7 @@ numInt = Math.floor(numInt / 1000);
 scaleIdx++;
 }
 }
-return word.trim() + (decimal > 0 ?  and ${decimal}/100 : '') + ' Only';
+return word.trim() + (decimal > 0 ? ` and ${decimal}/100` : '') + ' Only';
 }
 };
 
@@ -125,7 +124,7 @@ if (!I18nManager.dictionaries[lang]) return;
 I18nManager.currentLang = lang;
 document.documentElement.lang = lang;
 document.documentElement.dir = I18nManager.dictionaries[lang].dir;
-NotificationManager.show(Language changed to ${lang.toUpperCase()}, 'info');
+NotificationManager.show(`Language changed to ${lang.toUpperCase()}`, 'info');
 }
 };
 
@@ -152,15 +151,15 @@ return el;
 clear: (element) => { if (element) while (element.firstChild) element.removeChild(element.firstChild); }
 };
 
-/* ================= VALIDATION ENGINE ================= /
+/* ================= VALIDATION ENGINE ================= */
 const Validator = {
-isEmail: (email) => /^[^\s@]+@[^\s@]+.[^\s@]+$/.test(email),
-isURL: (url) => /^(https?://)?([\w\d-]+.)+[\w\d]{2,}(/.)?$/.test(url),
-isPhone: (phone) => /^[\d\s+-]+$/.test(phone),
+isEmail: (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+isURL: (url) => /^(https?:\/\/)?([\w\d-]+\.)+[\w\d]{2,}(\/.*)?$/.test(url),
+isPhone: (phone) => /^[\d\s+\-\(\)]+$/.test(phone),
 isNumeric: (val) => !isNaN(parseFloat(val)) && isFinite(val),
 isWallet: (address) => /^[a-zA-Z0-9]{26,62}$/.test(address),
 isIBAN: (iban) => /^[A-Z]{2}[0-9]{2}[a-zA-Z0-9]{11,30}$/.test(iban.replace(/\s/g, '')),
-validateItemBounds: (val, fieldName) => { if (parseFloat(val) < 0) throw new Error(${fieldName} cannot be negative.); return true; },
+validateItemBounds: (val, fieldName) => { if (parseFloat(val) < 0) throw new Error(`${fieldName} cannot be negative.`); return true; },
 validateDiscount: (discount, subtotal, isPercent) => {
 const d = parseFloat(discount) || 0;
 if (d < 0) throw new Error('Discount cannot be negative.');
@@ -684,7 +683,7 @@ const PaymentManager = {
 renderPaymentFields: () => {
 const method = Utility.getVal('p-method'), container = Utility.getEl('payment-dynamic-fields');
 if (!container) return; DOM.clear(container); const frag = document.createDocumentFragment();
-const createGroup = (label, id, type = 'text', placeholder = '', isFull = false) => DOM.create('div', { className: form-group${isFull ? ' full' : ''} }, [DOM.create('label', {}, [label]), DOM.create(type === 'textarea' ? 'textarea' : 'input', { type: type !== 'textarea' ? type : undefined, className: 'input-control', id, placeholder, rows: type === 'textarea' ? '4' : undefined, oninput: InvoiceEngine.syncDebounced })]);
+const createGroup = (label, id, type = 'text', placeholder = '', isFull = false) => DOM.create('div', { className: `form-group${isFull ? ' full' : ''}` }, [DOM.create('label', {}, [label]), DOM.create(type === 'textarea' ? 'textarea' : 'input', { type: type !== 'textarea' ? type : undefined, className: 'input-control', id, placeholder, rows: type === 'textarea' ? '4' : undefined, oninput: InvoiceEngine.syncDebounced })]);
 
 if (method === 'bank') { frag.appendChild(createGroup('Bank Name', 'p-bank', 'text', '', true)); frag.appendChild(createGroup('Account Name', 'p-accname')); frag.appendChild(createGroup('Account Number', 'p-accno')); frag.appendChild(createGroup('Routing / IBAN', 'p-iban')); frag.appendChild(createGroup('SWIFT / BIC', 'p-swift')); }  
     else if (method === 'paypal') frag.appendChild(createGroup('PayPal Email / Link', 'p-paypal', 'text', 'paypal.me/username', true));  
@@ -724,7 +723,7 @@ const element = Utility.getEl('invoice-render'); if (!element) return Notificati
 const invNum = Utility.getVal('f-inv-num') || 'Invoice', client = Utility.getVal('cli-name') || 'Client';
 UIManager.setLoadingState(true, 'Generating Enterprise PDF...');
 try {
-const opt = { margin: [0, 0, 0, 0], filename: ${invNum}_${client}.pdf.replace(/[^a-z0-9_-]/gi, '_'), image: { type: 'jpeg', quality: 1.0 }, html2canvas: { scale: 4, useCORS: true, logging: false, letterRendering: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['css', 'legacy'] } };
+const opt = { margin: [0, 0, 0, 0], filename: `${invNum}_${client}.pdf`.replace(/[^a-z0-9_-]/gi, '_'), image: { type: 'jpeg', quality: 1.0 }, html2canvas: { scale: 4, useCORS: true, logging: false, letterRendering: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['css', 'legacy'] } };
 if (typeof html2pdf === 'undefined') throw new Error('html2pdf not loaded.');
 await html2pdf().set(opt).from(element).save();
 NotificationManager.show('PDF exported successfully.', 'success');
@@ -790,7 +789,7 @@ case 'p': e.preventDefault(); ExportManager.generatePDF(); break;
 /* ================= INITIALIZATION BOOTSTRAP ================= */
 document.addEventListener('DOMContentLoaded', async () => {
 try {
-Logger.info(${AppConfig.appName} Boot Sequence v${AppConfig.version});
+Logger.info(`${AppConfig.appName} Boot Sequence v${AppConfig.version}`);
 UIManager.setLoadingState(true, 'Initializing Enterprise Architecture...');
 
 // 1. Initialize IndexedDB  
