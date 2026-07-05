@@ -19,133 +19,199 @@ export async function checkPublicInvoice() {
             if (docSnap.exists()) {
                 const publicData = docSnap.data();
                 document.body.innerHTML = '';
-                document.body.className = 'bg-slate-50 flex justify-center py-12 font-sans antialiased text-slate-800';
+                document.body.style.backgroundColor = '#eef2f3';
 
-                // Inject specific print and page-break styles for premium multi-page support  
+                // 100% Exact CSS matched with the image layout
                 const styleEl = document.createElement('style');  
                 styleEl.innerHTML = `  
+                    :root {
+                        --primary-color: #3F3DBC;
+                        --border-color: #D1D5DB;
+                        --box-border: #9389f5;
+                        --box-bg: #f9f9ff;
+                        --text-color: #1F2937;
+                        --green-color: #10B981;
+                    }
+                    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+                    
+                    .invoice-container {
+                        background: #ffffff; width: 210mm; min-height: 297mm; margin: 20px auto; 
+                        padding: 20mm 15mm; box-shadow: 0 0 20px rgba(0,0,0,0.05); position: relative;
+                    }
+                    .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+                    .header-left { display: flex; align-items: flex-start; gap: 15px; }
+                    .logo-placeholder { width: 120px; height: 120px; border: 1.5px solid var(--box-border); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #9CA3AF; font-weight: bold; overflow: hidden; background: #fff; }
+                    .logo-placeholder img { width: 100%; height: 100%; object-fit: contain; }
+                    .company-details h1 { color: var(--primary-color); font-size: 24px; margin: 0 0 8px 0; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+                    .company-details p { margin: 2px 0; font-size: 13px; color: #4B5563; }
+                    .header-right { text-align: right; }
+                    .invoice-title { color: var(--primary-color); font-size: 42px; font-weight: 800; margin: 0; letter-spacing: 1px; line-height: 1; }
+                    .invoice-num { font-size: 18px; font-weight: 700; margin: 10px 0 5px 0; color: #1F2937; }
+                    .status-badge { display: inline-block; background-color: #E0E7FF; color: var(--primary-color); padding: 4px 12px; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 15px; }
+                    .dates-info p { margin: 4px 0; font-size: 13px; font-weight: 600; color: #374151; }
+                    .dates-info span { font-weight: 700; color: var(--primary-color); }
+                    .divider-line { border-top: 2px solid var(--primary-color); margin: 15px 0 20px 0; }
+                    
+                    .billing-section { display: flex; justify-content: space-between; margin-bottom: 25px; }
+                    .bill-column { width: 48%; }
+                    .bill-label { color: var(--primary-color); font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+                    .bill-name { font-size: 15px; font-weight: 700; margin: 0 0 4px 0; text-transform: uppercase; }
+                    .bill-address { margin: 2px 0; font-size: 13px; color: #4B5563; line-height: 1.4; white-space: pre-wrap; }
+                    
+                    .items-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; }
+                    .items-table th { background-color: var(--primary-color); color: white; padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+                    .items-table th:nth-child(1) { text-align: left; width: 55%; }
+                    .items-table th:nth-child(2) { text-align: center; width: 10%; }
+                    .items-table th:nth-child(3) { text-align: right; width: 15%; }
+                    .items-table th:nth-child(4) { text-align: right; width: 20%; }
+                    .items-table td { padding: 12px; font-size: 13px; border: 1px solid #E5E7EB; color: #374151; }
+                    .items-table td:nth-child(1) { font-weight: 600; }
+                    .items-table td:nth-child(2) { text-align: center; }
+                    .items-table td:nth-child(3) { text-align: right; }
+                    .items-table td:nth-child(4) { text-align: right; font-weight: 600; }
+                    
+                    .bottom-grid { display: flex; justify-content: space-between; margin-bottom: 25px; gap: 20px; }
+                    .bottom-left-blocks { width: 53%; display: flex; flex-direction: column; gap: 15px; }
+                    .bottom-right-blocks { width: 44%; display: flex; flex-direction: column; gap: 15px; }
+                    .outline-box { border: 1px solid var(--box-border); background-color: var(--box-bg); border-radius: 10px; padding: 15px; }
+                    .box-title { color: var(--primary-color); font-size: 12px; font-weight: 700; text-transform: uppercase; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+                    .payment-row { font-size: 12px; margin-bottom: 6px; color: #374151; }
+                    .payment-row span { display: inline-block; border-bottom: 1px solid #9CA3AF; min-width: 180px; padding-left: 5px; font-weight: 600; }
+                    .notes-list, .terms-list { margin: 0; padding-left: 18px; font-size: 12px; color: #4B5563; }
+                    
+                    .totals-box { padding: 0; overflow: hidden; border: 1px solid var(--box-border); border-radius: 10px; }
+                    .total-row { display: flex; justify-content: space-between; padding: 10px 15px; font-size: 13px; font-weight: 700; border-bottom: 1px solid #E5E7EB; text-transform: uppercase; }
+                    .total-row:last-of-type { border-bottom: none; }
+                    .total-row.discount-row { color: var(--green-color); }
+                    .grand-total-row { background-color: var(--primary-color); color: white; display: flex; justify-content: space-between; padding: 12px 15px; font-size: 15px; font-weight: 700; text-transform: uppercase; }
+                    
+                    .invoice-footer { margin-top: 35px; }
+                    .auth-stamps-section { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; }
+                    .signature-block { width: 220px; position: relative; }
+                    .sig-line { border-top: 1px solid #4B5563; margin-bottom: 6px; }
+                    .sig-upload-preview { height: 50px; width: 100%; object-fit: contain; margin-bottom: -5px; }
+                    .auth-title { font-size: 11px; font-weight: 700; color: #1F2937; text-transform: uppercase; margin: 0 0 4px 0; }
+                    .auth-details p { margin: 2px 0; font-size: 12px; color: #4B5563; }
+                    .stamp-circle { width: 90px; height: 90px; border: 1.5px solid var(--box-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; text-align: center; overflow: hidden; background: #fff; margin-right: 40px; }
+                    .stamp-circle img { width: 100%; height: 100%; object-fit: contain; }
+                    .thanks-msg { text-align: center; font-size: 16px; font-weight: 700; color: #1F2937; margin-bottom: 15px; }
+                    .footer-bar { border-top: 1px solid var(--border-color); padding-top: 12px; display: flex; justify-content: center; gap: 30px; font-size: 12px; color: #4B5563; font-weight: 600; }
+                    
                     @media print {  
                         body { background: white !important; padding: 0 !important; }  
-                        #doc-preview { box-shadow: none !important; border: none !important; margin: 0 !important; padding: 10mm !important; max-width: 100% !important; }  
+                        .invoice-container { box-shadow: none !important; margin: 0 !important; width: 100% !important; padding: 0 !important; }  
                         .no-print { display: none !important; }  
-                        .avoid-break { page-break-inside: avoid; break-inside: avoid; }  
                     }  
-                    .avoid-break { page-break-inside: avoid; break-inside: avoid; }  
                 `;  
                 document.head.appendChild(styleEl);  
 
-                const previewEl = document.createElement('div');  
-                previewEl.id = 'doc-preview';  
-                previewEl.className = 'a4-document bg-white w-full max-w-[800px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-slate-900/5 sm:rounded-lg overflow-hidden';  
-                document.body.appendChild(previewEl);  
+                const previewWrapper = document.createElement('div');
+                previewWrapper.id = 'doc-preview';
+                document.body.appendChild(previewWrapper);
 
-                // Assign to store for rendering  
                 store.state = { ...defaultState, ...JSON.parse(publicData.stateSnapshot) };  
                   
-                // Construct premium UI structure (SaaS standard layout)  
-                previewEl.innerHTML = `  
-                    <div class="px-10 py-12 sm:px-14 sm:py-16">  
-                        <div class="flex flex-col md:flex-row justify-between items-start gap-8 mb-12 avoid-break">  
-                            <div class="flex flex-col gap-5 max-w-[50%]">  
-                                <img id="prev-logo" class="${store.state.logoDataUrl ? '' : 'hidden'} object-contain" src="${store.state.logoDataUrl || ''}" style="max-height: 72px;">  
-                                <div id="prev-company-name" class="text-xl font-bold text-slate-900 tracking-tight break-words">${store.state.companyName || ''}</div>  
-                            </div>  
-                            <div class="text-right flex flex-col gap-2 md:items-end">  
-                                <h2 id="prev-title" class="text-3xl font-normal tracking-tight text-slate-400 uppercase mb-1">${store.state.docType ? store.state.docType.toUpperCase() : ''}</h2>  
-                                <p class="text-base font-semibold text-slate-800"><span id="prev-number-label"># ${store.state.docNumber || ''}</span></p>  
-                                <div id="prev-status-badge" class="mt-1"></div>  
-                            </div>  
-                        </div>  
+                // Exact HTML Structure mirroring your UI request
+                previewWrapper.innerHTML = `  
+                    <div class="invoice-container">
+                        <div class="invoice-header">
+                            <div class="header-left">
+                                <div class="logo-placeholder">
+                                    <span id="logo-txt">LOGO</span>
+                                    <img id="logo-img" src="" alt="Logo" style="display:none;">
+                                </div>
+                                <div class="company-details">
+                                    <h1 id="comp-name">COMPANY NAME</h1>
+                                    <p id="comp-address">Company Address</p>
+                                </div>
+                            </div>
+                            <div class="header-right">
+                                <div class="invoice-title" id="inv-title">INVOICE</div>
+                                <div class="invoice-num" id="inv-num"># NUMBER</div>
+                                <div class="status-badge" id="inv-status">STATUS</div>
+                                <div class="dates-info">
+                                    <p>DATE: <span id="inv-date">DATE</span></p>
+                                    <p>DUE: <span id="due-date">DUE DATE</span></p>
+                                </div>
+                            </div>
+                        </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12 avoid-break border-t border-slate-100 pt-10">  
-                            <div>  
-                                <p id="lbl-from" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3"></p>  
-                                <div id="prev-sender" class="text-sm text-slate-700 leading-relaxed break-words"></div>  
-                            </div>  
-                            <div class="md:text-right">  
-                                <p id="lbl-to" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3"></p>  
-                                <div id="prev-client" class="text-sm text-slate-700 leading-relaxed whitespace-pre-line break-words">${store.state.clientDetails || ''}</div>  
-                                  
-                                <div class="inline-flex flex-col gap-2 text-sm mt-6">  
-                                    <div class="flex justify-between md:justify-end items-center gap-6">  
-                                        <span id="lbl-date" class="text-slate-500 font-medium text-[12px]"></span>  
-                                        <span id="prev-date" class="font-semibold text-slate-800 text-right w-24">${store.state.date || ''}</span>  
-                                    </div>  
-                                    <div class="flex justify-between md:justify-end items-center gap-6">  
-                                        <span id="lbl-due" class="text-slate-500 font-medium text-[12px]"></span>  
-                                        <span id="prev-due-date" class="font-semibold text-slate-800 text-right w-24">${store.state.dueDate || ''}</span>  
-                                    </div>  
-                                </div>  
-                            </div>  
-                        </div>  
+                        <div class="divider-line"></div>
 
-                        <div class="mb-12 border border-slate-200 rounded-lg overflow-hidden">  
-                            <table class="w-full text-sm text-left">  
-                                <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 avoid-break">  
-                                    <tr>  
-                                        <th id="lbl-desc" class="py-3 px-5 font-semibold text-xs text-slate-500 uppercase tracking-wider"></th>  
-                                        <th id="lbl-qty" class="py-3 px-5 font-semibold text-xs text-slate-500 uppercase tracking-wider text-center w-24"></th>  
-                                        <th id="lbl-price" class="py-3 px-5 font-semibold text-xs text-slate-500 uppercase tracking-wider text-right w-32"></th>  
-                                        <th id="lbl-total" class="py-3 px-5 font-semibold text-xs text-slate-500 uppercase tracking-wider text-right w-32"></th>  
-                                    </tr>  
-                                </thead>  
-                                <tbody id="prev-items-body" class="divide-y divide-slate-100"></tbody>  
-                            </table>  
-                        </div>  
+                        <div class="billing-section">
+                            <div class="bill-column">
+                                <div class="bill-label">From</div>
+                                <div class="bill-name" id="preview-from-title">COMPANY NAME</div>
+                                <div class="bill-address" id="from-addr">Address</div>
+                            </div>
+                            <div class="bill-column">
+                                <div class="bill-label">To</div>
+                                <div class="bill-name" id="client-name">CLIENT NAME</div>
+                                <div class="bill-address" id="client-addr">Address</div>
+                            </div>
+                        </div>
 
-                        <div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-12 avoid-break">  
-                            <div class="w-full md:w-[55%] space-y-8">  
-                                <div id="prev-notes-terms-container" class="hidden space-y-6">  
-                                    <div id="prev-notes-box" class="hidden">  
-                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Notes</p>  
-                                        <p id="prev-notes-content" class="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed break-words"></p>  
-                                    </div>  
-                                    <div id="prev-terms-box" class="hidden">  
-                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Terms</p>  
-                                        <p id="prev-terms-content" class="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed break-words"></p>  
-                                    </div>  
-                                </div>  
-                                  
-                                <div>  
-                                    <p id="lbl-payment" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2"></p>  
-                                    <p id="prev-payment-details" class="text-sm text-slate-700 font-medium whitespace-pre-wrap leading-relaxed break-words"></p>  
-                                    <div id="qr-code-container" class="mt-4"></div>  
-                                </div>  
-                            </div>  
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Qty</th>
+                                    <th>Unit Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoice-items-tbody"></tbody>
+                        </table>
 
-                            <div class="w-full md:w-[40%] bg-slate-50 rounded-lg p-6 border border-slate-100">  
-                                <div class="flex justify-between items-center mb-3 text-sm">  
-                                    <span id="lbl-subtotal" class="text-slate-500"></span>  
-                                    <span id="prev-subtotal" class="font-medium text-slate-800"></span>  
-                                </div>  
-                                <div id="prev-discount-row" class="flex justify-between items-center mb-3 text-sm text-emerald-600 hidden">  
-                                    <span id="lbl-discount"></span>  
-                                    <span id="prev-discount" class="font-medium"></span>  
-                                </div>  
-                                <div class="flex justify-between items-center mb-5 text-sm">  
-                                    <span id="prev-tax-label" class="text-slate-500"></span>  
-                                    <span id="prev-tax" class="font-medium text-slate-800"></span>  
-                                </div>  
-                                <div class="flex justify-between items-center pt-4 border-t border-slate-200">  
-                                    <span id="lbl-grandtotal" class="text-sm font-semibold text-slate-900"></span>  
-                                    <span id="prev-total" class="font-bold text-xl text-slate-900 tracking-tight"></span>  
-                                </div>  
-                                </div>  
-                            </div>  
+                        <div class="bottom-grid">
+                            <div class="bottom-left-blocks">
+                                <div class="outline-box">
+                                    <div class="box-title">💳 Payment Details</div>
+                                    <div id="payment-details-content" style="font-size: 13px; color: #4B5563; white-space: pre-wrap;"></div>
+                                </div>
+                                <div class="outline-box">
+                                    <div class="box-title">📝 Notes</div>
+                                    <div id="notes-content" style="font-size: 13px; color: #4B5563; white-space: pre-wrap;"></div>
+                                </div>
+                            </div>
+                            <div class="bottom-right-blocks">
+                                <div class="totals-box">
+                                    <div class="total-row"><span>Subtotal</span><span class="amount-val" id="subtotal-val">0.00</span></div>
+                                    <div class="total-row discount-row" id="discount-row" style="display:none;"><span>Discount</span><span class="amount-val" id="discount-val">0.00</span></div>
+                                    <div class="total-row"><span>Tax</span><span class="amount-val" id="tax-val">0.00</span></div>
+                                    <div class="grand-total-row"><span>Grand Total</span><span id="grand-total-val">0.00</span></div>
+                                </div>
+                                <div class="outline-box">
+                                    <div class="box-title">📋 Terms and Conditions</div>
+                                    <div id="terms-content" style="font-size: 13px; color: #4B5563; white-space: pre-wrap;"></div>
+                                </div>
+                            </div>
+                        </div>
 
-                        <div id="sig-container" class="mt-16 flex flex-col items-end hidden avoid-break">  
-                            <div class="w-48 text-center">  
-                                <img id="prev-sig" class="max-h-16 object-contain mx-auto mb-3">  
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-t border-slate-200 pt-3">Authorized Signature</p>  
-                            </div>  
-                        </div>  
-                    </div>  
+                        <div class="invoice-footer">
+                            <div class="auth-stamps-section">
+                                <div class="signature-block">
+                                    <img id="sig-img" class="sig-upload-preview" src="" style="display:none;">
+                                    <div class="sig-line"></div>
+                                    <div class="auth-title">Authorized Signature</div>
+                                    <div class="auth-details">
+                                        <p id="sig-comp">COMPANY NAME</p>
+                                    </div>
+                                </div>
+                                <div class="stamp-circle">
+                                    <span id="stamp-txt">Stamp</span>
+                                    <img id="stamp-img" src="" style="display:none;">
+                                </div>
+                            </div>
+                            <div class="thanks-msg">Thank you for your business!</div>
+                        </div>
+                    </div>
                 `;  
                 renderPreview();   
                   
                 const floatBtn = document.createElement('button');  
                 floatBtn.innerText = 'Print / Save PDF';  
-                floatBtn.className = 'no-print print:hidden fixed bottom-8 right-8 bg-slate-900 text-white px-8 py-3 rounded-full shadow-lg font-medium tracking-wide hover:bg-slate-800 hover:-translate-y-0.5 transform transition-all duration-200 ring-4 ring-slate-900/10';  
+                floatBtn.className = 'no-print fixed bottom-8 right-8 bg-[#3F3DBC] text-white px-8 py-3 rounded-full shadow-lg font-bold cursor-pointer';  
                 floatBtn.onclick = () => window.print();  
                 document.body.appendChild(floatBtn);  
                   
@@ -159,240 +225,124 @@ export async function checkPublicInvoice() {
 }
 
 export function renderPreview() {
-    const previewEl = document.getElementById('doc-preview');
-    if(!previewEl) return;
-
-    const langDict = dict[store.state.lang] || dict['en'];  
-    previewEl.setAttribute('dir', langDict.dir || 'ltr');  
-      
-    // 1. HEADER, BADGE & LOGO SECTION
+    // We target the IDs defined in our exact layout
     try {
-        const logoImg = document.getElementById('prev-logo');  
-        if(logoImg) {  
-            let logoPlaceholder = document.getElementById('placeholder-logo');
-
-            if (store.state.logoDataUrl) {  
-                // LOGO DISPLAY LOGIC 
-                logoImg.src = store.state.logoDataUrl;  
-                logoImg.classList.remove('hidden');  
-                if(logoPlaceholder) logoPlaceholder.classList.add('hidden');
-            } else {  
-                logoImg.src = '';  
-                logoImg.classList.add('hidden');  
-                if(logoPlaceholder) logoPlaceholder.classList.remove('hidden');
-            }  
-        }  
-
-        if(document.getElementById('prev-company-name')) {  
-            document.getElementById('prev-company-name').textContent = store.state.companyName || '';  
-        }  
-
-        const prevCompTaxId = document.getElementById('prev-company-tax-id');
-        if(prevCompTaxId) {
-            if(store.state.companyTaxId && store.state.companyTaxId.trim() !== '') {
-                prevCompTaxId.textContent = store.state.companyTaxId;
-                prevCompTaxId.classList.remove('hidden');
+        // --- 1. Header & Logos ---
+        const logoImg = document.getElementById('logo-img');
+        const logoTxt = document.getElementById('logo-txt');
+        if(logoImg && logoTxt) {
+            if(store.state.logoDataUrl) {
+                logoImg.src = store.state.logoDataUrl;
+                logoImg.style.display = 'block';
+                logoTxt.style.display = 'none';
             } else {
-                prevCompTaxId.classList.add('hidden');
+                logoImg.style.display = 'none';
+                logoTxt.style.display = 'block';
             }
         }
 
-        const typeKey = store.state.docType ? store.state.docType.toLowerCase() : 'invoice';  
-        if(document.getElementById('prev-title')) {
-            document.getElementById('prev-title').textContent = langDict[typeKey] || (store.state.docType ? store.state.docType.toUpperCase() : 'INVOICE');  
+        const compName = store.state.companyName || 'Hamid Hussain & Co.';
+        if(document.getElementById('comp-name')) document.getElementById('comp-name').textContent = compName;
+        if(document.getElementById('preview-from-title')) document.getElementById('preview-from-title').textContent = compName;
+        if(document.getElementById('sig-comp')) document.getElementById('sig-comp').textContent = compName;
+
+        if(document.getElementById('comp-address')) {
+            document.getElementById('comp-address').innerHTML = (store.state.companyAddress || '').replace(/\n/g, '<br>');
         }
+        if(document.getElementById('from-addr')) {
+            document.getElementById('from-addr').innerHTML = (store.state.senderDetails || '').replace(/\n/g, '<br>');
+        }
+
+        if(document.getElementById('inv-title')) document.getElementById('inv-title').textContent = (store.state.docType || 'INVOICE').toUpperCase();
+        if(document.getElementById('inv-num')) document.getElementById('inv-num').textContent = `# ${store.state.docNumber || ''}`;
         
-        if(document.getElementById('prev-number-label')) {
-            document.getElementById('prev-number-label').textContent = `# ${store.state.docNumber || ''}`;  
+        const statusBadge = document.getElementById('inv-status');
+        if(statusBadge) {
+            statusBadge.textContent = store.state.status || 'PENDING';
+            statusBadge.style.display = store.state.status ? 'inline-block' : 'none';
         }
 
-        const prevStatusBadge = document.getElementById('prev-status-badge');
-        if(prevStatusBadge) {
-            prevStatusBadge.textContent = store.state.status || 'Pending';
-        }
-    } catch(e) { console.warn("Header preview error:", e); }
+        if(document.getElementById('inv-date')) document.getElementById('inv-date').textContent = store.state.date || '';
+        if(document.getElementById('due-date')) document.getElementById('due-date').textContent = store.state.dueDate || '';
 
-    // 2. DATES & CLIENT SECTION
-    try {
-        if(document.getElementById('prev-date')) {
-            document.getElementById('prev-date').textContent = store.state.date || '';  
+        // --- 2. Client Details ---
+        if(document.getElementById('client-name')) {
+            // Extract first line as name if possible, or just dump details
+            let clientLines = (store.state.clientDetails || '').split('\n');
+            document.getElementById('client-name').textContent = clientLines[0] || 'CLIENT NAME';
+            document.getElementById('client-addr').innerHTML = clientLines.slice(1).join('<br>') || '';
         }
-          
-        const prevDueDate = document.getElementById('prev-due-date');  
-        const dueDateLblContainer = document.getElementById('lbl-due')?.parentElement;  
-        if (store.state.dueDate) {  
-            if(prevDueDate) prevDueDate.textContent = store.state.dueDate;  
-            if(dueDateLblContainer) dueDateLblContainer.style.display = '';  
-        } else {  
-            if(prevDueDate) prevDueDate.textContent = '';  
-            if(dueDateLblContainer) dueDateLblContainer.style.display = 'none';  
-        }  
 
-        if(document.getElementById('prev-sender')) {  
-            let senderHtml = '';
-            if (store.state.companyName) {
-                senderHtml += `<strong class="text-[15px] font-bold text-slate-900 block mb-1">${store.state.companyName}</strong>`;
-            }
-            if (store.state.companyAddress) {
-                senderHtml += `${store.state.companyAddress}<br>`;
-            }
-            if (store.state.senderDetails) {
-                senderHtml += store.state.senderDetails.replace(/\n/g, '<br>');
-            }
-            document.getElementById('prev-sender').innerHTML = senderHtml;  
-        }  
-          
-        if(document.getElementById('prev-client')) {
-            document.getElementById('prev-client').textContent = store.state.clientDetails || '';  
-        }
-        
-        const prevClientTaxId = document.getElementById('prev-client-tax-id');
-        if(prevClientTaxId) {
-            if(store.state.clientTaxId && store.state.clientTaxId.trim() !== '') {
-                prevClientTaxId.textContent = store.state.clientTaxId;
-                prevClientTaxId.classList.remove('hidden');
-            } else {
-                prevClientTaxId.classList.add('hidden');
-            }
-        }
-    } catch(e) { console.warn("Client details preview error:", e); }
-
-    // 3. LABELS & BADGES
-    try {
-        const setLbl = (id, text) => { const el = document.getElementById(id); if(el) el.textContent = text; };  
-        setLbl('lbl-from', langDict.from || 'FROM:');  
-        setLbl('lbl-to', langDict.to || 'BILL TO:');  
-        setLbl('lbl-date', langDict.date || 'Date:');  
-        setLbl('lbl-due', langDict.due || 'Due:');  
-        setLbl('lbl-desc', langDict.desc || 'DESCRIPTION');  
-        setLbl('lbl-qty', langDict.qty || 'QTY');  
-        setLbl('lbl-price', langDict.price || 'UNIT PRICE');  
-        setLbl('lbl-total', langDict.total || 'TOTAL');  
-        setLbl('lbl-subtotal', langDict.subtotal || 'SUBTOTAL');  
-        setLbl('lbl-discount', langDict.discount || 'DISCOUNT');  
-        setLbl('lbl-grandtotal', langDict.gtotal || 'TOTAL');  
-        setLbl('lbl-payment', langDict.paymentDetails || 'Payment Details');  
-    } catch(e) { console.warn("Labels preview error:", e); }
-
-    // 4. ITEMS & AMOUNTS CALCULATIONS
-    try {
-        if(document.getElementById('prev-items-body') && store.state.items) {  
-            document.getElementById('prev-items-body').innerHTML = store.state.items.filter(i => i.desc || Number(i.price) > 0).map(item => {
+        // --- 3. Items Table ---
+        if(document.getElementById('invoice-items-tbody') && store.state.items) {  
+            document.getElementById('invoice-items-tbody').innerHTML = store.state.items.filter(i => i.desc || Number(i.price) > 0).map(item => {
                 const qty = Number(item.qty) || 0;
                 const price = Number(item.price) || 0;
                 const total = qty * price;
-                
                 return `  
-                <tr class="avoid-break hover:bg-slate-50/50 transition-colors border-b border-slate-200">  
-                    <td class="py-4 text-start font-bold text-slate-800 break-words whitespace-pre-wrap">${item.desc || ''}</td>  
-                    <td class="py-4 text-center font-medium">${qty}</td>  
-                    <td class="py-4 text-end font-medium whitespace-nowrap">${formatMoney(price)}</td>  
-                    <td class="py-4 text-end font-bold text-slate-900 whitespace-nowrap">${formatMoney(total)}</td>  
+                <tr>  
+                    <td>${item.desc || ''}</td>  
+                    <td>${qty}</td>  
+                    <td>${formatMoney(price)}</td>  
+                    <td>${formatMoney(total)}</td>  
                 </tr>  
                 `;
             }).join('');  
-        }  
+        }
 
+        // --- 4. Calculations ---
         if(typeof calculate === 'function') calculate();  
         if(!store.calcTotals) store.calcTotals = { subtotal: 0, discount: 0, tax: 0, total: 0 };
 
-        if(document.getElementById('prev-subtotal')) {
-            document.getElementById('prev-subtotal').textContent = formatMoney(store.calcTotals.subtotal || 0);  
-        }
-        if(document.getElementById('prev-discount')) {
-            document.getElementById('prev-discount').textContent = `-${formatMoney(store.calcTotals.discount || 0)}`;  
-        }
-        if(document.getElementById('prev-discount-row')) {
-            document.getElementById('prev-discount-row').style.display = ((store.calcTotals.discount || 0) > 0) ? 'flex' : 'none';  
-        }
-          
-        let taxLabelName = store.state.taxName || 'Tax';
-        let taxLabelText = `${taxLabelName}`; 
-        if(document.getElementById('prev-tax-label')) document.getElementById('prev-tax-label').textContent = taxLabelText;  
-        if(document.getElementById('prev-tax')) document.getElementById('prev-tax').textContent = formatMoney(store.calcTotals.tax || 0);  
-        if(document.getElementById('prev-total')) document.getElementById('prev-total').textContent = formatMoney(store.calcTotals.total || 0); 
-    } catch(e) { console.warn("Items and amounts calculation error:", e); }
-
-    // 5. FOOTER, PAYMENT DETAILS, NOTES, TERMS & SIGNATURE
-    try {
-        const linkContainer = document.getElementById('prev-payment-link-container');
-        const prevPaymentLink = document.getElementById('prev-payment-link');
+        if(document.getElementById('subtotal-val')) document.getElementById('subtotal-val').textContent = formatMoney(store.calcTotals.subtotal || 0);
         
-        if (store.state.paymentLink && store.state.paymentLink.trim() !== '') {
-            if(linkContainer) linkContainer.classList.remove('hidden');
-            if(prevPaymentLink) {
-                prevPaymentLink.href = store.state.paymentLink;
-                prevPaymentLink.textContent = store.state.paymentLink;
+        const discRow = document.getElementById('discount-row');
+        if(discRow) {
+            if((store.calcTotals.discount || 0) > 0) {
+                discRow.style.display = 'flex';
+                document.getElementById('discount-val').textContent = `-${formatMoney(store.calcTotals.discount)}`;
+            } else {
+                discRow.style.display = 'none';
             }
-        } else {
-            if(linkContainer) linkContainer.classList.add('hidden');
         }
-
-        const prevPaymentDetails = document.getElementById('prev-payment-details');
-        if(prevPaymentDetails) {
-            prevPaymentDetails.textContent = store.state.paymentDetails || '';
-        }
-
-        const notesTermsContainer = document.getElementById('prev-notes-terms-container');
-        const notesBox = document.getElementById('prev-notes-box');
-        const termsBox = document.getElementById('prev-terms-box');
-        const notesContent = document.getElementById('prev-notes-content');  
-        const termsContent = document.getElementById('prev-terms-content');  
-        let showNotesTerms = false;
-
-        if (store.state.notes && store.state.notes.trim() !== '') {
-            if(notesBox) notesBox.classList.remove('hidden');
-            if(notesContent) notesContent.textContent = store.state.notes;
-            showNotesTerms = true;
-        } else {
-            if(notesBox) notesBox.classList.add('hidden');
-        }
-
-        if (store.state.terms && store.state.terms.trim() !== '') {
-            if(termsBox) termsBox.classList.remove('hidden');
-            if(termsContent) termsContent.textContent = store.state.terms;
-            showNotesTerms = true;
-        } else {
-            if(termsBox) termsBox.classList.add('hidden');
-        }
-
-        if(notesTermsContainer) {
-            if(showNotesTerms) notesTermsContainer.classList.remove('hidden');
-            else notesTermsContainer.classList.add('hidden');
-        }
-
-        const sigContainer = document.getElementById('sig-container');
-        const sigImg = document.getElementById('prev-sig');  
-        const sigPlaceholder = document.getElementById('prev-sig-placeholder-line');
         
-        if(store.state.sigDataUrl) {  
-            // SIGNATURE DISPLAY LOGIC (Fixing classes dynamically to ensure it shows)
-            if(sigContainer) {
-                sigContainer.classList.remove('hidden');
-                sigContainer.style.display = 'flex'; // Force flex display so it aligns properly
+        if(document.getElementById('tax-val')) document.getElementById('tax-val').textContent = formatMoney(store.calcTotals.tax || 0);
+        if(document.getElementById('grand-total-val')) document.getElementById('grand-total-val').textContent = formatMoney(store.calcTotals.total || 0);
+
+        // --- 5. Bottom Blocks (Notes, Terms, Payment) ---
+        if(document.getElementById('payment-details-content')) document.getElementById('payment-details-content').textContent = store.state.paymentDetails || '';
+        if(document.getElementById('notes-content')) document.getElementById('notes-content').textContent = store.state.notes || '';
+        if(document.getElementById('terms-content')) document.getElementById('terms-content').textContent = store.state.terms || '';
+
+        // --- 6. Signatures and Stamps ---
+        const sigImg = document.getElementById('sig-img');
+        if(sigImg) {
+            if(store.state.sigDataUrl) {
+                sigImg.src = store.state.sigDataUrl;
+                sigImg.style.display = 'block';
+            } else {
+                sigImg.style.display = 'none';
             }
-            if(sigImg) {
-                sigImg.src = store.state.sigDataUrl;  
-                sigImg.classList.remove('hidden');
+        }
+
+        // Logic for Stamp if you added stampDataUrl to your state
+        const stampImg = document.getElementById('stamp-img');
+        const stampTxt = document.getElementById('stamp-txt');
+        if(stampImg && stampTxt) {
+            if(store.state.stampDataUrl) {
+                stampImg.src = store.state.stampDataUrl;
+                stampImg.style.display = 'block';
+                stampTxt.style.display = 'none';
+            } else {
+                stampImg.style.display = 'none';
+                stampTxt.style.display = 'block';
             }
-            if(sigPlaceholder) sigPlaceholder.classList.add('hidden');
-        } else {  
-            if(sigContainer) {
-                sigContainer.classList.add('hidden');
-                sigContainer.style.display = 'none';
-            }
-            if(sigImg) {
-                sigImg.src = '';  
-                sigImg.classList.add('hidden');  
-            }
-            if(sigPlaceholder) sigPlaceholder.classList.remove('hidden');
-        }  
-        
-    } catch(e) { console.warn("Footer preview error:", e); }
+        }
+
+    } catch(e) { console.warn("Live Preview Update Error:", e); }
 }
 
 export function setupPreviewAndExportListeners() {
-    // विशेष कैलकुलेशन ट्रिगर्स के लिए लिसनर्स
     ['discount-type', 'discount-value', 'tax-rate-manual'].forEach(id => {
         const el = document.getElementById(id);
         if(el) {
@@ -403,7 +353,6 @@ export function setupPreviewAndExportListeners() {
         }
     });
 
-    // --- SMART LOCAL STORAGE LOGIC FOR DROPDOWNS (100% Client-Side) ---
     const initDropdown = (dropdownId, storageKey, inputId) => {
         const dropdown = document.getElementById(dropdownId);
         const input = document.getElementById(inputId);
@@ -424,7 +373,7 @@ export function setupPreviewAndExportListeners() {
         dropdown.addEventListener('change', (e) => {
             if(e.target.value) {
                 input.value = e.target.value;
-                input.dispatchEvent(new Event('input', { bubbles: true })); // Trigger sync with bubble
+                input.dispatchEvent(new Event('input', { bubbles: true })); 
                 e.target.value = ''; 
             }
         });
@@ -432,21 +381,19 @@ export function setupPreviewAndExportListeners() {
         return { loadOptions };
     };
 
-    // Initialize Dropdowns
     const senderDrop = initDropdown('saved-senders-dropdown', 'inv_saved_senders', 'sender-details');
     const clientDrop = initDropdown('saved-clients-dropdown', 'inv_saved_clients', 'client-details');
     const termsDrop = initDropdown('saved-terms-dropdown', 'inv_saved_terms', 'invoice-terms');
 
-    // Hook into the Save to Local Button to save preferences offline
     document.getElementById('btn-save-invoice')?.addEventListener('click', () => {
-        if(typeof saveState === 'function') saveState(); // Main state save
+        if(typeof saveState === 'function') saveState(); 
 
         const saveToDropdown = (key, val) => {
             if(!val || !val.trim()) return;
             let items = JSON.parse(localStorage.getItem(key) || '[]');
             if(!items.includes(val)) {
                 items.unshift(val); 
-                if(items.length > 10) items.pop(); // Keep only last 10 entries to avoid bloat
+                if(items.length > 10) items.pop(); 
                 localStorage.setItem(key, JSON.stringify(items));
             }
         };
@@ -455,15 +402,13 @@ export function setupPreviewAndExportListeners() {
         saveToDropdown('inv_saved_clients', document.getElementById('client-details')?.value);
         saveToDropdown('inv_saved_terms', document.getElementById('invoice-terms')?.value);
 
-        // Refresh dropdowns dynamically
         if(senderDrop) senderDrop.loadOptions();
         if(clientDrop) clientDrop.loadOptions();
         if(termsDrop) termsDrop.loadOptions();
 
-        showToast("Invoice and Data Saved Locally!");
+        showToast("Invoice Data Saved Locally!");
     });
 
-    // Share feature
     const shareModal = document.getElementById('share-modal');
     document.getElementById('btn-share')?.addEventListener('click', async () => {
         const validation = validateInvoice();
@@ -479,7 +424,7 @@ export function setupPreviewAndExportListeners() {
             try {  
                 await navigator.share({  
                     title: `Invoice ${store.state.docNumber || ''}`,  
-                    text: `Please find the details for invoice ${store.state.docNumber || ''} from ${store.state.companyName || (store.state.senderDetails ? store.state.senderDetails.split('\n')[0] : '')}.\nTotal: ${store.calcTotals ? formatMoney(store.calcTotals.total) : ''}`,  
+                    text: `Please find the details for invoice ${store.state.docNumber || ''}. Total: ${store.calcTotals ? formatMoney(store.calcTotals.total) : ''}`,  
                     url: shareLink  
                 });  
                 showToast("Shared successfully.");  
@@ -499,11 +444,10 @@ export function setupPreviewAndExportListeners() {
         const linkInput = document.getElementById('share-link-input');  
         if(linkInput) {  
             navigator.clipboard.writeText(linkInput.value);  
-            showToast("Link copied to clipboard!");  
+            showToast("Link copied!");  
         }  
     });  
 
-    // Print functionality  
     const btnPrintMode = document.getElementById('btn-print-mode');  
     if (btnPrintMode) {  
         btnPrintMode.addEventListener('click', () => {  
@@ -511,50 +455,32 @@ export function setupPreviewAndExportListeners() {
         });  
     }  
 
-    // PDF Generation Fix (Export) 
     const btnPdf = document.getElementById('btn-pdf');  
     if(btnPdf) {  
         btnPdf.addEventListener('click', async () => {  
             const validation = validateInvoice();  
             if (validation !== true) return showToast(validation);  
               
-            const element = document.getElementById('doc-preview');  
+            const element = document.getElementById('doc-preview') || document.querySelector('.invoice-container');  
             if(!element) return;
             
-            btnPdf.classList.add('is-loading');  
-            showToast("Compiling PDF asynchronously...");  
-
+            showToast("Compiling PDF...");  
             await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 50)));  
 
-            const originalWidth = element.style.width;  
-            element.style.width = '800px'; 
-
             const options = {  
-                margin: [10, 10, 10, 10],   
+                margin: [0, 0, 0, 0],   
                 filename: `${store.state.docNumber || 'Invoice'}.pdf`,  
                 image: { type: 'jpeg', quality: 1.0 },   
-                html2canvas: {   
-                    scale: 3, 
-                    useCORS: true,   
-                    letterRendering: true,  
-                    width: 800,  
-                    windowWidth: 800,  
-                    scrollY: 0,  
-                    logging: false  
-                },  
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },  
-                pagebreak: { mode: 'css', avoid: '.avoid-break' } 
+                html2canvas: { scale: 3, useCORS: true, logging: false },  
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }
             };  
               
             try {  
                 await html2pdf().set(options).from(element).save();  
-                showToast("Export completed successfully.");  
+                showToast("Export completed!");  
             } catch (error) {  
                 showToast("Error generating PDF.");  
                 console.error(error);  
-            } finally {  
-                element.style.width = originalWidth;  
-                btnPdf.classList.remove('is-loading');  
             }  
         });  
     }
