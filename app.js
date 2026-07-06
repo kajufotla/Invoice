@@ -5,7 +5,7 @@ window.toggleDarkMode = () => UIManager.toggleDarkMode();
 window.showToast = (msg, type) => NotificationManager.show(msg, type);
 window.setLanguage = (lang) => { if(typeof I18nManager !== 'undefined') I18nManager.setLanguage(lang); };
 window.saveDraft = () => UIManager.saveDraft();
-window.saveFinal = () => UIManager.saveFinal();
+window.saveFinal = () => UIManager.saveFinal(); 
 window.markPaid = () => UIManager.markPaid();
 window.mailInvoice = () => ExportManager.mailInvoice();
 window.shareInvoice = () => ExportManager.shareInvoice();
