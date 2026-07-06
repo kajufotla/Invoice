@@ -430,7 +430,15 @@
 
         <div id="toast-container" class="toast-container"></div>
     </div>
-<script src="database.js"></script>
+    
+    <script>
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            alert("ایرر کی تفصیل:\n" + msg + "\nلائن نمبر: " + lineNo);
+            return false;
+        };
+    </script>
+
+    <script src="database.js"></script>
     <script src="utils.js"></script>
     <script src="app.js?v=2"></script>
 </body>
