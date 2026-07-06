@@ -40,15 +40,46 @@ window.moveToTrash = (id) => { if(typeof HistoryManager !== 'undefined') History
 window.restoreFromTrash = (id) => { if(typeof HistoryManager !== 'undefined') HistoryManager.restoreFromTrash(id); };
 window.deletePermanently = (id) => { if(typeof HistoryManager !== 'undefined') HistoryManager.deletePermanently(id); };
 window.duplicateInvoice = (id) => { if(typeof HistoryManager !== 'undefined') HistoryManager.duplicateInvoice(id); };
-window.saveCustomerProfile = () => { if(typeof EntityManager !== 'undefined') EntityManager.saveCustomerProfile(); };
-window.loadCustomerProfile = () => { if(typeof EntityManager !== 'undefined') EntityManager.loadCustomerProfile(); };
-window.deleteCustomerProfile = () => { if(typeof EntityManager !== 'undefined') EntityManager.deleteCustomerProfile(); };
-window.saveCompanyProfile = () => { if(typeof EntityManager !== 'undefined') EntityManager.saveCompanyProfile(); };
-window.saveNotesTemplate = () => { if(typeof EntityManager !== 'undefined') EntityManager.saveNotesTemplate(); };
-window.savePaymentMethod = () => { if(typeof EntityManager !== 'undefined') EntityManager.savePaymentMethod(); };
-window.saveProductToLibrary = (idx) => { if(typeof EntityManager !== 'undefined') EntityManager.saveProductToLibrary(idx); };
-window.loadProductToItem = () => { if(typeof EntityManager !== 'undefined') EntityManager.loadProductToItem(); };
-window.deleteProduct = () => { if(typeof EntityManager !== 'undefined') EntityManager.deleteProduct(); };
+
+// --- FIX: MISSING BINDINGS FROM INDEX.HTML ADDED HERE ---
+window.saveInvoiceData = () => window.saveFinal();
+window.showHistory = () => window.loadHistory();
+
+window.loadProfile = (type) => { 
+    if(typeof EntityManager !== 'undefined') {
+        if(type === 'company' && EntityManager.loadCompanyProfile) EntityManager.loadCompanyProfile();
+        else if(type === 'client' && EntityManager.loadCustomerProfile) EntityManager.loadCustomerProfile();
+        else if(type === 'payment' && EntityManager.loadPaymentMethod) EntityManager.loadPaymentMethod();
+        else if(type === 'notes' && EntityManager.loadNotesTemplate) EntityManager.loadNotesTemplate();
+        else if(EntityManager.loadProfile) EntityManager.loadProfile(type);
+    }
+};
+
+window.saveProfile = (type) => { 
+    if(typeof EntityManager !== 'undefined') {
+        if(type === 'company' && EntityManager.saveCompanyProfile) EntityManager.saveCompanyProfile();
+        else if(type === 'client' && EntityManager.saveCustomerProfile) EntityManager.saveCustomerProfile();
+        else if(type === 'payment' && EntityManager.savePaymentMethod) EntityManager.savePaymentMethod();
+        else if(type === 'notes' && EntityManager.saveNotesTemplate) EntityManager.saveNotesTemplate();
+        else if(EntityManager.saveProfile) EntityManager.saveProfile(type);
+    } else {
+        NotificationManager.show('Database module not fully loaded.', 'error');
+    }
+};
+
+window.deleteProfile = (type) => { 
+    if(typeof EntityManager !== 'undefined') {
+        if(type === 'company' && EntityManager.deleteCompanyProfile) EntityManager.deleteCompanyProfile();
+        else if(type === 'client' && EntityManager.deleteCustomerProfile) EntityManager.deleteCustomerProfile();
+        else if(type === 'payment' && EntityManager.deletePaymentMethod) EntityManager.deletePaymentMethod();
+        else if(type === 'notes' && EntityManager.deleteNotesTemplate) EntityManager.deleteNotesTemplate();
+        else if(EntityManager.deleteProfile) EntityManager.deleteProfile(type);
+    }
+};
+
+// --- FIX: GLOBAL ITEMS REFERENCE FOR INLINE HTML "items.forEach" ---
+window._fallbackItems = [];
+window.items = window._fallbackItems;
 
 /* ================= SAFE LOGGER FALLBACK ================= */
 const SafeLogger = {
@@ -56,6 +87,19 @@ const SafeLogger = {
     warn: (msg, data) => { if(typeof Logger !== 'undefined') Logger.warn(msg, data); else console.warn('WARN:', msg, data || ''); },
     error: (msg, data) => { if(typeof Logger !== 'undefined') Logger.error(msg, data); else console.error('ERROR:', msg, data || ''); }
 };
+
+/* ================= SAFE UTILITY FALLBACK (PREVENTS SYNC CRASH) ================= */
+if (typeof Utility === 'undefined') {
+    window.Utility = {
+        getEl: (id) => document.getElementById(id),
+        getVal: (id) => { const el = document.getElementById(id); return el ? el.value : ''; },
+        formatCurrency: (num) => Number(num).toFixed(2),
+        formatDate: (d) => { if(!d) return ''; const date = new Date(d); return date.toLocaleDateString(); },
+        numberToWords: (n) => n + " in words",
+        generateId: () => 'INV-' + Date.now(),
+        debounce: (func, wait) => { let t; return function(...args) { clearTimeout(t); t = setTimeout(() => func.apply(this, args), wait); }; }
+    };
+}
 
 /* ================= NOTIFICATION MANAGER ================= */
 const NotificationManager = {
@@ -110,10 +154,10 @@ const InvoiceEngine = {
 
     generateInvoiceNumber: async () => {  
         const date = new Date(), year = date.getFullYear();  
-        let seq = (typeof StorageEngine !== 'undefined' ? StorageEngine.getKV('invoice_sequence') : 1) || 1;  
+        let seq = (typeof StorageEngine !== 'undefined' && StorageEngine.getKV) ? StorageEngine.getKV('invoice_sequence') || 1 : 1;  
         const invInput = typeof Utility !== 'undefined' ? Utility.getEl('f-inv-num') : document.getElementById('f-inv-num');  
         if (invInput) invInput.value = `INV-${year}-${String(seq).padStart(6, '0')}`;  
-        if (typeof StorageEngine !== 'undefined') StorageEngine.setKV('invoice_sequence', seq + 1);  
+        if (typeof StorageEngine !== 'undefined' && StorageEngine.setKV) StorageEngine.setKV('invoice_sequence', seq + 1);  
         InvoiceEngine.syncDebounced();  
     },  
 
@@ -122,8 +166,9 @@ const InvoiceEngine = {
         let items = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : window._fallbackItems;
         
         items.push({ id: Date.now(), desc: '', notes: '', sku: '', unit: '', qty: '', price: '', tax: '', disc: '', showAdv: false });  
+        window.items = items; // FIX: Ensure global sync
         UIManager.renderItems(); 
-        if (typeof StateManager !== 'undefined') StateManager.saveState();  
+        if (typeof StateManager !== 'undefined' && StateManager.saveState) StateManager.saveState();  
     },  
 
     deleteItem: (idx) => {  
@@ -134,10 +179,12 @@ const InvoiceEngine = {
         else if (items.length > 1 && typeof I18nManager !== 'undefined' && !confirm(I18nManager.t('deleted'))) return;  
         
         items.splice(idx, 1);  
+        window.items = items; // FIX: Ensure global sync
+        
         if (items.length === 0) InvoiceEngine.addItem();  
         else UIManager.renderItems();  
         
-        if (typeof StateManager !== 'undefined') StateManager.saveState();  
+        if (typeof StateManager !== 'undefined' && StateManager.saveState) StateManager.saveState();  
     },  
 
     clearItems: () => {  
@@ -145,6 +192,7 @@ const InvoiceEngine = {
         if(confirm("Clear all items?")) { 
             if (typeof StateManager !== 'undefined' && StateManager.items) StateManager.items = [];
             else window._fallbackItems = [];
+            window.items = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : window._fallbackItems; // FIX: Sync
             InvoiceEngine.addItem(); 
         }  
     },  
@@ -165,7 +213,10 @@ const InvoiceEngine = {
     },  
 
     saveInvoiceAction: async (status) => {  
-        if (typeof StorageEngine === 'undefined') return;
+        if (typeof StorageEngine === 'undefined') {
+            NotificationManager.show(`Storage not found, couldn't save as ${status}.`, 'error');
+            return;
+        }
         UIManager.setLoadingState(true, `Saving Invoice as ${status}...`);  
         try {  
             let items = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : window._fallbackItems;
@@ -243,11 +294,11 @@ const InvoiceEngine = {
             const outNFooter = document.getElementById('out-n-footer');
             if (outNFooter) outNFooter.innerHTML = nFooter ? nFooter.replace(/\n/g, '<br>') : '';
 
-            // --- UPGRADED: Dynamic Payment Sync ---
+            // --- Dynamic Payment Sync ---
             const outPayment = document.getElementById('out-payment');
             const wrapPay = document.getElementById('wrap-pay');  
             if (outPayment) {  
-                outPayment.innerHTML = ''; // Clear existing
+                outPayment.innerHTML = ''; 
                 const pMethod = Utility.getVal('p-method');
                 let hasData = false;  
                 
@@ -272,18 +323,14 @@ const InvoiceEngine = {
                 else if (pMethod === 'easypaisa') { addLine('Mobile Money', `${Utility.getVal('p-mobi-name')} - ${Utility.getVal('p-mobi-no')}`); }  
                 else { 
                     const customText = Utility.getVal('p-custom'); 
-                    if (customText) { 
-                        hasData = true; 
-                        outPayment.innerHTML += customText.replace(/\n/g, '<br>'); 
-                    } 
+                    if (customText) { hasData = true; outPayment.innerHTML += customText.replace(/\n/g, '<br>'); } 
                 }  
-                
                 if (wrapPay) wrapPay.style.display = hasData ? 'block' : 'none';  
             }  
 
-            // --- UPGRADED: Dynamic Items Sync ---
+            // --- Dynamic Items Sync ---
             let tbody = Utility.getEl('out-items-body'), subtotal = 0;  
-            if(tbody) tbody.innerHTML = ''; // Clear native
+            if(tbody) tbody.innerHTML = ''; 
             
             let currentItems = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : (window._fallbackItems || []);
             let cSym = typeof StateManager !== 'undefined' ? StateManager.currencySym : (currParts[1] || '$');
@@ -321,7 +368,7 @@ const InvoiceEngine = {
             if (tbody) tbody.innerHTML = tbHtml;
 
             let gDiscType = Utility.getVal('f-disc-type'), gDiscVal = Number(Utility.getVal('f-disc-val')) || 0, gTax = Number(Utility.getVal('f-global-tax')) || 0;  
-            if (typeof Validator !== 'undefined') {
+            if (typeof Validator !== 'undefined' && Validator.validateDiscount) {
                 try { Validator.validateDiscount(gDiscVal, subtotal, gDiscType === 'percent'); } catch(e) { gDiscVal = 0; Utility.getEl('f-disc-val').value = '0'; NotificationManager.show(e.message, 'warning'); }  
             }
 
@@ -335,8 +382,8 @@ const InvoiceEngine = {
             if (Utility.getEl('out-grand')) Utility.getEl('out-grand').textContent = `${cSym}${Utility.formatCurrency(grandTotal)}`;  
             if (Utility.getEl('out-words')) Utility.getEl('out-words').textContent = Utility.numberToWords(grandTotal) + ` ${cCode}`;  
 
-            if (typeof PaymentManager !== 'undefined') PaymentManager.renderQRCode(); 
-            if (typeof StateManager !== 'undefined') StateManager.saveState();  
+            if (typeof PaymentManager !== 'undefined' && PaymentManager.renderQRCode) PaymentManager.renderQRCode(); 
+            if (typeof StateManager !== 'undefined' && StateManager.saveState) StateManager.saveState();  
         } catch (error) { SafeLogger.error('Sync failed:', error); }  
     }
 };
@@ -396,8 +443,8 @@ const UIManager = {
     },
     loadThemePersistence: async () => {
         if (typeof StorageEngine === 'undefined') return;
-        if (StorageEngine.getKV('theme_dark')) document.body.classList.add('dark-mode');
-        const branding = StorageEngine.getKV('theme_branding');
+        if (StorageEngine.getKV && StorageEngine.getKV('theme_dark')) document.body.classList.add('dark-mode');
+        const branding = StorageEngine.getKV && StorageEngine.getKV('theme_branding');
         if (branding) {
             if (branding.color) { document.documentElement.style.setProperty('--inv-color', branding.color); const c = document.getElementById('b-color'); if(c) c.value = branding.color; }
             if (branding.font) { document.documentElement.style.setProperty('--inv-font', branding.font); const f = document.getElementById('b-font'); if(f) f.value = branding.font; }
@@ -410,16 +457,15 @@ const UIManager = {
         new Sortable(container, { handle: '.drag-handle', animation: animDuration, ghostClass: 'drag-ghost', delay: 150, delayOnTouchOnly: true, onEnd: function (evt) {
             let items = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : window._fallbackItems;
             if (items) {
-                const moved = items.splice(evt.oldIndex, 1)[0]; items.splice(evt.newIndex, 0, moved); UIManager.renderItems(); 
-                if (typeof StateManager !== 'undefined') StateManager.saveState();
+                const moved = items.splice(evt.oldIndex, 1)[0]; items.splice(evt.newIndex, 0, moved); window.items = items; UIManager.renderItems(); 
+                if (typeof StateManager !== 'undefined' && StateManager.saveState) StateManager.saveState();
             }
         }});
     },
 
-    // --- UPGRADED: Fully Native Dynamic Items Rendering ---
     renderItems: () => {
         const cont = document.getElementById('items-container'); if (!cont) return;
-        cont.innerHTML = ''; // Clear container
+        cont.innerHTML = ''; 
         
         let items = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : (window._fallbackItems || []);
         let cSym = typeof StateManager !== 'undefined' ? StateManager.currencySym : '$';
@@ -458,8 +504,10 @@ const UIManager = {
                     
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <button class="btn btn-sm btn-outline" onclick="
-                            let items = (typeof StateManager !== 'undefined' && StateManager.items) ? StateManager.items : window._fallbackItems;
-                            if (items && items[${idx}]) { items[${idx}].showAdv = !items[${idx}].showAdv; window.renderItems(); }
+                            if (window.items && window.items[${idx}]) { 
+                                window.items[${idx}].showAdv = !window.items[${idx}].showAdv; 
+                                window.renderItems(); 
+                            }
                         "><i class="fa-solid fa-sliders"></i> ${it.showAdv ? 'Hide Details' : 'More Details'}</button>
                         <span style="font-weight:bold;">Line Total: ${cSym}${typeof Utility !== 'undefined' ? Utility.formatCurrency(total) : total.toFixed(2)}</span>
                     </div>
@@ -493,8 +541,8 @@ const UIManager = {
         const f = typeof Utility !== 'undefined' ? Utility.getVal('b-font') : document.getElementById('b-font').value;  
         if (c) document.documentElement.style.setProperty('--inv-color', c);  
         if (f) document.documentElement.style.setProperty('--inv-font', f);  
-        if (typeof StorageEngine !== 'undefined') await StorageEngine.setKV('theme_branding', { color: c, font: f }); 
-        if (typeof StateManager !== 'undefined') StateManager.saveState();  
+        if (typeof StorageEngine !== 'undefined' && StorageEngine.setKV) await StorageEngine.setKV('theme_branding', { color: c, font: f }); 
+        if (typeof StateManager !== 'undefined' && StateManager.saveState) StateManager.saveState();  
     },  
 
     handleImageUpload: (input, imgId) => {  
@@ -509,7 +557,7 @@ const UIManager = {
                     if (imgId === 'img-logo' && document.getElementById('logo-placeholder')) document.getElementById('logo-placeholder').style.display = 'none';  
                     if (imgId === 'img-sign' && document.getElementById('sign-placeholder')) document.getElementById('sign-placeholder').style.display = 'none';  
                     if (imgId === 'img-stamp' && document.getElementById('wrap-stamp')) document.getElementById('wrap-stamp').style.display = 'block';  
-                    if (typeof StateManager !== 'undefined') StateManager.saveState();  
+                    if (typeof StateManager !== 'undefined' && StateManager.saveState) StateManager.saveState();  
                 }  
             };  
             reader.onerror = () => NotificationManager.show('Failed to load image.', 'error');  
@@ -548,7 +596,6 @@ const UIManager = {
 
 /* ================= PAYMENT MANAGER ================= */
 const PaymentManager = {
-    // --- UPGRADED: Dynamic Payment Fields Based on Dropdown Selection ---
     renderPaymentFields: () => {
         const methodEl = document.getElementById('p-method');
         const method = methodEl ? methodEl.value : 'bank';
@@ -597,7 +644,7 @@ const PaymentManager = {
         if(method && typeof EntityManager !== 'undefined') {  
             html += `
                 <div class="form-group full" style="margin-top:10px;">
-                    <button class="btn btn-outline" onclick="window.savePaymentMethod()"><i class="fa-solid fa-save"></i> Save this Payment Template</button>
+                    <button class="btn btn-outline" onclick="window.saveProfile('payment')"><i class="fa-solid fa-save"></i> Save this Payment Template</button>
                 </div>
             `;
         }  
@@ -608,7 +655,7 @@ const PaymentManager = {
     handleQRUpload: (input) => {  
         if (input.files && input.files[0] && typeof StateManager !== 'undefined') {  
             const reader = new FileReader();  
-            reader.onload = function(e) { StateManager.uploadedQRImage = e.target.result; PaymentManager.renderQRCode(); StateManager.saveState(); };  
+            reader.onload = function(e) { StateManager.uploadedQRImage = e.target.result; PaymentManager.renderQRCode(); if(StateManager.saveState) StateManager.saveState(); };  
             reader.readAsDataURL(input.files[0]);  
         }  
     },  
@@ -625,7 +672,7 @@ const PaymentManager = {
     }
 };
 
-/* ================= ENTERPRISE PRINT ENGINE (FIXED A4 & FOOTER ISSUE) ================= */
+/* ================= ENTERPRISE PRINT ENGINE ================= */
 const PrintManager = {
     printInvoice: () => {
         const style = document.createElement('style');
@@ -800,7 +847,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             navigator.serviceWorker.register('/sw.js').then(reg => SafeLogger.info('Service Worker Registered')).catch(err => SafeLogger.warn('Service Worker Failed', err));
         }
 
-        if (typeof StorageEngine !== 'undefined') await StorageEngine.init();  
+        if (typeof StorageEngine !== 'undefined' && StorageEngine.init) await StorageEngine.init();  
         const dateEl = document.getElementById('f-date'); if (dateEl) dateEl.valueAsDate = new Date();  
         
         await UIManager.loadThemePersistence();  
@@ -816,10 +863,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         UIManager.renderItems();  
         InvoiceEngine.sync();   
           
-        if (typeof HistoryManager !== 'undefined') await HistoryManager.loadHistory();
-        if (typeof DashboardManager !== 'undefined') await DashboardManager.updateDashboard();
-        if (typeof StateManager !== 'undefined') await StateManager.recoverDraft();  
-        if (typeof StateManager !== 'undefined') StateManager.saveState();  
+        if (typeof HistoryManager !== 'undefined' && HistoryManager.loadHistory) await HistoryManager.loadHistory();
+        if (typeof DashboardManager !== 'undefined' && DashboardManager.updateDashboard) await DashboardManager.updateDashboard();
+        if (typeof StateManager !== 'undefined' && StateManager.recoverDraft) await StateManager.recoverDraft();  
+        if (typeof StateManager !== 'undefined' && StateManager.saveState) StateManager.saveState();  
 
         const bindFilter = (id, func) => { const el = document.getElementById(id); if (el) el.addEventListener('input', func); };
         
@@ -834,7 +881,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             bindFilter('final-sort', HistoryManager.renderFinalsTable);
         }
 
-        // ================= DIRECT EVENT BINDINGS FOR DYNAMIC UI FIXES =================
         const btnAddItem = document.getElementById('add-item-btn');
         if (btnAddItem) {
             btnAddItem.addEventListener('click', (e) => { e.preventDefault(); window.addItem(); });
@@ -852,29 +898,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             document.querySelectorAll('button').forEach(btn => {
                 if (btn.textContent.includes('Clear All')) {
-                    btn.addEventListener('click', (e) => { e.preventDefault(); window.clearItems(); });
-                }
-            });
-        }
-
-        const pMethodDropdown = document.getElementById('p-method');
-        if (pMethodDropdown) {
-            pMethodDropdown.addEventListener('change', () => { window.renderPaymentFields(); });
-        } else {
-            document.querySelectorAll('select').forEach(sel => {
-                sel.addEventListener('change', (e) => {
-                    if (e.target.value === 'stripe' || e.target.value === 'bank' || e.target.value === 'paypal' || e.target.value === 'crypto') {
-                        window.renderPaymentFields();
-                    }
-                });
-            });
-        }
-        // ======================================================================
-          
-        UIManager.setLoadingState(false);  
-    } catch (error) {  
-        UIManager.setLoadingState(false);  
-        SafeLogger.error('Critical failure during initialization sequence:', error);  
-        if (typeof NotificationManager !== 'undefined') NotificationManager.show('System Boot Failure. Check console.', 'error');  
-    }
-});
